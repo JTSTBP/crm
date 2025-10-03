@@ -401,6 +401,7 @@ console.log(attendanceRecords, "attendanceRecords", filteredRecords);
       >
         Clear All Attendance
       </button>
+
       {/* Attendance Records */}
       <div className="glass rounded-2xl border border-white/30 overflow-hidden shadow-xl">
         {filteredRecords.length === 0 ? (
@@ -447,8 +448,16 @@ console.log(attendanceRecords, "attendanceRecords", filteredRecords);
               <tbody className="divide-y divide-white/10">
                 {filteredRecords.map((record) => (
                   <tr
-                    key={record.id}
-                    className="hover:bg-white/5 transition-colors"
+                    key={record}
+                    className={`${
+                      record.status === "Present"
+                        ? "bg-green-500/10"
+                        : record.status === "Absent"
+                        ? "bg-red-500/10"
+                        : record.status === "Half Day"
+                        ? "bg-yellow-500/10"
+                        : "bg-orange-500/10"
+                    }`}
                   >
                     <td className="py-4 px-6 whitespace-nowrap">
                       <div className="flex items-center space-x-2">

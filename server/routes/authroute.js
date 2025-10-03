@@ -36,6 +36,8 @@ router.post("/login", async (req, res) => {
 
     const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
 
+    
+
     let record = await Attendance.findOne({ user_id: user._id, date: today });
 
     if (!record) {
@@ -76,52 +78,7 @@ router.post("/login", async (req, res) => {
 });
 
 // routes/auth.js
-// router.post("/logout", authMiddleware, async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user._id);
-//     if (!user) return res.status(404).json({ message: "User not found" });
 
-//     // Update last logout time
-//     user.lastLogout = new Date();
-//     await user.save();
-
-//     const today = new Date().toISOString().split("T")[0];
-
-//     const record = await Attendance.findOne({
-//       user_id: req.user._id,
-//       date: today,
-//     });
-
-//     if (!record) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "No login found for today" });
-//     }
-
-//     const lastSession = record.sessions[record.sessions.length - 1];
-
-//     if (lastSession && !lastSession.logoutTime) {
-//       lastSession.logoutTime = new Date();
-
-//       const diffMs =
-//         new Date(lastSession.logoutTime) - new Date(lastSession.loginTime);
-//       const diffHours = diffMs / (1000 * 60 * 60);
-
-//       lastSession.durationHours = diffHours;
-
-//       record.totalHours = record.sessions.reduce(
-//         (sum, s) => sum + (s.durationHours || 0),
-//         0
-//       );
-
-//       await record.save();
-//     }
-
-//     res.json({ message: "Logout recorded successfully" });
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
 
 router.post("/logout", authMiddleware, async (req, res) => {
   try {

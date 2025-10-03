@@ -919,9 +919,8 @@ React.useEffect(() => {
                   <p>
                     <strong>Headers:</strong> companyName, companyInfo,
                     companySize, websiteUrl, hiringNeeds, pointsOfContact,
-                    leadSource, contactName, contactEmail, contactPhone,
-                    contactDesignation, linkedinLink, industryName, stage,
-                    assignedTo
+                    leadSource, linkedinLink, industryName, stage,
+                    assignedBy
                   </p>
                   <p>
                     <strong>Stage values:</strong> New, Contacted, Proposal
@@ -1052,18 +1051,7 @@ React.useEffect(() => {
                         <th className="px-4 py-3 text-left text-gray-300 font-medium">
                           Source
                         </th>
-                        <th className="px-4 py-3 text-left text-gray-300 font-medium">
-                          Contact
-                        </th>
-                        <th className="px-4 py-3 text-left text-gray-300 font-medium">
-                          Email
-                        </th>
-                        <th className="px-4 py-3 text-left text-gray-300 font-medium">
-                          Phone
-                        </th>
-                        <th className="px-4 py-3 text-left text-gray-300 font-medium">
-                          Designation
-                        </th>
+                        
                         <th className="px-4 py-3 text-left text-gray-300 font-medium">
                           Industry
                         </th>
@@ -1084,20 +1072,7 @@ React.useEffect(() => {
                           <td className="px-4 py-3 text-white">
                             {row.leadSource || row.lead_source || ""}
                           </td>
-                          <td className="px-4 py-3 text-white">
-                            {row.contactName || row.contact_name || ""}
-                          </td>
-                          <td className="px-4 py-3 text-white">
-                            {row.contactEmail || row.contact_email || ""}
-                          </td>
-                          <td className="px-4 py-3 text-white">
-                            {row.contactPhone || row.contact_phone || ""}
-                          </td>
-                          <td className="px-4 py-3 text-white">
-                            {row.contactDesignation ||
-                              row.contact_designation ||
-                              ""}
-                          </td>
+                          
                           <td className="px-4 py-3 text-white">
                             {row.industryName || row.industry_name || ""}
                           </td>

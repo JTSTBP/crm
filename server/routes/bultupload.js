@@ -230,16 +230,20 @@ function parsePointsOfContact(row) {
   while (
     row[`points_of_contact[${i}].name`] ||
     row[`points_of_contact[${i}].phone`] ||
-    row[`points_of_contact[${i}].email`]
+    row[`points_of_contact[${i}].email`] ||
+    row[`points_of_contact[${i}].linkedin_url`]
   ) {
     const name = row[`points_of_contact[${i}].name`] || "";
     const designation = row[`points_of_contact[${i}].designation`] || "";
     const phone = row[`points_of_contact[${i}].phone`] || "";
     const email = row[`points_of_contact[${i}].email`] || "";
+     const linkedin_url = row[`points_of_contact[${i}].linkedin_url`] || "";
+
     if (name || phone || email)
-      contacts.push({ name, designation, phone, email });
+      contacts.push({ name, designation, phone, email, linkedin_url });
     i++;
   }
+
   return contacts;
 }
 function safeParseJson(value, fallback) {
