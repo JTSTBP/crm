@@ -105,15 +105,18 @@ const AppContent: React.FC = () => {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse animation-delay-2000"></div>
         <div className="absolute top-3/4 left-1/3 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse animation-delay-4000"></div>
       </div>
-      
+
       <div className="flex">
         {/* Mobile Sidebar */}
         {isMobile && isMobileMenuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden backdrop-blur-sm">
-            <div className="fixed inset-0 bg-black bg-opacity-60" onClick={() => setIsMobileMenuOpen(false)} />
+            <div
+              className="fixed inset-0 bg-black bg-opacity-60"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
             <div className="fixed inset-y-0 left-0 w-64 z-50">
-              <Sidebar 
-                currentPage={currentPage} 
+              <Sidebar
+                currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 isMobile={true}
                 onClose={() => setIsMobileMenuOpen(false)}
@@ -123,23 +126,24 @@ const AppContent: React.FC = () => {
         )}
 
         {/* Desktop Sidebar */}
-        <div className={`${isMobile ? 'hidden' : 'w-64 flex-shrink-0'}`}>
+        <div className={`${isMobile ? "hidden" : "w-64 flex-shrink-0"}`}>
           <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
         </div>
 
         {/* Main Content */}
+        {/* Main Content */}
         <div className="flex-1 flex flex-col min-h-screen relative z-10 overflow-auto">
-          <Header 
-            onMenuClick={() => setIsMobileMenuOpen(true)} 
+          <Header
+            onMenuClick={() => setIsMobileMenuOpen(true)}
             isMobile={isMobile}
           />
           <main className="flex-1 p-4 lg:p-8">
-            {renderContent()}
+            {!user || !profile ? <LoginForm /> : renderContent()}
           </main>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function App() {

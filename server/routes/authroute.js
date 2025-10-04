@@ -36,8 +36,6 @@ router.post("/login", async (req, res) => {
 
     const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
 
-    
-
     let record = await Attendance.findOne({ user_id: user._id, date: today });
 
     if (!record) {
@@ -77,62 +75,76 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// routes/auth.js
-
-
 router.post("/logout", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const {
+      autoLogout,
+      lastLoginDate,
+      staticLogoutTime = "19:00",
+      userIdentifier,
+    } = req.body || {};
 
-    const now = new Date();
-    user.lastLogout = now;
-    await user.save();
-
-    const today = new Date().toISOString().split("T")[0];
-    const record = await Attendance.findOne({ user_id: user._id, date: today });
-
-    if (!record) {
-      return res.status(400).json({ message: "No login found for today" });
+    // 1️⃣ Find the user
+    let user;
+    if (autoLogout && userIdentifier) {
+      user = await User.findById(userIdentifier);
+    } else {
+      user = await User.findById(req.user._id);
     }
 
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 2️⃣ Determine logout time and record date
+    let logoutTime = new Date();
+    let recordDate = new Date().toISOString().split("T")[0]; // today
+
+    if (autoLogout && lastLoginDate && staticLogoutTime) {
+      const [hours, minutes] = staticLogoutTime.split(":").map(Number);
+      const autoDate = new Date(lastLoginDate);
+      autoDate.setHours(hours, minutes, 0, 0);
+      logoutTime = autoDate;
+      recordDate = lastLoginDate;
+    }
+
+    user.lastLogout = logoutTime;
+    await user.save();
+
+    // 3️⃣ Find the attendance record
+    const record = await Attendance.findOne({
+      user_id: user._id,
+      date: recordDate,
+    });
+    if (!record) {
+      return res.status(400).json({ message: "No login found for this day" });
+    }
+
+    // 4️⃣ Update last session
     const lastSession = record.sessions[record.sessions.length - 1];
     if (!lastSession.logoutTime) {
-      lastSession.logoutTime = now;
+      lastSession.logoutTime = logoutTime;
 
       const diffMs =
         new Date(lastSession.logoutTime) - new Date(lastSession.loginTime);
-      const diffHours = diffMs / (1000 * 60 * 60);
-      lastSession.durationHours = diffHours;
+      lastSession.durationHours = diffMs / (1000 * 60 * 60);
 
-      // Recalculate total hours
+      // 5️⃣ Recalculate total hours
       record.totalHours = record.sessions.reduce(
         (sum, s) => sum + (s.durationHours || 0),
         0
       );
 
-      // --- Attendance Status Logic ---
+      // 6️⃣ Attendance Status Logic
       const firstLogin = new Date(record.sessions[0].loginTime);
       const firstLoginHour =
         firstLogin.getHours() + firstLogin.getMinutes() / 60;
 
       let status;
-
       if (record.totalHours > 6) {
-        console.log(status, "1");
         status = "Present";
-      } else if (record.totalHours >= 4 && record.totalHours <= 6) {
+      } else if (record.totalHours >= 4) {
         status = "Half-Day";
-        console.log(status, "2");
       } else {
-        // Less than 4 hours, check first login
-        if (firstLoginHour > 10) {
-          status = "Late";
-          console.log(status, "3");
-        } else {
-          status = "Half-Day";
-          console.log(status, "4"); // optional: you can also mark "Late" here
-        }
+        status = firstLoginHour > 10 ? "Late" : "Half-Day";
       }
 
       record.status = status;
@@ -140,11 +152,14 @@ router.post("/logout", authMiddleware, async (req, res) => {
     }
 
     res.json({
-      message: "Logout recorded successfully",
+      message: autoLogout
+        ? "Auto-logout recorded successfully"
+        : "Logout recorded successfully",
       status: record.status,
       totalHours: record.totalHours,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });

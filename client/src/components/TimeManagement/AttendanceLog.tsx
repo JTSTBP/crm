@@ -56,7 +56,7 @@ const isSameMonth = (dateStr: string, month: Date) => {
     date.getFullYear() === month.getFullYear()
   );
 };
-
+console.log(attendanceRecords, "attendanceRecords");
 const filteredRecords = attendanceRecords
   .filter(
     (record) =>

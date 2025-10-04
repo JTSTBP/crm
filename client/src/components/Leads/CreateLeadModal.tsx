@@ -21,6 +21,8 @@ interface LeadFormData {
   company_info: string;
   company_size: string;
   website_url: string;
+
+  company_email: string;
   hiring_needs: string[];
   points_of_contact: Array<{
     name: string;
@@ -357,6 +359,27 @@ const addPointOfContact = () => {
             {errors.website_url && (
               <p className="mt-2 text-sm text-red-300">
                 {errors.website_url.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-white mb-3">
+              Company Email *
+            </label>
+            <input
+              {...register("company_email", {
+                required: "Company email is required",
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Enter a valid email address",
+                },
+              })}
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+              placeholder="info@company.com"
+            />
+            {errors.company_email && (
+              <p className="mt-2 text-sm text-red-300">
+                {errors.company_email.message}
               </p>
             )}
           </div>

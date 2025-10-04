@@ -10,6 +10,7 @@ const activityroutes = require("./routes/activityroute");
 const proposalsroutes = require("./routes/proposalroutes");
 const attendanceroutes = require("./routes/attendanceroute");
 const bulkleadroute = require("./routes/bultupload");
+const sendmails = require("./routes/sendmails");
 const path = require("path");
 
 dotenv.config();
@@ -30,6 +31,8 @@ app.use("/api/tasks", taskroutes);
 app.use("/api/activitylogs", activityroutes);
 app.use("/api/proposals", proposalsroutes);
 app.use("/api/attendance", attendanceroutes);
+
+app.use("/api/", sendmails);
 
 // checking route
 app.get("/", (req, res) => {

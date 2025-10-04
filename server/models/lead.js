@@ -32,6 +32,7 @@ const remarkSchema = new mongoose.Schema(
 const LeadSchema = new mongoose.Schema(
   {
     company_name: { type: String, },
+    company_email:{type:String},
     company_info: { type: String },
     company_size: { type: String },
     website_url: { type: String, unique: true },

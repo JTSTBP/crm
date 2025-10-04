@@ -1,144 +1,3 @@
-// import React, { createContext, useContext, useState, useEffect } from "react";
-// import toast from "react-hot-toast";
-// import axios from "axios";
-
-// interface Profile {
-//   id: string;
-//   name: string;
-//   email: string;
-//   role: "Admin" | "Manager" | "BD Executive";
-//   status: "Active";
-//   phone?: string | null;
-//   created_at: string;
-//   updated_at: string;
-// }
-
-// interface AuthContextType {
-//   user: any | null;
-//   profile: Profile | null;
-//   session: string | null;
-//   loading: boolean;
-//   signIn: (email: string, password: string) => Promise<void>;
-//   signOut: () => Promise<void>;
-// }
-
-// const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) throw new Error("useAuth must be used within AuthProvider");
-//   return context;
-// };
-
-// export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-//   children,
-// }) => {
-//   const [user, setUser] = useState<any | null>(null);
-//   const [profile, setProfile] = useState<Profile | null>(null);
-//   const [session, setSession] = useState<string | null>(null);
-//   const [loading, setLoading] = useState(true);
-//   const url = import.meta.env.VITE_BACKEND_URL;
-//   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
-//   const [attendanceloading, setAttendanceLoading] = useState(false);
-//   const getAuthToken = () => localStorage.getItem("token");
-
-//   useEffect(() => {
-//     // Check if user info is saved in localStorage
-//     const token = localStorage.getItem("token");
-//     const storedProfile = localStorage.getItem("profile");
-//     if (token && storedProfile) {
-//       setSession(token);
-//       setProfile(JSON.parse(storedProfile));
-//       setUser({ email: JSON.parse(storedProfile).email });
-//     }
-//     setLoading(false);
-//   }, []);
-
-//   const signIn = async (email: string, password: string) => {
-//     setLoading(true);
-//     try {
-//       const response = await fetch(`${url}/api/auth/login`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ email, password }),
-//       });
-
-//       const data = await response.json();
-//       if (!response.ok) throw new Error(data.message || "Login failed");
-
-//       // Save session and profile locally
-//       localStorage.setItem("token", data.token);
-//       localStorage.setItem("profile", JSON.stringify(data.user));
-//       setSession(data.token);
-//       setProfile(data.user);
-//       setUser({ email: data.user.email });
-
-//       toast.success("Login successful!");
-//     } catch (error: any) {
-//       toast.error(error.message || "Login failed");
-//       throw error;
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const signOut = async () => {
-//     setLoading(true);
-//     try {
-//       await fetch(`${url}/api/auth/logout`, {
-//         method: "POST",
-//         headers: { Authorization: `Bearer ${session}` },
-//       });
-//       setUser(null);
-//       setProfile(null);
-//       setSession(null);
-//       localStorage.removeItem("token");
-//       localStorage.removeItem("profile");
-//       toast.success("Logged out successfully!");
-//     } catch (error) {
-//       console.error("Sign out error:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // Fetch all attendance records
-//   const fetchAttendance = async () => {
-//     setAttendanceLoading(true);
-//     try {
-//       const res = await axios.get(`${url}/api/attendance`, {
-//         headers: { Authorization: `Bearer ${getAuthToken()}` },
-//       });
-//       setAttendanceRecords(res.data); // should return array of attendance
-//     } catch (err) {
-//       console.error("Failed to fetch attendance:", err);
-//     } finally {
-//       setAttendanceLoading(false);
-//     }
-//   };
-//     useEffect(() => {
-//       fetchAttendance();
-//     }, []);
-
-//   return (
-//     <AuthContext.Provider
-//       value={{
-//         user,
-//         profile,
-//         session,
-//         loading,
-//         signIn,
-//         signOut,
-//         attendanceRecords,
-//         attendanceloading,
-//       }}
-//     >
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// contexts/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -303,38 +162,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const checkAutoLogout = async (session: string | null) => {
+  useEffect(() => {
     if (!session) return;
 
-    const profile = localStorage.getItem("profile");
-    if (!profile) return;
+    let timer: NodeJS.Timeout;
 
-    const user = JSON.parse(profile);
-    const lastLoginDate = new Date(user.lastLogin).toISOString().split("T")[0];
-    const today = new Date().toISOString().split("T")[0];
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        signOut(); // just call intentional logout
+      }, 5 * 60 * 1000); // 5 minutes
+    };
 
-    // If last login date is not today → trigger backend logout
-    if (lastLoginDate !== today) {
-      try {
+    const events = ["mousemove", "keydown", "scroll", "click"];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+
+    resetTimer(); // start timer
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, [session]);
+
+  useEffect(() => {
+    const runAutoLogout = async () => {
+      const profile = localStorage.getItem("profile");
+      const token = localStorage.getItem("token");
+      if (!profile || !token) return;
+
+      const user = JSON.parse(profile);
+      const lastLoginDate = new Date(user.lastLogin)
+        .toISOString()
+        .split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
+
+      if (lastLoginDate !== today) {
+        // call backend to auto logout
         await fetch(`${url}/api/auth/logout`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${session}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userIdentifier: user.id,
+            autoLogout: true,
+            lastLoginDate,
+            staticLogoutTime: "22:00",
+          }),
         });
 
-        // Clear storage
-        localStorage.removeItem("token");
+        // clear local storage
         localStorage.removeItem("profile");
-        console.log("Auto-logout performed for yesterday");
-      } catch (err) {
-        console.error("Auto-logout failed:", err);
-      }
-    }
-  };
+        localStorage.removeItem("token");
+        setProfile(null);
+        setSession(null);
+        setUser(null);
 
-  // Call this in your main App or AuthProvider
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    checkAutoLogout(token);
+        toast.success("Auto-logout processed for previous day");
+      }
+    };
+
+    runAutoLogout();
   }, []);
 
   /* -----------------------------
@@ -342,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   ------------------------------ */
   const refetchAttendance = useCallback(async () => {
     setAttendanceLoading(true);
+
     try {
       const res = await axios.get(`${url}/api/attendance/all`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
@@ -349,21 +240,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const records = res.data.records; // <-- use records here
 
-      const transformed = records.map((rec: any) => ({
-        _id: rec._id,
-        userId: rec.user_id._id,
-        name: rec.user_id.name,
-        role: rec.user_id.role,
-        date: rec.date,
-        lastLogin: rec.sessions?.length
-          ? rec.sessions[rec.sessions.length - 1].loginTime
-          : null,
-        lastLogout: rec.sessions?.length
-          ? rec.sessions[rec.sessions.length - 1].logoutTime
-          : null,
-        totalHours: rec.totalHours || 0,
-        status: rec.status || "Present",
-      }));
+      const transformed = records
+        .filter((rec: any) => rec && rec.user_id) // skip null user_id
+        .map((rec: any) => ({
+          _id: rec._id,
+          userId: rec.user_id?._id || "unknown",
+          name: rec.user_id?.name || "Unknown User",
+          role: rec.user_id?.role || "Unknown",
+          date: rec.date,
+          lastLogin: rec.sessions?.length
+            ? rec.sessions[rec.sessions.length - 1].loginTime
+            : null,
+          lastLogout: rec.sessions?.length
+            ? rec.sessions[rec.sessions.length - 1].logoutTime
+            : null,
+          totalHours: rec.totalHours || 0,
+          status: rec.status || "Present",
+        }));
 
       setAttendanceRecords(transformed);
       console.log("Fetched attendance:", transformed); // check output
@@ -389,8 +282,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (session) refetchAttendance();
-  }, [session, refetchAttendance]);
+    refetchAttendance();
+  }, []);
 
   /* -----------------------------
      Attendance: Mark login/logout
@@ -440,7 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       attendancePercentage,
     };
   };
-  console.log(attendanceRecords, "attendanceRecords");
+  console.log(attendanceRecords, "attendanceRecords rr");
   const getTodayAttendance = (): AttendanceRecord | null => {
     if (!profile) return null;
     const today = new Date().toISOString().split("T")[0];

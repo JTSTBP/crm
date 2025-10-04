@@ -919,8 +919,7 @@ React.useEffect(() => {
                   <p>
                     <strong>Headers:</strong> companyName, companyInfo,
                     companySize, websiteUrl, hiringNeeds, pointsOfContact,
-                    leadSource, linkedinLink, industryName, stage,
-                    assignedBy
+                    leadSource, linkedinLink, industryName, stage, assignedBy
                   </p>
                   <p>
                     <strong>Stage values:</strong> New, Contacted, Proposal
@@ -1051,7 +1050,10 @@ React.useEffect(() => {
                         <th className="px-4 py-3 text-left text-gray-300 font-medium">
                           Source
                         </th>
-                        
+                        <th className="px-4 py-3 text-left text-gray-300 font-medium">
+                          Email
+                        </th>
+
                         <th className="px-4 py-3 text-left text-gray-300 font-medium">
                           Industry
                         </th>
@@ -1072,7 +1074,10 @@ React.useEffect(() => {
                           <td className="px-4 py-3 text-white">
                             {row.leadSource || row.lead_source || ""}
                           </td>
-                          
+                          <td className="px-4 py-3 text-white">
+                            {row.companyEmail || row.company_email || ""}
+                          </td>
+
                           <td className="px-4 py-3 text-white">
                             {row.industryName || row.industry_name || ""}
                           </td>
@@ -1108,7 +1113,7 @@ React.useEffect(() => {
           )}
 
           {/* Step 3: Results */}
-          {step === "results"  && (
+          {step === "results" && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-xl font-bold text-white mb-2">

@@ -326,6 +326,7 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
                 company_info: row.company_info || "",
                 company_size: row.company_size || "",
                 website_url: normalizedUrl,
+                company_email: row.company_email || "",
                 hiring_needs: parseHiringNeeds(row.hiring_needs),
 
                 points_of_contact: contacts,
