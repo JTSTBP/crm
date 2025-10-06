@@ -31,11 +31,11 @@ const remarkSchema = new mongoose.Schema(
 
 const LeadSchema = new mongoose.Schema(
   {
-    company_name: { type: String },
+    company_name: { type: String, required: true },
     company_email: { type: String },
     company_info: { type: String },
     company_size: { type: String },
-    website_url: { type: String, unique: true },
+    website_url: { type: String, unique: true, required: true },
     hiring_needs: [{ type: String }],
     points_of_contact: [PointOfContactSchema],
     lead_source: { type: String },

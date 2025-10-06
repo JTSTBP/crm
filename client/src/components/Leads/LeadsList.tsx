@@ -1,81 +1,94 @@
-import React, { useEffect, useState } from 'react'
-import { 
-  Plus, 
+import React, { useEffect, useState } from "react";
+import {
+  Plus,
   Upload,
-  Search, 
-  Filter, 
-  Building2, 
-  Phone, 
-  Mail, 
+  Search,
+  Filter,
+  Building2,
+  Phone,
+  Mail,
   Calendar,
   Edit3,
-  Eye
-} from 'lucide-react'
-import { useLeads } from '../../hooks/useLeads'
-import { useAuth } from '../../contexts/AuthContext'
-import CreateLeadModal from './CreateLeadModal'
-import BulkImportModal from './BulkImportModal'
-import LeadDetailModal from './LeadDetailModal'
+  Eye,
+} from "lucide-react";
+import { useLeads } from "../../hooks/useLeads";
+import { useAuth } from "../../contexts/AuthContext";
+import CreateLeadModal from "./CreateLeadModal";
+import BulkImportModal from "./BulkImportModal";
+import LeadDetailModal from "./LeadDetailModal";
 import ScheduleModal from "../Scheduling/ScheduleModal";
 import { useLeadsContext } from "../../contexts/leadcontext";
-import { useUsers } from '../../hooks/useUsers'
+import { useUsers } from "../../hooks/useUsers";
 
 const LeadsList: React.FC = () => {
   // const { leads, loading } = useLeads()
   const { leads, loading, createLead, updateLead, deleteLead } =
     useLeadsContext();
-     const { users} = useUsers()
-  const { profile } = useAuth()
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false)
-  const [selectedLead, setSelectedLead] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [stageFilter, setStageFilter] = useState('All')
+  const { users } = useUsers();
+  const { profile } = useAuth();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [stageFilter, setStageFilter] = useState("All");
   const [userFilter, setUserFilter] = useState("All");
 
-const [isLeadDetailOpen, setIsLeadDetailOpen] = useState(false);
+  const [isLeadDetailOpen, setIsLeadDetailOpen] = useState(false);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
+  const stages = [
+    "All",
+    "New",
+    "Contacted",
+    "Proposal Sent",
+    "Negotiation",
+    "Won",
+    "Lost",
+    "Onboarded",
+  ];
 
-  const stages = ['All', 'New', 'Contacted', 'Proposal Sent', 'Negotiation', 'Won', 'Lost', 'Onboarded']
+  const filteredLeads = leads.filter((lead) => {
+    const matchesSearch =
+      lead.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.contact_email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-const filteredLeads = leads.filter((lead) => {
-  const matchesSearch =
-    lead.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.contact_email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
 
-  const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
+    const matchesUser =
+      userFilter === "All" || lead.assignedBy?._id === userFilter;
 
-  const matchesUser =
-    userFilter === "All" || lead.assignedBy?._id === userFilter;
-
-  return matchesSearch && matchesStage && matchesUser;
-});
-
-
+    return matchesSearch && matchesStage && matchesUser;
+  });
 
   const getStageColor = (stage: string) => {
     switch (stage) {
-      case 'New': return 'bg-blue-100 text-blue-800'
-      case 'Contacted': return 'bg-yellow-100 text-yellow-800'
-      case 'Proposal Sent': return 'bg-purple-100 text-purple-800'
-      case 'Negotiation': return 'bg-orange-100 text-orange-800'
-      case 'Won': return 'bg-green-100 text-green-800'
-      case 'Lost': return 'bg-red-100 text-red-800'
-      case 'Onboarded': return 'bg-emerald-100 text-emerald-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case "New":
+        return "bg-blue-100 text-blue-800";
+      case "Contacted":
+        return "bg-yellow-100 text-yellow-800";
+      case "Proposal Sent":
+        return "bg-purple-100 text-purple-800";
+      case "Negotiation":
+        return "bg-orange-100 text-orange-800";
+      case "Won":
+        return "bg-green-100 text-green-800";
+      case "Lost":
+        return "bg-red-100 text-red-800";
+      case "Onboarded":
+        return "bg-emerald-100 text-emerald-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -368,6 +381,6 @@ const filteredLeads = leads.filter((lead) => {
       )}
     </div>
   );
-}
+};
 
-export default LeadsList
+export default LeadsList;
