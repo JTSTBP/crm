@@ -16,7 +16,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
 // POST /api/users - Create new user
 router.post("/", authMiddleware, async (req, res) => {
-  const { name, email, password, role, phone } = req.body;
+  const { name, email, password, role, phone, appPassword } = req.body;
   try {
     const existing = await User.findOne({ email });
     if (existing)
@@ -24,7 +24,8 @@ router.post("/", authMiddleware, async (req, res) => {
     const user = new User({
       name,
       email,
-      password, // ⚠️ hash this before saving!
+      password,
+      appPassword, // ⚠️ hash this before saving!
       role,
       phone,
     });
@@ -53,7 +54,7 @@ router.patch("/:id/status", authMiddleware, async (req, res) => {
 // PUT /api/users/:id - Update user info
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const { name, email, role, phone, status } = req.body;
+    const { name, email, role, phone, status,appPassword } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -62,6 +63,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     user.role = role || user.role;
     user.status = status || user.status;
     user.phone = phone || user.phone;
+    user.appPassword = appPassword || user.appPassword;
     user.updated_at = Date.now();
     await user.save();
     res.json(user);

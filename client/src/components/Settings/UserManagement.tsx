@@ -17,9 +17,10 @@ import CreateUserModal from './CreateUserModal'
 import EditUserModal from './EditUserModal'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { useAuth } from '../../contexts/AuthContext'
 
 const UserManagement: React.FC = () => {
-  const { users, loading, toggleUserStatus, deleteUser } = useUsers()
+  const { users, loading, toggleUserStatus, deleteUser } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -52,7 +53,7 @@ const UserManagement: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
       try {
         await deleteUser(userId)
-        toast.success('User deleted successfully')
+       
       } catch (error: any) {
         toast.error(error.message || 'Failed to delete user')
       }

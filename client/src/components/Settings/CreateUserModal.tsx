@@ -4,6 +4,7 @@ import { X, UserPlus, Mail, Phone, User, Shield } from 'lucide-react'
 import { useUsers } from '../../hooks/useUsers'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from '../../contexts/AuthContext'
 
 interface CreateUserModalProps {
   isOpen: boolean
@@ -14,15 +15,18 @@ interface UserFormData {
   name: string;
   email: string;
   password: string;
+  appPassword?: string;
   phone: string;
   role: "Admin" | "Manager" | "BD Executive";
   status: "Active" | "Inactive";
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose }) => {
-  const { createUser } = useUsers()
+  const { createUser } = useAuth()
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false);
+  const [showAppPassword, setShowAppPassword] = useState(false);
+
 
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<UserFormData>({
@@ -37,7 +41,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose }) =>
     setLoading(true)
     try {
       await createUser(data)
-      toast.success('User created successfully!')
+    
       reset()
       onClose()
     } catch (error: any) {
@@ -117,7 +121,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose }) =>
             )}
           </div>
 
-          
           <div>
             <label className="block text-sm font-semibold text-white mb-3">
               Password *
@@ -139,6 +142,36 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose }) =>
               </button>
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-white mb-3">
+              App Password (for Email Integration)
+            </label>
+
+            <div className="relative">
+              <input
+                type={showAppPassword ? "text" : "password"}
+                {...register("appPassword")}
+                placeholder="Optional App Password"
+                onChange={(e) => {
+                  e.target.value = e.target.value.replace(/\s/g, ""); // remove spaces
+                }}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowAppPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+              >
+                {showAppPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+              Optional — used for future email integration.
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-white mb-3">
               <Phone className="w-4 h-4 inline mr-2" />
@@ -170,9 +203,15 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose }) =>
               {...register("role", { required: "Role is required" })}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
             >
-              <option value="BD Executive">BD Executive</option>
-              <option value="Manager">Manager</option>
-              <option value="Admin">Admin</option>
+              <option className="bg-gray-700 text-white" value="BD Executive">
+                BD Executive
+              </option>
+              <option className="bg-gray-700 text-white" value="Manager">
+                Manager
+              </option>
+              <option className="bg-gray-700 text-white" value="Admin">
+                Admin
+              </option>
             </select>
             {errors.role && (
               <p className="mt-2 text-sm text-red-300">{errors.role.message}</p>
@@ -187,8 +226,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose }) =>
               {...register("status")}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
             >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option className="bg-gray-700 text-white" value="Active">
+                Active
+              </option>
+              <option className="bg-gray-700 text-white" value="Inactive">
+                Inactive
+              </option>
             </select>
           </div>
 

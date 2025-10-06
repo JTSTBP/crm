@@ -85,14 +85,6 @@ router.post("/", async (req, res) => {
         .json({ message: "Duplicate contact phone numbers are not allowed" });
     }
 
-    const emails = points_of_contact?.map((c) => c.email) || [];
-    const uniqueEmails = new Set(emails);
-    if (emails.length !== uniqueEmails.size) {
-      return res
-        .status(400)
-        .json({ message: "Duplicate contact emails are not allowed" });
-    }
-
     const lead = new Lead({ ...req.body, website_url: normalizedUrl });
     await lead.save();
 
@@ -220,14 +212,6 @@ router.put("/:id", async (req, res) => {
       return res
         .status(400)
         .json({ message: "Duplicate contact phone numbers are not allowed" });
-    }
-
-    const emails = points_of_contact?.map((c) => c.email) || [];
-    const uniqueEmails = new Set(emails);
-    if (emails.length !== uniqueEmails.size) {
-      return res
-        .status(400)
-        .json({ message: "Duplicate contact emails are not allowed" });
     }
 
     const updated = await Lead.findByIdAndUpdate(req.params.id, req.body, {

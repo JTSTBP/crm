@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
 
   lastLogin: { type: Date },
   lastLogout: { type: Date },
+  appPassword: { type: String },
 
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },

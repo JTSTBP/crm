@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
- const url = import.meta.env.VITE_BACKEND_URL;
+const url = import.meta.env.VITE_BACKEND_URL;
 
 const API_URL = `${url}/api/users`;
 
@@ -34,15 +34,14 @@ export const useUsers = () => {
     const res = await axios.post(API_URL, data, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
-    setUsers((prev) => [res.data, ...prev]);
+    await fetchUsers();
   };
 
   const updateUser = async (id: string, data: any) => {
-   
     const res = await axios.put(`${API_URL}/${id}`, data, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
-   setUsers((prev) => prev.map((u) => (u._id === id ? res.data : u)));
+    setUsers((prev) => prev.map((u) => (u._id === id ? res.data : u)));
   };
 
   const toggleUserStatus = async (id: string) => {

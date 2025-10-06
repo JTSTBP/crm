@@ -32,7 +32,7 @@ app.use("/api/activitylogs", activityroutes);
 app.use("/api/proposals", proposalsroutes);
 app.use("/api/attendance", attendanceroutes);
 
-app.use("/api/", sendmails);
+app.use("/api/emails", sendmails);
 
 // checking route
 app.get("/", (req, res) => {
