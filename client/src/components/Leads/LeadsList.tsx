@@ -77,7 +77,7 @@ const filteredLeads = leads.filter((lead) => {
       </div>
     )
   }
-console.log(leads,"ll")
+
   return (
     <div className="space-y-6">
       {/* Header */}

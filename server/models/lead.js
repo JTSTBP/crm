@@ -31,17 +31,17 @@ const remarkSchema = new mongoose.Schema(
 
 const LeadSchema = new mongoose.Schema(
   {
-    company_name: { type: String, },
-    company_email:{type:String},
+    company_name: { type: String },
+    company_email: { type: String },
     company_info: { type: String },
     company_size: { type: String },
     website_url: { type: String, unique: true },
     hiring_needs: [{ type: String }],
     points_of_contact: [PointOfContactSchema],
     lead_source: { type: String },
-   
+
     linkedin_link: { type: String },
-    industry_name: { type: String,  },
+    industry_name: { type: String },
     no_of_designations: { type: Number, default: null },
     no_of_positions: { type: Number, default: null },
     stage: {
@@ -54,11 +54,15 @@ const LeadSchema = new mongoose.Schema(
         "Won",
         "Lost",
         "Onboarded",
-        "No vendor"
+        "No vendor",
       ],
       default: "New",
     },
-    assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     remarks: [remarkSchema],
   },
   { timestamps: true }

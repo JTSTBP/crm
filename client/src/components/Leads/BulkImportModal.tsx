@@ -1,11 +1,11 @@
 // import React, { useState, useCallback, useRef } from 'react'
 // import { useDropzone } from 'react-dropzone'
-// import { 
-//   X, 
-//   Upload, 
-//   FileText, 
-//   AlertCircle, 
-//   CheckCircle, 
+// import {
+//   X,
+//   Upload,
+//   FileText,
+//   AlertCircle,
+//   CheckCircle,
 //   Download,
 //   Users,
 //   Settings
@@ -610,7 +610,6 @@
 
 // export default BulkImportModal
 
-
 import React, { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
@@ -654,12 +653,12 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({
     "auto"
   );
   const [selectedAssignee, setSelectedAssignee] = useState("");
-const [importSummary, setImportSummary] = useState<ImportSummary>({
-  totalRows: 0,
-  inserted: 0,
-  skipped: 0,
-  errors: [],
-});
+  const [importSummary, setImportSummary] = useState<ImportSummary>({
+    totalRows: 0,
+    inserted: 0,
+    skipped: 0,
+    errors: [],
+  });
 
   const [step, setStep] = useState<"upload" | "preview" | "results">("upload");
   const { bulkUploadLeads } = useLeadsContext();
@@ -720,49 +719,44 @@ const [importSummary, setImportSummary] = useState<ImportSummary>({
     reader.readAsText(file);
   };
 
-const handleImport = async () => {
-  if (!file) return;
+  const handleImport = async () => {
+    if (!file) return;
 
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("assignmentOption", assignmentOption);
-    if (assignmentOption === "manual" && selectedAssignee) {
-      formData.append("assignedTo", selectedAssignee);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("assignmentOption", assignmentOption);
+      if (assignmentOption === "manual" && selectedAssignee) {
+        formData.append("assignedTo", selectedAssignee);
+      }
+
+      const result = await bulkUploadLeads(formData);
+
+      const normalized = {
+        totalRows: result?.totalRows ?? 0,
+        inserted: result?.inserted ?? 0,
+        skipped: result?.skipped ?? 0,
+        errors: result?.errors ?? [],
+      };
+      console.log(result);
+
+      // ✅ Show success toast
+      toast.success(
+        `Processed ${normalized.totalRows} rows. Inserted: ${normalized.inserted}, Updated: ${normalized.updated}, Skipped: ${normalized.skipped}`
+      );
+
+      // ✅ Show errors in a separate toast if any
+      if (normalized.errors.length > 0) {
+        toast.error(`Errors: ${normalized.errors.join(", ")}`);
+      }
+      onClose();
+      // must happen after setting importSummary
+    } catch (error: any) {
+      console.error(error);
+      // Show backend error message
+      toast.error(error?.error || error?.message || "Import failed");
     }
-
-    const result = await bulkUploadLeads(formData);
-
-    console.log("bulkUploadLeads response:", result);
-
-    const normalized = {
-      totalRows: result?.totalRows ?? 0,
-      inserted: result?.inserted ?? 0,
-      skipped: result?.skipped ?? 0,
-      errors: result?.errors ?? [],
-    };
-
-    console.log("Normalized result:", normalized);
-const mockResult = {
-  totalRows: 5,
-  inserted: 3,
-  skipped: 2,
-  errors: [{ line: 3, reason: "Invalid email" }],
-};
-setImportSummary(mockResult);
-setStep("results");
-
-   // must happen after setting importSummary
-  } catch (error: any) {
-    console.error(error);
-    toast.error(error?.message || "Import failed");
-  }
-};
-
-React.useEffect(() => {
-  console.log("Step changed:", step, importSummary);
-}, [step, importSummary]);
-
+  };
 
   const downloadErrorReport = () => {
     if (!importSummary?.errors.length) return;
@@ -833,23 +827,23 @@ React.useEffect(() => {
 
           {/* Progress Steps */}
           <div className="flex items-center space-x-4 mt-6">
-            {["upload", "preview", "results"].map((stepName, index) => (
+            {["upload", "preview"].map((stepName, index) => (
               <div key={stepName} className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                     step === stepName
                       ? "bg-white text-blue-600"
-                      : ["upload", "preview", "results"].indexOf(step) > index
+                      : ["upload", "preview"].indexOf(step) > index
                       ? "bg-white/30 text-white"
                       : "bg-white/10 text-white/60"
                   }`}
                 >
                   {index + 1}
                 </div>
-                {index < 2 && (
+                {index < 1 && (
                   <div
                     className={`w-12 h-0.5 mx-2 ${
-                      ["upload", "preview", "results"].indexOf(step) > index
+                      ["upload", "preview"].indexOf(step) > index
                         ? "bg-white/30"
                         : "bg-white/10"
                     }`}
@@ -1113,104 +1107,6 @@ React.useEffect(() => {
           )}
 
           {/* Step 3: Results */}
-          {step === "results" && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Import Complete
-                </h3>
-                <p className="text-gray-300">Here's a summary of your import</p>
-              </div>
-
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-400">
-                    {importSummary.totalRows}
-                  </div>
-                  <div className="text-blue-300 text-sm">Total Rows</div>
-                </div>
-                <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-green-400">
-                    {importSummary.inserted}
-                  </div>
-                  <div className="text-green-300 text-sm">
-                    Successfully Imported
-                  </div>
-                </div>
-                <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-red-400">
-                    {importSummary.skipped}
-                  </div>
-                  <div className="text-red-300 text-sm">Skipped/Errors</div>
-                </div>
-              </div>
-
-              {/* Success Message */}
-              {importSummary.inserted > 0 && (
-                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-center space-x-3">
-                  <CheckCircle className="w-6 h-6 text-green-400" />
-                  <div>
-                    <p className="text-green-400 font-semibold">
-                      Import Successful!
-                    </p>
-                    <p className="text-green-300 text-sm">
-                      {importSummary.inserted} leads have been added to your
-                      system
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Errors */}
-              {importSummary.errors.length > 0 && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <AlertCircle className="w-5 h-5 text-red-400" />
-                      <h4 className="text-red-400 font-semibold">
-                        Import Errors
-                      </h4>
-                    </div>
-                    <button
-                      onClick={downloadErrorReport}
-                      className="flex items-center space-x-2 px-3 py-1 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-300 text-sm transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Download Report</span>
-                    </button>
-                  </div>
-                  <div className="max-h-40 overflow-y-auto space-y-2">
-                    {importSummary.errors.slice(0, 10).map((error, index) => (
-                      <div key={index} className="text-sm text-red-300">
-                        <strong>Line {error.line}:</strong> {error.reason}
-                      </div>
-                    ))}
-                    {importSummary.errors.length > 10 && (
-                      <div className="text-sm text-red-400">
-                        ... and {importSummary.errors.length - 10} more errors
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex space-x-4">
-                <button
-                  onClick={resetModal}
-                  className="flex-1 px-6 py-3 border border-white/30 text-gray-300 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-300 font-semibold"
-                >
-                  Import Another File
-                </button>
-                <button
-                  onClick={handleClose}
-                  className="flex-1 gradient-primary text-white px-6 py-3 rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-300 font-semibold"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

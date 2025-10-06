@@ -87,7 +87,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [proposalsLoading, setProposalLoading] = useState(true);
    const { profile } = useAuth();
-console.log(profile, "profile");
+
  
   // const fetchLeads = async () => {
   //   try {
@@ -121,7 +121,7 @@ console.log(profile, "profile");
   const fetchLeads = async (assignedBy?: string): Promise<Lead[]> => {
     try {
       setLoading(true);
-      console.log(assignedBy);
+
       const query = assignedBy ? `?assignedBy=${assignedBy}` : "";
       const res = await axios.get(`${API_URL}${query}`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
@@ -144,10 +144,12 @@ console.log(profile, "profile");
           "Content-Type": "multipart/form-data",
         },
       });
+      console.log(res,"res")
       fetchLeads(profile.role === "BD Executive" ? profile.id : undefined);
       return res.data;
     } catch (err) {
       console.error("Error uploading bulk leads:", err);
+      throw err.response?.data || err;
     }
   };
 
@@ -302,7 +304,7 @@ console.log(profile, "profile");
   // proposals
   const createProposal = async (data: any) => {
     try {
-      console.log(data, "data");
+
       const res = await axios.post(`${proposals_url}`, data, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
