@@ -24,10 +24,27 @@ interface SentListProps {
 const SentList: React.FC<SentListProps> = ({ searchTerm, onEmailSelect }) => {
   const { sentEmails, loading, deleteEmail, searchEmails, fetchSentEmails } =
     useEmail();
-  console.log(sentEmails, "sentEmails");
-  const filteredEmails = searchTerm
-    ? searchEmails(searchTerm, "Sent")
-    : sentEmails;
+  console.log(loading, "loading");
+const filteredEmails = searchTerm
+  ? sentEmails.filter((email) => {
+      // Ensure email.to is always an array
+      const toArray = Array.isArray(email.to) ? email.to : [email.to];
+
+      // Optional: include cc in search
+      const ccArray = Array.isArray(email.cc) ? email.cc : [];
+
+      // Combine all recipients
+      const recipients = [...toArray, ...ccArray];
+
+      // Check if search term matches recipient or subject
+      return (
+        recipients.some((r) =>
+          r?.toLowerCase().includes(searchTerm.toLowerCase())
+        ) || email.subject?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
+  : sentEmails;
+
 
   const handleDeleteEmail = async (
     emailId: string,
@@ -93,7 +110,7 @@ const SentList: React.FC<SentListProps> = ({ searchTerm, onEmailSelect }) => {
       </div>
     );
   }
-
+  console.log(filteredEmails, "filteredEmails");
   return (
     <div className="glass rounded-2xl border border-white/30 overflow-hidden shadow-xl">
       {filteredEmails.length === 0 ? (
@@ -279,9 +296,12 @@ const SentList: React.FC<SentListProps> = ({ searchTerm, onEmailSelect }) => {
                         {email.subject}
                       </h3>
 
-                      <p className="text-gray-400 text-sm line-clamp-2">
-                        {emailBody.substring(0, 150)}...
-                      </p>
+                      <div
+                        className="text-gray-400 text-sm line-clamp-2"
+                        dangerouslySetInnerHTML={{
+                          __html: emailBody.substring(0, 150) + "...",
+                        }}
+                      ></div>
 
                       <div className="flex items-center space-x-4 mt-3 text-xs">
                         <span className="text-gray-500">

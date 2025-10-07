@@ -5,12 +5,15 @@ import InboxList from './InboxList'
 import SentList from './SentList'
 import ComposeModal from './ComposeModal'
 import EmailDetailModal from './EmailDetailModal'
+import InboxDetailed from "./inboxDetailmodel";
 
 const EmailTab: React.FC = () => {
   const { getUnreadCount } = useEmails()
   const [activeSubTab, setActiveSubTab] = useState<'inbox' | 'sent'>('inbox')
   const [isComposeModalOpen, setIsComposeModalOpen] = useState(false)
-  const [selectedEmail, setSelectedEmail] = useState<any>(null)
+const [selectedEmail, setSelectedEmail] = useState<any>(null);
+const [emailType, setEmailType] = useState<"inbox" | "sent" | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('')
 
   const unreadCount = getUnreadCount()
@@ -20,7 +23,9 @@ const EmailTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Email Center</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">
+            Email Center
+          </h1>
           <p className="text-gray-300 mt-2 text-lg">
             Manage all your email communications in one place
           </p>
@@ -51,11 +56,11 @@ const EmailTab: React.FC = () => {
       {/* Sub-navigation */}
       <div className="flex space-x-1 bg-white/10 rounded-xl p-1">
         <button
-          onClick={() => setActiveSubTab('inbox')}
+          onClick={() => setActiveSubTab("inbox")}
           className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-300 ${
-            activeSubTab === 'inbox'
-              ? 'bg-white/20 text-white shadow-lg'
-              : 'text-gray-300 hover:text-white hover:bg-white/10'
+            activeSubTab === "inbox"
+              ? "bg-white/20 text-white shadow-lg"
+              : "text-gray-300 hover:text-white hover:bg-white/10"
           }`}
         >
           <Inbox className="w-5 h-5" />
@@ -67,11 +72,11 @@ const EmailTab: React.FC = () => {
           )}
         </button>
         <button
-          onClick={() => setActiveSubTab('sent')}
+          onClick={() => setActiveSubTab("sent")}
           className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-300 ${
-            activeSubTab === 'sent'
-              ? 'bg-white/20 text-white shadow-lg'
-              : 'text-gray-300 hover:text-white hover:bg-white/10'
+            activeSubTab === "sent"
+              ? "bg-white/20 text-white shadow-lg"
+              : "text-gray-300 hover:text-white hover:bg-white/10"
           }`}
         >
           <Send className="w-5 h-5" />
@@ -80,40 +85,66 @@ const EmailTab: React.FC = () => {
       </div>
 
       {/* Content */}
-      {activeSubTab === 'inbox' && (
-        <InboxList 
+      {activeSubTab === "inbox" && (
+        <InboxList
           searchTerm={searchTerm}
-          onEmailSelect={setSelectedEmail}
+          onEmailSelect={(email) => {
+            setSelectedEmail(email);
+            setEmailType("inbox");
+          }}
         />
       )}
-      {activeSubTab === 'sent' && (
-        <SentList 
+      {activeSubTab === "sent" && (
+        <SentList
           searchTerm={searchTerm}
-          onEmailSelect={setSelectedEmail}
+          onEmailSelect={(email) => {
+            setSelectedEmail(email);
+            setEmailType("sent");
+          }}
         />
       )}
 
       {/* Modals */}
       {isComposeModalOpen && (
-        <ComposeModal 
+        <ComposeModal
           isOpen={isComposeModalOpen}
           onClose={() => setIsComposeModalOpen(false)}
         />
       )}
 
-      {selectedEmail && (
-        <EmailDetailModal 
+      {selectedEmail && emailType === "inbox" && (
+        <InboxDetailed
           email={selectedEmail}
           isOpen={!!selectedEmail}
-          onClose={() => setSelectedEmail(null)}
+          onClose={() => {
+            setSelectedEmail(null);
+            setEmailType(null);
+          }}
           onReply={() => {
-            setSelectedEmail(null)
-            setIsComposeModalOpen(true)
+            setSelectedEmail(null);
+            setEmailType(null);
+            setIsComposeModalOpen(true);
+          }}
+        />
+      )}
+
+      {selectedEmail && emailType === "sent" && (
+        <EmailDetailModal
+          email={selectedEmail}
+          isOpen={!!selectedEmail}
+          onClose={() => {
+            setSelectedEmail(null);
+            setEmailType(null);
+          }}
+          onReply={() => {
+            setSelectedEmail(null);
+            setEmailType(null);
+            setIsComposeModalOpen(true);
           }}
         />
       )}
     </div>
-  )
+  );
 }
 
 export default EmailTab

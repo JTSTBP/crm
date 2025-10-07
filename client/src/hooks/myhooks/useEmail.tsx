@@ -9,6 +9,9 @@ const getAuthToken = () => localStorage.getItem("token");
 
 export const useEmail = () => {
   const [loading, setLoading] = useState(false);
+  const [fetchmails, setfetchmails] = useState(false);
+  
+ 
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [inboxEmails, setInboxEmails] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +25,7 @@ export const useEmail = () => {
     content,
     senderName,
     receiverName,
+    attachments = [],
   }: {
     fromEmail: string;
     appPassword: string;
@@ -30,22 +34,37 @@ export const useEmail = () => {
     content: string;
     senderName?: string;
     receiverName?: string;
+    attachments?: File[];
   }) => {
     try {
       setLoading(true);
+
+      // Use FormData to support attachments
+      const formData = new FormData();
+      formData.append("fromEmail", fromEmail);
+      formData.append("appPassword", appPassword);
+      formData.append("toEmail", toEmail);
+      formData.append("subject", subject);
+      formData.append("content", content);
+      if (senderName) formData.append("senderName", senderName);
+      if (receiverName) formData.append("receiverName", receiverName);
+
+      // Append attachments only if files exist
+      attachments.forEach((file) => {
+        formData.append("attachments", file);
+      });
+
       const res = await axios.post(
         `${BACKEND_URL}/api/emails/send-email`,
+        formData,
         {
-          fromEmail,
-          appPassword,
-          toEmail,
-          subject,
-          content,
-          senderName,
-          receiverName,
-        },
-        { headers: { Authorization: `Bearer ${getAuthToken()}` } }
+          headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
+
       setSentEmails((prev) => [res.data.email, ...prev]);
       return res.data;
     } catch (err: any) {
@@ -65,7 +84,7 @@ export const useEmail = () => {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
         params: { userEmail },
       });
-      console.log(res)
+      console.log(res);
       setSentEmails(res.data || []);
     } catch (err: any) {
       console.error("Fetch Sent Error:", err);
@@ -76,22 +95,23 @@ export const useEmail = () => {
   };
 
   // --- FETCH INBOX EMAILS ---
-  const fetchInboxEmails = async (userEmail?: string) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/api/emails/inbox`, {
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-        params: { userEmail },
-      });
-      setInboxEmails(res.data.inboxEmails || []);
-    } catch (err: any) {
-      console.error("Fetch Inbox Error:", err);
-      setError("Failed to fetch inbox emails");
-    } finally {
-      setLoading(false);
-    }
-  };
 
+ const fetchInboxEmails = async (fromEmail, appPassword) => {
+   try {
+     setfetchmails(true)
+     const res = await axios.post(`${BACKEND_URL}/api/emails/fetch-emails`, {
+       email: fromEmail,
+       appPassword,
+     });
+     
+     setInboxEmails(res.data.emails || []);
+     setfetchmails(false)
+   } catch (err) {
+     console.error("Failed to fetch inbox:", err);
+     setInboxEmails([]);
+     alert("Failed to fetch emails. Check credentials or internet.");
+   }
+ };
   // --- DELETE EMAIL ---
   const deleteEmail = async (emailId: string, type: "Sent" | "Inbox") => {
     try {
@@ -130,9 +150,9 @@ export const useEmail = () => {
     const userEmail = localStorage.getItem("profile");
     // optional
     const email = JSON.parse(userEmail);
-    console.log(email.email)
+    console.log(email.email);
     fetchSentEmails(email.email);
-    fetchInboxEmails(userEmail);
+    fetchInboxEmails(email.email,email.appPassword);
   }, []);
 
   return {
@@ -143,6 +163,8 @@ export const useEmail = () => {
     sendEmail,
     fetchSentEmails,
     fetchInboxEmails,
+    fetchmails,
+
     deleteEmail,
     searchEmails,
   };

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { 
   Mail, 
   MailOpen, 
@@ -15,6 +15,8 @@ import {
 import { useEmails } from '../../hooks/useEmails'
 import { format, isToday, isYesterday } from 'date-fns'
 import toast from 'react-hot-toast'
+import { useEmail } from '../../hooks/myhooks/useEmail'
+
 
 interface InboxListProps {
   searchTerm: string
@@ -22,11 +24,44 @@ interface InboxListProps {
 }
 
 const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
-  const { inboxEmails, loading, markAsRead, deleteEmail, searchEmails } = useEmails()
+  const { inboxEmails, fetchmails, deleteEmail, searchEmails } = useEmail();
+    const [selectedEmail, setSelectedEmail] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+    const handleEmailSelect = (email) => {
+      setSelectedEmail(email);
+      setIsModalOpen(true);
+    };
 
-  const filteredEmails = searchTerm 
-    ? searchEmails(searchTerm, 'Inbox')
-    : inboxEmails
+    const handleCloseModal = () => {
+      setIsModalOpen(false);
+      setSelectedEmail(null);
+    };
+  console.log(inboxEmails, "inboxEmails");
+  
+  const normalizedEmails = inboxEmails.map((email, index) => ({
+    id: index.toString(),
+    from: email.from,
+    subject: email.subject,
+    body: email.text,
+    status: "Unread",
+    isImportant: false,
+    attachments: [],
+    receivedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    leadName: "",
+    companyName: "",
+  }));
+
+const filteredEmails = searchTerm
+  ? normalizedEmails.filter(
+      (email) =>
+        email.from?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.text?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  : normalizedEmails;
+
 
   const handleMarkAsRead = async (emailId: string, event: React.MouseEvent) => {
     event.stopPropagation()
@@ -64,12 +99,12 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
       : <MailOpen className="w-4 h-4 text-gray-400" />
   }
 
-  if (loading) {
+  if (fetchmails) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -78,28 +113,23 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
         <div className="p-8 text-center">
           <Mail className="w-16 h-16 text-gray-400 mx-auto mb-6" />
           <h3 className="text-xl font-semibold text-white mb-3">
-            {searchTerm ? 'No emails found' : 'Inbox is empty'}
+            {searchTerm ? "No emails found" : "Inbox is empty"}
           </h3>
           <p className="text-gray-300 text-lg">
-            {searchTerm 
-              ? 'Try adjusting your search term' 
-              : 'New emails will appear here when received'}
+            {searchTerm
+              ? "Try adjusting your search term"
+              : "New emails will appear here when received"}
           </p>
         </div>
       ) : (
         <div className="divide-y divide-white/10">
           {filteredEmails.map((email) => (
-            <div 
-              key={email.id} 
+            <div
+              key={email.id}
               className={`p-6 hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-[1.01] ${
-                email.status === 'Unread' ? 'bg-blue-500/5' : ''
+                email.status === "Unread" ? "bg-blue-500/5" : ""
               }`}
-              onClick={() => {
-                if (email.status === 'Unread') {
-                  markAsRead(email.id)
-                }
-                onEmailSelect(email)
-              }}
+              onClick={() => onEmailSelect(email)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4 flex-1">
@@ -109,19 +139,25 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
                       <Paperclip className="w-4 h-4 text-gray-400" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-3">
-                        <p className={`font-semibold ${
-                          email.status === 'Unread' ? 'text-white' : 'text-gray-300'
-                        }`}>
+                        <p
+                          className={`font-semibold ${
+                            email.status === "Unread"
+                              ? "text-white"
+                              : "text-gray-300"
+                          }`}
+                        >
                           {email.leadName || email.from}
                         </p>
                         {email.companyName && (
                           <div className="flex items-center space-x-1">
                             <Building2 className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-400 text-sm">{email.companyName}</span>
+                            <span className="text-gray-400 text-sm">
+                              {email.companyName}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -131,13 +167,17 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
                         </span>
                       </div>
                     </div>
-                    
-                    <h3 className={`text-lg mb-2 ${
-                      email.status === 'Unread' ? 'text-white font-semibold' : 'text-gray-300 font-medium'
-                    }`}>
+
+                    <h3
+                      className={`text-lg mb-2 ${
+                        email.status === "Unread"
+                          ? "text-white font-semibold"
+                          : "text-gray-300 font-medium"
+                      }`}
+                    >
                       {email.subject}
                     </h3>
-                    
+
                     <p className="text-gray-400 text-sm line-clamp-2">
                       {email.body.substring(0, 150)}...
                     </p>
@@ -147,7 +187,10 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
                       {email.attachments.length > 0 && (
                         <span className="text-blue-400 flex items-center space-x-1">
                           <Paperclip className="w-3 h-3" />
-                          <span>{email.attachments.length} attachment{email.attachments.length > 1 ? 's' : ''}</span>
+                          <span>
+                            {email.attachments.length} attachment
+                            {email.attachments.length > 1 ? "s" : ""}
+                          </span>
                         </span>
                       )}
                       {email.isImportant && (
@@ -159,9 +202,9 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2 ml-4">
-                  {email.status === 'Unread' && (
+                  {/* {email.status === 'Unread' && (
                     <button
                       onClick={(e) => handleMarkAsRead(email.id, e)}
                       className="p-2 text-gray-400 hover:text-blue-400 transition-colors hover:bg-white/20 rounded-lg"
@@ -169,8 +212,8 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
                     >
                       <MailOpen className="w-4 h-4" />
                     </button>
-                  )}
-                  <button
+                  )} */}
+                  {/* <button
                     onClick={(e) => {
                       e.stopPropagation()
                       // Reply functionality
@@ -198,15 +241,17 @@ const InboxList: React.FC<InboxListProps> = ({ searchTerm, onEmailSelect }) => {
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+     
     </div>
-  )
+  );
 }
 
 export default InboxList
