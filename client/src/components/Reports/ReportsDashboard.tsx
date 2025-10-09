@@ -40,6 +40,7 @@ import {
 import { useReports } from '../../hooks/useReports'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { useAuth } from '../../contexts/AuthContext'
 
 const ReportsDashboard: React.FC = () => {
   const { 
@@ -47,15 +48,16 @@ const ReportsDashboard: React.FC = () => {
     userMetrics, 
     chartData, 
     activityFeed, 
-    loading, 
     filters, 
     updateFilters, 
     exportData,
     getUserDetails
   } = useReports()
+  const { users, loading, toggleUserStatus, deleteUser } = useAuth();
   
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'activity'>('overview')
+  
 
   const MetricCard: React.FC<{ 
     title: string

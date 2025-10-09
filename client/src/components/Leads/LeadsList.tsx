@@ -38,6 +38,10 @@ const LeadsList: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
+
+   const [currentPage, setCurrentPage] = useState(1);
+   const pageSize = 5;
+
   const stages = [
     "All",
     "New",
@@ -56,11 +60,26 @@ const LeadsList: React.FC = () => {
 
     const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
 
-    const matchesUser =
-      userFilter === "All" || lead.assignedBy?._id === userFilter;
+  const matchesUser =
+    userFilter === "All" ||
+    (userFilter === "Unassigned" && !lead.assignedBy) ||
+    lead.assignedBy?._id === userFilter;
+
 
     return matchesSearch && matchesStage && matchesUser;
   });
+
+  const totalPages = Math.ceil(filteredLeads.length / pageSize);
+  const paginatedLeads = filteredLeads.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const getStageColor = (stage: string) => {
     switch (stage) {
@@ -175,6 +194,9 @@ const LeadsList: React.FC = () => {
                   {user.name}
                 </option>
               ))}
+              <option value="Unassigned" className="bg-gray-700 text-white">
+                Unassigned Users
+              </option>
             </select>
           </div>
         </div>
@@ -196,7 +218,7 @@ const LeadsList: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-white/10">
-            {filteredLeads.map((lead) => (
+            {paginatedLeads.map((lead) => (
               <div
                 key={lead._id}
                 className="p-6 hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-[1.02]"
@@ -334,6 +356,63 @@ const LeadsList: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 p-4">
+            {/* Prev button */}
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg bg-[#667eea] text-white hover:bg-[#764ba2] disabled:opacity-50 transition"
+            >
+              &lt;
+            </button>
+
+            {/* Page buttons */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (page, idx, arr) => {
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`px-3 py-1 rounded-lg font-medium transition ${
+                        page === currentPage
+                          ? "bg-gradient-to-r from-[#db2777] via-[#a855f7] to-[#667eea] text-white shadow-lg"
+                          : "bg-[#764ba2] text-white hover:bg-[#a855f7]"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  Math.abs(page - currentPage) === 2 &&
+                  arr[idx - 1] !== "..."
+                ) {
+                  return (
+                    <span key={page} className="px-2 text-[#a855f7]">
+                      ...
+                    </span>
+                  );
+                } else {
+                  return null;
+                }
+              }
+            )}
+
+            {/* Next button */}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-lg bg-[#667eea] text-white hover:bg-[#764ba2] disabled:opacity-50 transition"
+            >
+              &gt;
+            </button>
           </div>
         )}
       </div>

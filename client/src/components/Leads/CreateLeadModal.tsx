@@ -1,12 +1,10 @@
-
-
-import React, { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { X, Building2 } from 'lucide-react'
-import { useLeads } from '../../hooks/useLeads'
-import { useAuth } from '../../contexts/AuthContext'
-import toast from 'react-hot-toast'
-import { useUsers } from '../../hooks/useUsers'
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { X, Building2 } from "lucide-react";
+import { useLeads } from "../../hooks/useLeads";
+import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
+import { useUsers } from "../../hooks/useUsers";
 import { useLeadsContext } from "../../contexts/leadcontext";
 
 interface CreateLeadModalProps {
@@ -14,7 +12,6 @@ interface CreateLeadModalProps {
   onClose: () => void;
   lead?: any; // optional lead for editing
 }
-
 
 interface LeadFormData {
   company_name: string;
@@ -51,26 +48,25 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   lead,
 }) => {
   // const { createLead, updateLead } = useLeads();
-    const {  createLead, updateLead } =
-      useLeadsContext();
-   const { users} = useUsers()
+  const { createLead, updateLead } = useLeadsContext();
+  const { users } = useUsers();
   const { user } = useAuth();
   const [selectedHiringNeeds, setSelectedHiringNeeds] = useState<string[]>([]);
-const [pointsOfContact, setPointsOfContact] = useState([
-  {
-    name: "",
-    designation: "",
-    phone: "",
-    email: "",
-    linkedin_url: "",
-    stage: "Busy",
-  },
-]);
+  const [pointsOfContact, setPointsOfContact] = useState([
+    {
+      name: "",
+      designation: "",
+      phone: "",
+      email: "",
+      linkedin_url: "",
+      stage: "",
+    },
+  ]);
 
   const [noOfPositions, setNoOfPositions] = useState<number | "">("");
   const [assignedBy, setAssignedBy] = useState<string>("");
 
-console.log(lead, "lead", assignedBy);
+  console.log(lead, "lead", assignedBy);
 
   const hiringNeedsOptions = ["IT", "Non-IT", "Volume", "Leadership"];
   const companySizeOptions = [
@@ -90,7 +86,6 @@ console.log(lead, "lead", assignedBy);
     "Event",
     "Other",
   ];
- 
 
   const {
     register,
@@ -111,36 +106,35 @@ console.log(lead, "lead", assignedBy);
           stage: "New",
         },
   });
-useEffect(() => {
-  if (lead) {
-    reset(lead);
-    setSelectedHiringNeeds(lead.hiring_needs || []);
-    setPointsOfContact(
-      lead.points_of_contact || [
-        { name: "", designation: "", phone: "", email: "" },
-      ]
-    );
-    setNoOfPositions(lead.no_of_positions || "");
+  useEffect(() => {
+    if (lead) {
+      reset(lead);
+      setSelectedHiringNeeds(lead.hiring_needs || []);
+      setPointsOfContact(
+        lead.points_of_contact || [
+          { name: "", designation: "", phone: "", email: "" },
+        ]
+      );
+      setNoOfPositions(lead.no_of_positions || "");
 
-    // Set assignedBy value in both state and react-hook-form
-    setAssignedBy(lead.assignedBy || "");
-    setValue("assignedBy", lead.assignedBy || "");
-  }
-}, [lead, reset, setValue]);
-const addPointOfContact = () => {
-  setPointsOfContact([
-    ...pointsOfContact,
-    {
-      name: "",
-      designation: "",
-      phone: "",
-      email: "",
-      linkedin_url: "",
-      stage: "Busy",
-    },
-  ]);
-};
-
+      // Set assignedBy value in both state and react-hook-form
+      setAssignedBy(lead.assignedBy || "");
+      setValue("assignedBy", lead.assignedBy || "");
+    }
+  }, [lead, reset, setValue]);
+  const addPointOfContact = () => {
+    setPointsOfContact([
+      ...pointsOfContact,
+      {
+        name: "",
+        designation: "",
+        phone: "",
+        email: "",
+        linkedin_url: "",
+        stage: "Busy",
+      },
+    ]);
+  };
 
   const removePointOfContact = (index: number) => {
     if (pointsOfContact.length > 1) {
@@ -165,15 +159,14 @@ const addPointOfContact = () => {
   };
   const onSubmit = async (data: LeadFormData) => {
     try {
+      const validContacts = pointsOfContact.filter(
+        (c) => c.name.trim() !== "" && c.email.trim() !== ""
+      );
 
-       const validContacts = pointsOfContact.filter(
-         (c) => c.name.trim() !== "" && c.email.trim() !== ""
-       );
-
-       if (validContacts.length === 0) {
-         toast.error("At least one point of contact is required");
-         return;
-       }
+      if (validContacts.length === 0) {
+        toast.error("At least one point of contact is required");
+        return;
+      }
       if (lead) {
         // EDIT MODE
         await updateLead(lead._id, {
@@ -190,7 +183,7 @@ const addPointOfContact = () => {
           ...data,
           hiring_needs: selectedHiringNeeds,
           points_of_contact: pointsOfContact.filter((c) => c.name && c.email),
-         
+
           no_of_designations: data.no_of_designations || null,
           no_of_positions: noOfPositions || null,
         });
@@ -235,9 +228,7 @@ const addPointOfContact = () => {
               Company Name *
             </label>
             <input
-              {...register("company_name", {
-                required: "Company name is required",
-              })}
+              {...register("company_name", {})}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
               placeholder="Enter company name"
             />
@@ -312,7 +303,7 @@ const addPointOfContact = () => {
               Assigned By *
             </label>
             <select
-              {...register("assignedBy", { required: "Please select a user" })}
+              {...register("assignedBy")}
               value={assignedBy._id}
               onChange={(e) => {
                 setValue("assignedBy", e.target.value);
@@ -368,7 +359,6 @@ const addPointOfContact = () => {
             </label>
             <input
               {...register("company_email", {
-                required: "Company email is required",
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                   message: "Enter a valid email address",
@@ -503,6 +493,12 @@ const addPointOfContact = () => {
                         className="bg-gray-700 text-white"
                         value="Contacted"
                       >
+                        Select Stage
+                      </option>
+                      <option
+                        className="bg-gray-700 text-white"
+                        value="Contacted"
+                      >
                         Contacted
                       </option>
                       <option className="bg-gray-700 text-white" value="Busy">
@@ -554,9 +550,7 @@ const addPointOfContact = () => {
               Industry Name *
             </label>
             <input
-              {...register("industry_name", {
-                required: "Industry name is required",
-              })}
+              {...register("industry_name", {})}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
               placeholder="e.g., Technology, Healthcare, Finance"
             />
@@ -573,7 +567,6 @@ const addPointOfContact = () => {
             </label>
             <input
               {...register("no_of_designations", {
-                required: "No. of designations is required",
                 min: { value: 1, message: "Must be at least 1" },
               })}
               type="number"
@@ -661,4 +654,4 @@ const addPointOfContact = () => {
   );
 };
 
-export default CreateLeadModal
+export default CreateLeadModal;

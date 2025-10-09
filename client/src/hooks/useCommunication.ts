@@ -275,7 +275,7 @@ const demoEmailTemplates: EmailTemplate[] = [
   {
     id: "email-2",
     name: "Follow-up",
-    subject: "Following up on our conversation - {{company_name}}",
+    subject: "RE: Partnership Opportunity – {{company_name}}",
     content: `Hi {{contact_name}},
 
 Thank you for taking the time to speak with me earlier about {{company_name}}'s recruitment needs.
@@ -299,7 +299,9 @@ Best regards,
   {
     id: "email-3",
     name: "Proposal Submission",
-    subject: "Recruitment Proposal - {{position_type}} for {{company_name}}",
+    // subject: "Recruitment Proposal - {{position_type}} for {{company_name}}",
+    subject: " RE: Partnership Opportunity – {{company_name}}",
+
     content: `
 <table style="width:100%; font-family: Arial, sans-serif; line-height:1.5; color:#333;">
   <tr>

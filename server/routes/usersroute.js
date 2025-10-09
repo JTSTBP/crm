@@ -86,4 +86,21 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// update user call count
+router.post("/:id/incrementCall", async (req, res) => {
+  try {
+    const poc = await User.findById(req.params.id);
+    if (!poc) return res.status(404).json({ message: "POC not found" });
+
+    poc.no_of_calls = (poc.no_of_calls || 0) + 1;
+    await poc.save();
+
+    res.json({ message: "Call count updated", no_of_calls: poc.no_of_calls });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 module.exports = router;

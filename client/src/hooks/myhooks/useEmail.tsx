@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -10,8 +9,7 @@ const getAuthToken = () => localStorage.getItem("token");
 export const useEmail = () => {
   const [loading, setLoading] = useState(false);
   const [fetchmails, setfetchmails] = useState(false);
-  
- 
+
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [inboxEmails, setInboxEmails] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -96,22 +94,49 @@ export const useEmail = () => {
 
   // --- FETCH INBOX EMAILS ---
 
- const fetchInboxEmails = async (fromEmail, appPassword) => {
-   try {
-     setfetchmails(true)
-     const res = await axios.post(`${BACKEND_URL}/api/emails/fetch-emails`, {
-       email: fromEmail,
-       appPassword,
-     });
-     
-     setInboxEmails(res.data.emails || []);
-     setfetchmails(false)
-   } catch (err) {
-     console.error("Failed to fetch inbox:", err);
-     setInboxEmails([]);
-     alert("Failed to fetch emails. Check credentials or internet.");
-   }
- };
+  const fetchInboxEmails = async (fromEmail, appPassword) => {
+    try {
+      setfetchmails(true);
+      const res = await axios.post(`${BACKEND_URL}/api/emails/fetch-emails`, {
+        email: fromEmail,
+        appPassword,
+      });
+
+      setInboxEmails(res.data.emails || []);
+      setfetchmails(false);
+    } catch (err) {
+      console.error("Failed to fetch inbox:", err);
+      setInboxEmails([]);
+      alert("Failed to fetch emails. Check credentials or internet.");
+    }
+  };
+
+  // const fetchInboxEmails = (fromEmail, appPassword) => {
+  //   setfetchmails(true);
+  //   setInboxEmails([]); // clear previous emails
+
+  //   const eventSource = new EventSource(
+  //     `${BACKEND_URL}/api/emails/fetch-emails?email=${encodeURIComponent(
+  //       fromEmail
+  //     )}&appPassword=${encodeURIComponent(appPassword)}`
+  //   );
+
+  //   eventSource.addEventListener("batch", (event) => {
+  //     const data = JSON.parse(event.data);
+  //     setInboxEmails((prev) => [...prev, ...data.emails]);
+  //   });
+
+  //   eventSource.addEventListener("done", () => {
+  //     setfetchmails(false);
+  //     eventSource.close();
+  //   });
+
+  //   eventSource.addEventListener("error", (err) => {
+  //     console.error("SSE error:", err);
+  //     setfetchmails(false);
+  //     eventSource.close();
+  //   });
+  // };
   // --- DELETE EMAIL ---
   const deleteEmail = async (emailId: string, type: "Sent" | "Inbox") => {
     try {
@@ -152,7 +177,7 @@ export const useEmail = () => {
     const email = JSON.parse(userEmail);
     console.log(email.email);
     fetchSentEmails(email.email);
-    fetchInboxEmails(email.email,email.appPassword);
+    fetchInboxEmails(email.email, email.appPassword);
   }, []);
 
   return {
@@ -167,5 +192,24 @@ export const useEmail = () => {
 
     deleteEmail,
     searchEmails,
+  };
+};
+
+export const useSendmessage = () => {
+  const sendToWhatsApp = (phone: string, message: string) => {
+    if (!phone) {
+      alert("Phone number is missing!");
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, ""); // remove any + or spaces
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+
+    // Opens WhatsApp Web or Mobile
+    window.open(whatsappUrl, "_blank");
+  };
+  return {
+    sendToWhatsApp,
   };
 };

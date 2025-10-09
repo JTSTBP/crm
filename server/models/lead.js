@@ -10,7 +10,7 @@ const PointOfContactSchema = new mongoose.Schema({
   stage: {
     type: String,
     enum: ["Contacted", "Busy", "No Answer", "Wrong Number"],
-    default: "Busy",
+  
   },
 });
 

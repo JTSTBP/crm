@@ -1,116 +1,172 @@
-import React, { useState, useEffect } from 'react'
-import { X, MessageCircle, Send, FileText, Image, File } from 'lucide-react'
-import { useCommunication, WhatsAppTemplate } from '../../hooks/useCommunication'
-import { useAuth } from '../../contexts/AuthContext'
-import toast from 'react-hot-toast'
+import React, { useState, useEffect } from "react";
+import { X, MessageCircle, Send, FileText, Image, File } from "lucide-react";
+import {
+  useCommunication,
+  WhatsAppTemplate,
+} from "../../hooks/useCommunication";
+import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
+import { useSendmessage } from "../../hooks/myhooks/useEmail";
 
 interface WhatsAppModalProps {
-  isOpen: boolean
-  onClose: () => void
-  lead: any
+  isOpen: boolean;
+  onClose: () => void;
+  lead: any;
 }
 
-const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) => {
-  const { sendWhatsApp, getWhatsAppTemplates, loading } = useCommunication()
-  const { profile } = useAuth()
-  const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null)
-  const [content, setContent] = useState('')
-  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({})
-  const [showPreview, setShowPreview] = useState(false)
-  const [mediaFile, setMediaFile] = useState<File | null>(null)
+const WhatsAppModal: React.FC<WhatsAppModalProps> = ({
+  isOpen,
+  onClose,
+  lead,
+}) => {
+  const { sendWhatsApp, getWhatsAppTemplates, loading } = useCommunication();
+  const { sendToWhatsApp } = useSendmessage();
+  const { profile } = useAuth();
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<WhatsAppTemplate | null>(null);
+  const [content, setContent] = useState("");
+  const [placeholderValues, setPlaceholderValues] = useState<
+    Record<string, string>
+  >({});
+  const [showPreview, setShowPreview] = useState(false);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [selectedContact, setSelectedContact] = useState<any>(null);
 
-  const whatsappTemplates = getWhatsAppTemplates()
+  const whatsappTemplates = getWhatsAppTemplates();
 
   useEffect(() => {
     if (selectedTemplate) {
       // Pre-fill placeholder values with lead data
       const defaultValues: Record<string, string> = {
-        company_name: lead.company_name || '',
-        contact_name: lead.contact_name || '',
-        contact_phone: lead.contact_phone || '',
-        consultant_name: profile?.name || '',
-        position_type: 'Software Engineer', // Default value
-        tat: '15',
-      }
-
-      setPlaceholderValues(defaultValues)
-      setContent(selectedTemplate.content)
+        company_name: lead.company_name || "",
+        contact_name: selectedContact?.name || "",
+        contact_phone: selectedContact?.phone || "",
+        consultant_name: profile?.name || "",
+        position_type: "Software Engineer", // Default value
+        tat: "15",
+      };
+      console.log(
+        selectedContact,
+        "selectedContact",
+        defaultValues,
+        "defaultValues"
+      );
+      setPlaceholderValues(defaultValues);
+      setContent(selectedTemplate.content);
     }
-  }, [selectedTemplate, lead, profile])
+  }, [selectedTemplate, lead, profile]);
 
   const handleTemplateSelect = (template: WhatsAppTemplate) => {
-    setSelectedTemplate(template)
-  }
+    setSelectedTemplate(template);
+  };
 
   const handlePlaceholderChange = (key: string, value: string) => {
-    setPlaceholderValues(prev => ({ ...prev, [key]: value }))
-  }
+    setPlaceholderValues((prev) => ({ ...prev, [key]: value }));
+  };
 
   const generatePreview = () => {
-    let previewContent = content
+    let previewContent = content;
 
     Object.entries(placeholderValues).forEach(([key, value]) => {
-      const placeholder = `{{${key}}}`
-      previewContent = previewContent.replace(new RegExp(placeholder, 'g'), value)
-    })
+      const placeholder = `{{${key}}}`;
+      previewContent = previewContent.replace(
+        new RegExp(placeholder, "g"),
+        value
+      );
+    });
 
-    return previewContent
+    return previewContent;
+  };
+
+  // const handleSendWhatsApp = async () => {
+  //   if (!selectedTemplate) {
+  //     toast.error('Please select a WhatsApp template')
+  //     return
+  //   }
+
+  //   if (!content.trim()) {
+  //     toast.error('Message content is required')
+  //     return
+  //   }
+
+  //   try {
+  //     const mediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : undefined
+  //     await sendWhatsApp(
+  //       lead.id,
+  //       selectedTemplate.id,
+  //       { ...placeholderValues, contact_phone: lead.contact_phone },
+  //       content,
+  //       mediaUrl
+  //     )
+  //     onClose()
+  //   } catch (error) {
+  //     // Error handled in hook
+  //   }
+  // }
+const handleSendWhatsApp = async () => {
+  if (!selectedTemplate) {
+    toast.error("Please select a WhatsApp template");
+    return;
   }
 
-  const handleSendWhatsApp = async () => {
-    if (!selectedTemplate) {
-      toast.error('Please select a WhatsApp template')
-      return
-    }
-
-    if (!content.trim()) {
-      toast.error('Message content is required')
-      return
-    }
-
-    try {
-      const mediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : undefined
-      await sendWhatsApp(
-        lead.id,
-        selectedTemplate.id,
-        { ...placeholderValues, contact_phone: lead.contact_phone },
-        content,
-        mediaUrl
-      )
-      onClose()
-    } catch (error) {
-      // Error handled in hook
-    }
+  if (!selectedContact) {
+    toast.error("Please select a point of contact");
+    return;
   }
+
+  if (!selectedContact.phone) {
+    toast.error("Selected contact has no phone number");
+    return;
+  }
+
+  const previewMessage = generatePreview();
+
+  if (!previewMessage.trim()) {
+    toast.error("Message content is empty");
+    return;
+  }
+
+  try {
+    const cleanPhone = selectedContact.phone.replace(/\D/g, "");
+    const encodedMessage = encodeURIComponent(previewMessage);
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, "_blank");
+    toast.success(`Opening WhatsApp for ${selectedContact.name}...`);
+    onClose();
+  } catch (error) {
+    toast.error("Failed to open WhatsApp");
+  }
+};
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file) {
       // Check file size (max 16MB for WhatsApp)
       if (file.size > 16 * 1024 * 1024) {
-        toast.error('File size must be less than 16MB')
-        return
+        toast.error("File size must be less than 16MB");
+        return;
       }
-      setMediaFile(file)
+      setMediaFile(file);
     }
-  }
+  };
 
   const resetForm = () => {
-    setSelectedTemplate(null)
-    setContent('')
-    setPlaceholderValues({})
-    setShowPreview(false)
-    setMediaFile(null)
-  }
+    setSelectedTemplate(null);
+    setContent("");
+    setPlaceholderValues({});
+    setShowPreview(false);
+    setMediaFile(null);
+  };
 
   const handleClose = () => {
-    resetForm()
-    onClose()
-  }
+    resetForm();
+    onClose();
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
-  const preview = generatePreview()
+  const preview = generatePreview();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -123,7 +179,9 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
                 <MessageCircle className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight">Send WhatsApp Message</h2>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Send WhatsApp Message
+                </h2>
                 <p className="text-green-100 mt-1">
                   To: {lead.contact_name} ({lead.contact_phone})
                 </p>
@@ -139,6 +197,57 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          {/* Select Point of Contact */}
+          <div>
+            <label className="block text-sm font-semibold text-white mb-3">
+              Select Point of Contact
+            </label>
+
+            <select
+              value={selectedContact?._id || ""}
+              onChange={(e) => {
+                const selectedId = e.target.value;
+                const contact = lead.points_of_contact.find((c) => {
+                  const idValue =
+                    typeof c._id === "object" ? c._id.$oid : c._id;
+                  return idValue === selectedId;
+                });
+                setSelectedContact(contact);
+              }}
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-green-400 focus:border-green-400 focus:bg-white/20 transition-all duration-300"
+            >
+              <option value="">-- Select Contact --</option>
+              {lead.points_of_contact?.map((contact) => {
+                const idValue =
+                  typeof contact._id === "object"
+                    ? contact._id.$oid
+                    : contact._id;
+
+                return (
+                  <option key={idValue} value={idValue}>
+                    {contact.name} ({contact.designation})
+                  </option>
+                );
+              })}
+            </select>
+
+            {selectedContact && (
+              <div className="mt-3 text-sm text-gray-300 space-y-1 bg-white/10 p-3 rounded-xl border border-white/10">
+                <p>
+                  <strong>Name:</strong> {selectedContact.name}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {selectedContact.phone || "N/A"}
+                </p>
+                {selectedContact.email && (
+                  <p>
+                    <strong>Email:</strong> {selectedContact.email}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           {!showPreview ? (
             <div className="space-y-6">
               {/* Template Selection */}
@@ -153,16 +262,24 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
                       onClick={() => handleTemplateSelect(template)}
                       className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                         selectedTemplate?.id === template.id
-                          ? 'border-green-400 bg-green-500/20'
-                          : 'border-white/20 bg-white/10 hover:border-white/40'
+                          ? "border-green-400 bg-green-500/20"
+                          : "border-white/20 bg-white/10 hover:border-white/40"
                       }`}
                     >
                       <div className="flex items-center space-x-3 mb-2">
                         <div className="flex items-center space-x-2">
-                          {template.type === 'text' && <FileText className="w-5 h-5 text-green-400" />}
-                          {template.type === 'image' && <Image className="w-5 h-5 text-green-400" />}
-                          {template.type === 'document' && <File className="w-5 h-5 text-green-400" />}
-                          <h3 className="font-semibold text-white">{template.name}</h3>
+                          {template.type === "text" && (
+                            <FileText className="w-5 h-5 text-green-400" />
+                          )}
+                          {template.type === "image" && (
+                            <Image className="w-5 h-5 text-green-400" />
+                          )}
+                          {template.type === "document" && (
+                            <File className="w-5 h-5 text-green-400" />
+                          )}
+                          <h3 className="font-semibold text-white">
+                            {template.name}
+                          </h3>
                         </div>
                       </div>
                       <p className="text-sm text-gray-300 line-clamp-3">
@@ -184,14 +301,24 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
                       {selectedTemplate.placeholders.map((placeholder) => (
                         <div key={placeholder}>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            {placeholder.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {placeholder
+                              .replace(/_/g, " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
                           </label>
                           <input
                             type="text"
-                            value={placeholderValues[placeholder] || ''}
-                            onChange={(e) => handlePlaceholderChange(placeholder, e.target.value)}
+                            value={placeholderValues[placeholder] || ""}
+                            onChange={(e) =>
+                              handlePlaceholderChange(
+                                placeholder,
+                                e.target.value
+                              )
+                            }
                             className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-green-400 focus:border-green-400 focus:bg-white/20 transition-all duration-300"
-                            placeholder={`Enter ${placeholder.replace(/_/g, ' ')}`}
+                            placeholder={`Enter ${placeholder.replace(
+                              /_/g,
+                              " "
+                            )}`}
                           />
                         </div>
                       ))}
@@ -230,7 +357,9 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
                       </label>
                       {mediaFile && (
                         <div className="flex items-center space-x-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
-                          <span className="text-green-400 text-sm">{mediaFile.name}</span>
+                          <span className="text-green-400 text-sm">
+                            {mediaFile.name}
+                          </span>
                           <button
                             onClick={() => setMediaFile(null)}
                             className="text-red-400 hover:text-red-300"
@@ -283,7 +412,9 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
             /* Preview Mode */
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white">WhatsApp Preview</h3>
+                <h3 className="text-xl font-bold text-white">
+                  WhatsApp Preview
+                </h3>
                 <button
                   onClick={() => setShowPreview(false)}
                   className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
@@ -298,28 +429,35 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
                   <div className="flex items-center space-x-2 mb-2">
                     <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">
-                        {profile?.name?.charAt(0) || 'U'}
+                        {profile?.name?.charAt(0) || "U"}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-gray-700">{profile?.name}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {profile?.name}
+                    </span>
                   </div>
-                  
+
                   {mediaFile && (
                     <div className="mb-3 p-2 bg-gray-100 rounded-lg">
                       <div className="flex items-center space-x-2">
                         <File className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">{mediaFile.name}</span>
+                        <span className="text-sm text-gray-600">
+                          {mediaFile.name}
+                        </span>
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="whitespace-pre-wrap text-gray-800 text-sm">
                     {preview}
                   </div>
-                  
+
                   <div className="flex justify-end mt-2">
                     <span className="text-xs text-gray-500">
-                      {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date().toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                 </div>
@@ -353,7 +491,7 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ isOpen, onClose, lead }) 
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WhatsAppModal
+export default WhatsAppModal;

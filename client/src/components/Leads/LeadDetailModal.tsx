@@ -85,6 +85,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const { profile } = useAuth();
   const [isEditingPOCs, setIsEditingPOCs] = useState(false);
   const [remarks, setRemarks] = useState<Remark[]>([]);
+  const [isCallDropdownOpen, setIsCallDropdownOpen] = useState(false);
+  const [selectedPOC, setSelectedPOC] = useState(null);
+
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
 
   const stages = [
     "New",
@@ -167,7 +171,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         return "bg-red-500";
       case "Onboarded":
         return "bg-emerald-500";
-   
+
       default:
         return "bg-gray-500";
     }
@@ -306,7 +310,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         phone: "",
         email: "",
         linkedin_url: "",
-        stage: "Contacted",
+        stage: "",
       },
     ]);
   };
@@ -361,13 +365,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const filteredActivities = activities?.filter(
     (activity) => activity.entityId === lead._id || activity.leadId === lead._id
   );
-// Sort descending (latest first)
-const sortedRemarks = remarks.sort(
-  (a, b) => new Date(b.created_at) - new Date(a.created_at)
-);
-
-console.log(sortedRemarks);
-  console.log(remarks, "remarks");
+  // Sort descending (latest first)
+  const sortedRemarks = remarks.sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
 
   return (
     <div
@@ -688,6 +689,7 @@ console.log(sortedRemarks);
                               }
                               className="px-3 py-2 border rounded-lg text-sm w-34"
                             >
+                              <option value="">Select Stage</option>
                               <option value="Contacted">Contacted</option>
                               <option value="Busy">Busy</option>
                               <option value="No Answer">No Answer</option>
@@ -790,33 +792,6 @@ console.log(sortedRemarks);
                   Company Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* <div className="flex items-center space-x-3">
-                    <Mail className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium text-gray-900">
-                        {lead.contact_email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium text-gray-900">
-                        {lead.contact_phone}
-                      </p>
-                    </div>
-                  </div> */}
-                  {/* <div className="flex items-center space-x-3">
-                    <Building2 className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Designation</p>
-                      <p className="font-medium text-gray-900">
-                        {lead.contact_designation || "Not specified"}
-                      </p>
-                    </div>
-                  </div> */}
                   <div className="flex items-center space-x-3">
                     <Activity className="w-5 h-5 text-gray-400" />
                     <div>
@@ -895,12 +870,16 @@ console.log(sortedRemarks);
 
               {/* Quick Actions */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-center transition-colors">
+                <button
+                  onClick={() => setIsCallModalOpen(true)}
+                  className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-center transition-colors"
+                >
                   <Phone className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                   <span className="text-sm font-medium text-blue-600">
                     Call
                   </span>
                 </button>
+
                 <button
                   onClick={() => setIsEmailModalOpen(true)}
                   className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl text-center transition-colors"
@@ -1286,6 +1265,62 @@ console.log(sortedRemarks);
           )}
         </div>
       </div>
+      {isCallModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-auto flex flex-col p-6">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Select Contact to Call
+              </h2>
+              <button
+                onClick={() => setIsCallModalOpen(false)}
+                className="p-2 hover:bg-gray-200 rounded-full transition"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* List of POCs */}
+            <div className="divide-y divide-gray-200">
+              {localPOCs.length > 0 ? (
+                localPOCs.map((poc) => (
+                  <button
+                    key={poc.id}
+                    onClick={async () => {
+                      setSelectedPOC(poc);
+                      setIsCallModalOpen(false);
+
+                      // Call backend to increment no_of_calls
+                      try {
+                        await fetch(
+                          `${url}/api/users/${profile?.id}/incrementCall`,
+                          {
+                            method: "POST",
+                          }
+                        );
+                      } catch (err) {
+                        console.error("Error updating call count", err);
+                      }
+
+                      // Initiate the call
+                      window.location.href = `tel:${poc.phone}`;
+                    }}
+                    className="w-full flex justify-between items-center px-4 py-3 hover:bg-blue-50 rounded-xl transition text-sm font-medium text-gray-900"
+                  >
+                    <span>{poc.name}</span>
+                    <span className="text-gray-500">{poc.phone}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No contacts available
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <EmailModal

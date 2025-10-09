@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date },
   lastLogout: { type: Date },
   appPassword: { type: String },
+  no_of_calls:{type:Number,default:0},
 
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },

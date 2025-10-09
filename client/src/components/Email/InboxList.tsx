@@ -179,7 +179,7 @@ const filteredEmails = searchTerm
                     </h3>
 
                     <p className="text-gray-400 text-sm line-clamp-2">
-                      {email.body.substring(0, 150)}...
+                      {email.body?.substring(0, 150)}...
                     </p>
 
                     <div className="flex items-center space-x-4 mt-3 text-xs">
