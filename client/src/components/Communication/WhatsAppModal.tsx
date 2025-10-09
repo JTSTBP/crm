@@ -6,7 +6,6 @@ import {
 } from "../../hooks/useCommunication";
 import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
-import { useSendmessage } from "../../hooks/myhooks/useEmail";
 
 interface WhatsAppModalProps {
   isOpen: boolean;
@@ -20,7 +19,7 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({
   lead,
 }) => {
   const { sendWhatsApp, getWhatsAppTemplates, loading } = useCommunication();
-  const { sendToWhatsApp } = useSendmessage();
+
   const { profile } = useAuth();
   const [selectedTemplate, setSelectedTemplate] =
     useState<WhatsAppTemplate | null>(null);
