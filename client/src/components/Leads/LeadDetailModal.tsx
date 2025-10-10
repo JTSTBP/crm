@@ -36,6 +36,7 @@ import { useLeadsContext } from "../../contexts/leadcontext";
 import { FiEdit, FiX, FiCheck } from "react-icons/fi";
 import { FaTrash } from "react-icons/fa";
 import axios from "axios";
+import { useCallLog } from "../../hooks/myhooks/useEmail";
 
 interface LeadDetailModalProps {
   lead: any;
@@ -70,6 +71,8 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     getAllProposals,
   } = useLeadsContext();
   const { user } = useAuth();
+
+  const { logCallActivity } = useCallLog();
   const [newRemark, setNewRemark] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [isRecording, setIsRecording] = useState(false);
@@ -1291,19 +1294,18 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                       setSelectedPOC(poc);
                       setIsCallModalOpen(false);
 
-                      // Call backend to increment no_of_calls
                       try {
-                        await fetch(
-                          `${url}/api/users/${profile?.id}/incrementCall`,
-                          {
-                            method: "POST",
-                          }
-                        );
+                        await logCallActivity({
+                          userId: profile?.id,
+                          leadId: lead._id,
+                          phone: poc.phone,
+                          url,
+                        });
                       } catch (err) {
-                        console.error("Error updating call count", err);
+                        console.error("Failed to log call", err);
                       }
 
-                      // Initiate the call
+                      // Start the phone call
                       window.location.href = `tel:${poc.phone}`;
                     }}
                     className="w-full flex justify-between items-center px-4 py-3 hover:bg-blue-50 rounded-xl transition text-sm font-medium text-gray-900"

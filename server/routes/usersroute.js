@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/users");
+const CallActivity = require("../models/call");
 const authMiddleware = require("../middleware/auth"); // JWT auth middleware
 
 // GET /api/users - Get all users
@@ -86,19 +87,31 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// update user call count
-router.post("/:id/incrementCall", async (req, res) => {
+router.post("/log", async (req, res) => {
   try {
-    const poc = await User.findById(req.params.id);
-    if (!poc) return res.status(404).json({ message: "POC not found" });
+    const { userId, leadId, phone } = req.body;
 
-    poc.no_of_calls = (poc.no_of_calls || 0) + 1;
-    await poc.save();
+    if (!userId || !leadId || !phone) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-    res.json({ message: "Call count updated", no_of_calls: poc.no_of_calls });
+    // Create a new call activity record
+    const newCall = await CallActivity.create({
+      userId,
+      leadId,
+      phone,
+      timestamp: new Date(),
+    });
+
+    // Optionally increment total calls for that user
+    await User.findByIdAndUpdate(userId, { $inc: { no_of_calls: 1 } });
+
+    res
+      .status(201)
+      .json({ message: "Call logged successfully", call: newCall });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error logging call:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

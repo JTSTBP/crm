@@ -144,4 +144,30 @@ export const useEmail = () => {
     searchEmails,
   };
 };
+export const useCallLog = () => {
+  const logCallActivity = async ({ userId, leadId, phone }) => {
+    try {
+      console.log("hit")
+      const response = await fetch(`${BACKEND_URL}/api/users/log`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, leadId, phone }),
+      });
 
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || "Failed to log call");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error logging call activity:", error);
+      throw error;
+    }
+  };
+
+  return {
+    logCallActivity,
+  };}
