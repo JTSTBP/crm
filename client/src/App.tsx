@@ -18,6 +18,7 @@ import InternalCommunicationTab from './components/InternalCommunication/Interna
 import TimeManagementTab from './components/TimeManagement/TimeManagementTab'
 import AutomationTab from './components/Automation/AutomationTab'
 import { LeadsProvider } from "./contexts/leadcontext";
+import { EmailProvider } from './contexts/EmailContext'
 
 const AppContent: React.FC = () => {
   const { user, profile, loading } = useAuth()
@@ -148,14 +149,14 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    
     <AuthProvider>
       <LeadsProvider>
-        <AppContent />
-        <Toaster position="top-right" />
-        </LeadsProvider>
-      </AuthProvider>
-  
+        <EmailProvider>
+          <AppContent />
+          <Toaster position="top-right" />
+        </EmailProvider>
+      </LeadsProvider>
+    </AuthProvider>
   );
 }
 

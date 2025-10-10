@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -50,6 +50,7 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { useUsers } from "../../hooks/useUsers";
+import { useEmail } from "../../contexts/EmailContext";
 
 const ReportsDashboard: React.FC = () => {
   const {
@@ -68,7 +69,18 @@ const ReportsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity">(
     "overview"
   );
+  const [callcount,setCallCount]=useState(0)
+  const { fetchAllCallActivities } = useEmail();
 
+useEffect(() => {
+  const getCalls = async () => {
+    const calls = await fetchAllCallActivities();
+   setCallCount(calls.length);
+  };
+  getCalls();
+}, []);
+
+  
   const MetricCard: React.FC<{
     title: string;
     value: string | number;
@@ -372,7 +384,7 @@ const ReportsDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               title="Total Calls Made"
-              value={overallMetrics.callsMade}
+              value={callcount}
               icon={<Phone className="w-7 h-7 text-white" />}
               color="bg-blue-500"
               trend="+12% vs last period"

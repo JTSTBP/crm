@@ -5,7 +5,7 @@ import { X, Mail, Send, FileText, User, Building2 } from "lucide-react";
 import { useCommunication, EmailTemplate } from "../../hooks/useCommunication";
 import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
-import { useEmail } from "../../hooks/myhooks/useEmail";
+import { useEmail } from "../../contexts/EmailContext";
 
 interface EmailModalProps {
   isOpen: boolean;
@@ -39,7 +39,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
         consultant_role: profile?.role || "",
         consultant_num: profile?.phone || "",
         position_type: "Software Engineer",
-        tat: "15",
+        payment_term: "15",
         service_fee: "8.33% of CTC",
         replacement_guarantee: "90 days",
       };
@@ -196,9 +196,15 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
                   value={selectedContact?.id || ""}
                   onChange={(e) => handleContactSelect(e.target.value)}
                 >
-                  <option value="">-- Select Contact --</option>
+                  <option className="bg-gray-700 text-white" value="">
+                    -- Select Contact --
+                  </option>
                   {lead.points_of_contact?.map((contact: any) => (
-                    <option key={contact._id} value={contact._id}>
+                    <option
+                      className="bg-gray-700 text-white"
+                      key={contact._id}
+                      value={contact._id}
+                    >
                       {contact.name}{" "}
                       {contact.email ? `(${contact.email})` : "(No Email)"}
                     </option>
@@ -207,20 +213,21 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
               </div>
 
               {/* Template Selection */}
-              {selectedContact   && (
+              {selectedContact && (
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
+                  {/* <label className="block text-sm font-semibold text-white mb-3">
                     Select Email Template
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  </label> */}
+                  {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {emailTemplates.map((template) => (
                       <div
                         key={template.id}
                         onClick={() => handleTemplateSelect(template)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${selectedTemplate?.id === template.id
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                          selectedTemplate?.id === template.id
                             ? "border-blue-400 bg-blue-500/20"
                             : "border-white/20 bg-white/10 hover:border-white/40"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-center space-x-3 mb-2">
                           <FileText className="w-5 h-5 text-blue-400" />
@@ -233,10 +240,75 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
                         </p>
                       </div>
                     ))}
-                  </div>
-                </div>)}
+                  </div> */}
+                  <div className="space-y-6">
+                    {/* Dropdown for quick selection */}
+                    <div className="w-full max-w-md">
+                      <label
+                        htmlFor="templateSelect"
+                        className="block mb-2 text-sm font-medium text-white"
+                      >
+                        Select Email Template
+                      </label>
+                      <select
+                        id="templateSelect"
+                        value={selectedTemplate?.id || ""}
+                        onChange={(e) => {
+                          const selected = emailTemplates.find(
+                            (template) => template.id === e.target.value
+                          );
+                          handleTemplateSelect(selected);
+                        }}
+                        className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl p-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                      >
+                        <option
+                          className="bg-gray-700 text-white"
+                          value=""
+                          disabled
+                        >
+                          -- Choose a template --
+                        </option>
+                        {emailTemplates.map((template) => (
+                          <option
+                            className="bg-gray-700 text-white"
+                            key={template.id}
+                            value={template.id}
+                          >
+                            {template.name} — {template.subject}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-              {selectedTemplate  && (
+                    {/* Grid of clickable cards */}
+                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {emailTemplates.map((template) => (
+                        <div
+                          key={template.id}
+                          onClick={() => handleTemplateSelect(template)}
+                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                            selectedTemplate?.id === template.id
+                              ? "border-blue-400 bg-blue-500/20"
+                              : "border-white/20 bg-white/10 hover:border-white/40"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3 mb-2">
+                            <FileText className="w-5 h-5 text-blue-400" />
+                            <h3 className="font-semibold text-white">
+                              {template.name}
+                            </h3>
+                          </div>
+                          <p className="text-sm text-gray-300 line-clamp-2">
+                            {template.subject}
+                          </p>
+                        </div>
+                      ))}
+                    </div> */}
+                  </div>
+                </div>
+              )}
+
+              {selectedTemplate && (
                 <>
                   {/* Placeholder Values */}
                   <div>

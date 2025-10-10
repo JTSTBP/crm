@@ -19,7 +19,7 @@ import {
 import { useEmails } from '../../hooks/useEmails'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
-import { useEmail } from '../../hooks/myhooks/useEmail'
+import { useEmail } from '../../contexts/EmailContext'
 
 interface EmailDetailModalProps {
   email: any

@@ -36,7 +36,7 @@ import { useLeadsContext } from "../../contexts/leadcontext";
 import { FiEdit, FiX, FiCheck } from "react-icons/fi";
 import { FaTrash } from "react-icons/fa";
 import axios from "axios";
-import { useCallLog } from "../../hooks/myhooks/useEmail";
+import { useEmail } from "../../contexts/EmailContext";
 
 interface LeadDetailModalProps {
   lead: any;
@@ -72,7 +72,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   } = useLeadsContext();
   const { user } = useAuth();
 
-  const { logCallActivity } = useCallLog();
+  const { logCallActivity } = useEmail();
   const [newRemark, setNewRemark] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [isRecording, setIsRecording] = useState(false);

@@ -296,12 +296,117 @@ Best regards,
     ],
   },
 
+  //   {
+  //     id: "email-3",
+  //     name: "Proposal Submission",
+  //     subject: "Recruitment Proposal - {{position_type}} for {{company_name}}",
+  //     // subject: " RE: Partnership Opportunity – {{company_name}}",
+
+  //     content: `
+  // <table style="width:100%; font-family: Arial, sans-serif; line-height:1.5; color:#333;">
+  //   <tr>
+  //     <td>
+  //       <p>Hi {{contact_name}},</p>
+
+  //       <p>It was nice talking to you. I hope this email finds you well.</p>
+
+  //       <h2 style="color:#2E86C1;">Welcome to Jobs Territory — Your Gateway to Exceptional Talent!</h2>
+
+  //       <p>With over 15 years of expertise and a team of 180+ Talent Advisors, Jobs Territory is a leading recruitment agency dedicated to connecting businesses with top talent.</p>
+
+  //       <p>We’re pleased to share our recruitment proposal for the <b>{{position_type}}</b> position at <b>{{company_name}}</b>.</p>
+
+  //       <h3>Key Highlights:</h3>
+  //       <ul>
+  //         <li><b>Turn Around Time:</b> {{tat}} days</li>
+  //         <li><b>Service Fee:</b> {{service_fee}} of Annual CTC</li>
+  //         <li><b>Replacement Guarantee:</b> {{replacement_guarantee}} days</li>
+  //       </ul>
+
+  //       <h3>Industries We Serve & Positions We've Closed:</h3>
+  //       <table style="width:100%; border-collapse: collapse;">
+  //         <thead>
+  //           <tr>
+  //             <th style="border: 1px solid #ddd; padding: 8px; text-align:left;">Industry</th>
+  //             <th style="border: 1px solid #ddd; padding: 8px; text-align:left;">Trending Positions</th>
+  //           </tr>
+  //         </thead>
+  //         <tbody>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Wholesale Building Materials</td><td style="border: 1px solid #ddd; padding: 8px;">Procurement Specialist, Sales Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Agritech</td><td style="border: 1px solid #ddd; padding: 8px;">Product Manager, Operations Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">NBFC</td><td style="border: 1px solid #ddd; padding: 8px;">Data Scientist, Finance Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">FMCG</td><td style="border: 1px solid #ddd; padding: 8px;">Sales Manager, Marketing Head</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">HVAC</td><td style="border: 1px solid #ddd; padding: 8px;">Project Engineer, Service Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Electrical Appliances</td><td style="border: 1px solid #ddd; padding: 8px;">Product Designer, QA Lead</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Manufacturing</td><td style="border: 1px solid #ddd; padding: 8px;">Plant Manager, Supply Chain Analyst</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Retail</td><td style="border: 1px solid #ddd; padding: 8px;">Store Manager, Merchandising Director</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Healthcare</td><td style="border: 1px solid #ddd; padding: 8px;">Clinical Operations Lead, HR Director</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Pharmaceuticals</td><td style="border: 1px solid #ddd; padding: 8px;">Regulatory Affairs Manager, QA Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Hospitality</td><td style="border: 1px solid #ddd; padding: 8px;">Hotel General Manager, Operations Director</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Logistics</td><td style="border: 1px solid #ddd; padding: 8px;">Logistics Coordinator, Supply Chain Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Construction</td><td style="border: 1px solid #ddd; padding: 8px;">Project Manager, Site Engineer</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Automotive</td><td style="border: 1px solid #ddd; padding: 8px;">Mechanical Engineer, Plant Supervisor</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Consumer Goods</td><td style="border: 1px solid #ddd; padding: 8px;">Brand Manager, Marketing Specialist</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Startups</td><td style="border: 1px solid #ddd; padding: 8px;">CTO, Business Development Manager</td></tr>
+  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">D2C (Direct-to-Consumer)</td><td style="border: 1px solid #ddd; padding: 8px;">E-commerce Manager, Digital Marketing Head</td></tr>
+  //         </tbody>
+  //       </table>
+
+  //       <h3>Payment Terms:</h3>
+  //       <ul>
+  //         <li>Service Charge: {{service_fee}} of Annual CTC</li>
+  //         <li>Payment Terms: 30 days from invoice date</li>
+  //         <li>Replacement: {{replacement_guarantee}} days (if a candidate leaves within this period, excluding involuntary termination, we’ll conduct a search at no additional cost)</li>
+  //       </ul>
+
+  //       <p>Request you to kindly confirm and share the JD for us.</p>
+
+  //       <p>Looking forward to partnering with <b>{{company_name}}</b> to build your dream team.</p>
+
+  //       <p>Best regards,<br>
+  //       {{consultant_name}}<br>
+  //       Jobs Territory Team</p>
+  //       <hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">
+
+  //       <table style="width:100%; font-size:0.9em; color:#555;">
+  //         <tr>
+  //           <td style="vertical-align: top;">
+  //             <img src="https://www.jobsterritory.com/images/logo.png" alt="Jobs Territory Logo" style="width:120px; height:auto; margin-bottom:10px;">
+  //           </td><br/>
+  //           <td style="vertical-align: top; padding-left:15px;">
+  //             {{consultant_name}}<br>
+  //            {{consultant_role}}<br>
+  //             <a href="https://www.facebook.com/jobsterritory" target="_blank">Facebook</a> |
+  //             <a href="https://www.linkedin.com/company/jobs-territory/?viewAsMember=true" target="_blank">LinkedIn</a> |
+  //             <a href="https://www.instagram.com/jobsterritory/" target="_blank">Instagram</a><br><br>
+  //             M: {{consultant_num}}<br>
+
+  //             W: <a href="https://www.jobsterritory.com" target="_blank">www.jobsterritory.com</a>
+  //           </td>
+  //         </tr>
+  //       </table>
+
+  //       <p>P.S. I’ve attached our company profile for your review.</p>
+  //     </td>
+  //   </tr>
+  // </table>
+  // `,
+  //     placeholders: [
+  //       "company_name",
+  //       "contact_name",
+  //       "position_type",
+  //       "tat",
+  //       "service_fee",
+  //       "replacement_guarantee",
+  //       "consultant_name",
+  //       "consultant_role",
+  //       "consultant_num",
+  //     ],
+  //   },
   {
     id: "email-3",
     name: "Proposal Submission",
-    // subject: "Recruitment Proposal - {{position_type}} for {{company_name}}",
-    subject: " RE: Partnership Opportunity – {{company_name}}",
-
+    subject: "Recruitment Proposal - {{company_name}}",
     content: `
 <table style="width:100%; font-family: Arial, sans-serif; line-height:1.5; color:#333;">
   <tr>
@@ -314,11 +419,11 @@ Best regards,
 
       <p>With over 15 years of expertise and a team of 180+ Talent Advisors, Jobs Territory is a leading recruitment agency dedicated to connecting businesses with top talent.</p>
 
-      <p>We’re pleased to share our recruitment proposal for the <b>{{position_type}}</b> position at <b>{{company_name}}</b>.</p>
+      <p>We’re pleased to share our recruitment proposal for <b>{{company_name}}</b>.</p>
 
       <h3>Key Highlights:</h3>
       <ul>
-        <li><b>Turn Around Time:</b> {{tat}} days</li>
+        <li><b>Payment Term:</b> {{payment_term}} days</li>
         <li><b>Service Fee:</b> {{service_fee}} of Annual CTC</li>
         <li><b>Replacement Guarantee:</b> {{replacement_guarantee}} days</li>
       </ul>
@@ -355,7 +460,7 @@ Best regards,
       <h3>Payment Terms:</h3>
       <ul>
         <li>Service Charge: {{service_fee}} of Annual CTC</li>
-        <li>Payment Terms: 30 days from invoice date</li>
+        <li>Payment Terms: {{payment_term}} from invoice date</li>
         <li>Replacement: {{replacement_guarantee}} days (if a candidate leaves within this period, excluding involuntary termination, we’ll conduct a search at no additional cost)</li>
       </ul>
 
@@ -375,7 +480,7 @@ Best regards,
           </td><br/>
           <td style="vertical-align: top; padding-left:15px;">
             {{consultant_name}}<br>
-           {{consultant_role}}<br>
+            {{consultant_role}}<br>
             <a href="https://www.facebook.com/jobsterritory" target="_blank">Facebook</a> | 
             <a href="https://www.linkedin.com/company/jobs-territory/?viewAsMember=true" target="_blank">LinkedIn</a> | 
             <a href="https://www.instagram.com/jobsterritory/" target="_blank">Instagram</a><br><br>
@@ -394,8 +499,7 @@ Best regards,
     placeholders: [
       "company_name",
       "contact_name",
-      "position_type",
-      "tat",
+      "payment_term",
       "service_fee",
       "replacement_guarantee",
       "consultant_name",
