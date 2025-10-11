@@ -262,6 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       const records = res.data.records;
+      console.log(records,"rr")
       const transformed = records
         .filter((rec: any) => rec && rec.user_id)
         .map((rec: any) => ({
@@ -271,7 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           role: rec.user_id?.role || "Unknown",
           date: rec.date,
           lastLogin: rec.sessions?.length
-            ? rec.sessions[rec.sessions.length - 1].loginTime
+            ? rec.sessions[0].loginTime // ✅ first session = initial login
             : null,
           lastLogout: rec.sessions?.length
             ? rec.sessions[rec.sessions.length - 1].logoutTime

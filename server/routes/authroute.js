@@ -34,19 +34,71 @@ router.post("/login", async (req, res) => {
 
     await user.save();
 
-    const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+    // Handle missed logout from yesterday
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayDateStr = yesterday.toISOString().split("T")[0];
 
-    let record = await Attendance.findOne({ user_id: user._id, date: today });
+    const yesterdayRecord = await Attendance.findOne({
+      user_id: user._id,
+      date: yesterdayDateStr,
+    });
 
-    if (!record) {
-      record = new Attendance({ user_id: user._id, date: today, sessions: [] });
+    if (yesterdayRecord) {
+      const lastSession =
+        yesterdayRecord.sessions[yesterdayRecord.sessions.length - 1];
+      if (lastSession && !lastSession.logoutTime) {
+        // Set standard logout time at 19:00 yesterday
+        const [hours, minutes] = [19, 0];
+        const autoLogoutTime = new Date(yesterdayDateStr);
+        autoLogoutTime.setHours(hours, minutes, 0, 0);
+
+        lastSession.logoutTime = autoLogoutTime;
+
+        const diffMs =
+          new Date(lastSession.logoutTime) - new Date(lastSession.loginTime);
+        lastSession.durationHours = diffMs / (1000 * 60 * 60);
+
+        // Recalculate total hours
+        yesterdayRecord.totalHours = yesterdayRecord.sessions.reduce(
+          (sum, s) => sum + (s.durationHours || 0),
+          0
+        );
+
+        // Attendance status logic
+        const firstLogin = new Date(yesterdayRecord.sessions[0].loginTime);
+        const firstLoginHour =
+          firstLogin.getHours() + firstLogin.getMinutes() / 60;
+
+        if (yesterdayRecord.totalHours > 6) {
+          yesterdayRecord.status = "Present";
+        } else if (yesterdayRecord.totalHours >= 4) {
+          yesterdayRecord.status = "Half-Day";
+        } else {
+          yesterdayRecord.status = firstLoginHour > 10 ? "Late" : "Half-Day";
+        }
+
+        await yesterdayRecord.save();
+      }
     }
 
-    // Add new session with loginTime
-    record.sessions.push({ loginTime: new Date() });
-    record.status = "Present";
+    // Skip attendance creation for Admin
+    if (user.role !== "Admin") {
+      const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+      let record = await Attendance.findOne({ user_id: user._id, date: today });
 
-    await record.save();
+      if (!record) {
+        record = new Attendance({
+          user_id: user._id,
+          date: today,
+          sessions: [],
+        });
+      }
+
+      record.sessions.push({ loginTime: new Date() });
+      record.status = "Present";
+      await record.save();
+    }
 
     // Create JWT token
     const token = jwt.sign(
@@ -94,6 +146,15 @@ router.post("/logout", authMiddleware, async (req, res) => {
     }
 
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Skip attendance update for Admin
+    if (user.role === "Admin") {
+      user.lastLogout = new Date();
+      await user.save();
+      return res.json({
+        message: "Admin logout recorded. No attendance created.",
+      });
+    }
 
     // 2️⃣ Determine logout time and record date
     let logoutTime = new Date();

@@ -338,32 +338,97 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   };
 
   // handle to get the activity changes clearly
-  const formatUpdatedFields = (updatedFields: any) => {
-    if (!updatedFields) return null;
+// const formatUpdatedFields = (updatedFields: any) => {
+//   if (!updatedFields) return null;
 
-    return Object.entries(updatedFields)
-      .filter(([key, value]) => {
-        // ignore big/complex fields
-        return !["remarks", "points_of_contact", "files", "documents"].includes(
-          key
-        );
-      })
-      .map(([key, value]) => {
-        if (typeof value === "object" && value !== null) {
-          // if it's a create action, value may be the whole object
-          return (
-            <span key={key}>
-              {key}: {value?.company_name || value?.title || "[object]"};{" "}
-            </span>
-          );
-        }
+//   return Object.entries(updatedFields)
+//     .filter(([key]) => {
+//       // ignore big/complex fields
+//       return !["remarks", "points_of_contact", "files", "documents"].includes(
+//         key
+//       );
+//     })
+//     .map(([key, value]) => {
+//       // If value is an object with old/new keys
+//       if (
+//         value &&
+//         typeof value === "object" &&
+//         "old" in value &&
+//         "new" in value
+//       ) {
+//         return (
+//           <span key={key}>
+//             {key} is changed {value.new};{" "}
+//           </span>
+//         );
+//       }
+
+//       // If value is a nested object with known fields
+//       if (typeof value === "object" && value !== null) {
+//         const displayValue =
+//           value.company_name || value.title || JSON.stringify(value);
+//         return (
+//           <span key={key}>
+//             {key} as {displayValue};{" "}
+//           </span>
+//         );
+//       }
+
+//       // Simple field
+//       return (
+//         <span key={key}>
+//           {key} as {value};{" "}
+//         </span>
+//       );
+//     });
+// };
+const formatUpdatedFields = (updatedFields: any) => {
+  if (!updatedFields) return null;
+
+  const changes = Object.entries(updatedFields)
+    .filter(([key, value]) => {
+      // ignore big/complex fields
+      return !["remarks", "points_of_contact", "files", "documents"].includes(
+        key
+      );
+    })
+    .map(([key, value]) => {
+      if (!value) return null; // skip null/undefined
+
+      // If value is an object with old/new keys
+      if (typeof value === "object" && "old" in value && "new" in value) {
         return (
           <span key={key}>
-            {key}: {value};{" "}
+            {key} is changed new: {value.new};{" "}
           </span>
         );
-      });
-  };
+      }
+
+      // If value is a nested object with known fields
+      if (typeof value === "object") {
+        const displayValue =
+          value.company_name || value.title || JSON.stringify(value);
+        if (displayValue === "{}") return null; // skip empty objects
+        return (
+          <span key={key}>
+            {key} as {displayValue};{" "}
+          </span>
+        );
+      }
+
+      // Simple value
+      return (
+        <span key={key}>
+          {key} as {value};{" "}
+        </span>
+      );
+    })
+    .filter(Boolean); // remove nulls
+
+  return changes.length > 0 ? changes : null; // return null if nothing meaningful
+};
+
+
 
   const filteredActivities = activities?.filter(
     (activity) => activity.entityId === lead._id || activity.leadId === lead._id
@@ -372,6 +437,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const sortedRemarks = remarks.sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
+  console.log(filteredActivities, "filteredActivities");
 
   return (
     <div
@@ -1228,13 +1294,20 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                         </p>
                       )}
 
-                      {activity.action !== "create" &&
+                      {/* {activity.action !== "create" &&
                         activity.updatedFields && (
                           <p className="text-sm text-gray-600">
                             Changes:{" "}
                             {formatUpdatedFields(activity.updatedFields)}
                           </p>
-                        )}
+                        )} */}
+                      {activity.action !== "create" && (
+                        <p className="text-sm text-gray-600">
+                          Changes:{" "}
+                          {formatUpdatedFields(activity.updatedFields) ||
+                            "No meaningful changes"}
+                        </p>
+                      )}
 
                       {activity.remarks &&
                         activity.remarks.map((remark: any) => (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Clock,
   Calendar,
@@ -27,14 +27,10 @@ import toast from "react-hot-toast";
 import { useUsers } from "../../hooks/useUsers";
 
 const AttendanceLog: React.FC = () => {
-  const {
-   
-    loading,
-    
-  } = useAttendance();
+  const { loading } = useAttendance();
 
   const {
-   clearAllAttendance,
+    clearAllAttendance,
     profile,
     attendanceRecords,
     markAttendance,
@@ -48,32 +44,33 @@ const AttendanceLog: React.FC = () => {
   const todayAttendance = getTodayAttendance();
   const isLoggedIn = todayAttendance?.loginTime && !todayAttendance?.logoutTime;
   const isLoggedOut = todayAttendance?.loginTime && todayAttendance?.logoutTime;
+  const [overallSummary, setOverallSummary] = useState(null);
 
-const isSameMonth = (dateStr: string, month: Date) => {
-  const date = new Date(dateStr);
-  return (
-    date.getMonth() === month.getMonth() &&
-    date.getFullYear() === month.getFullYear()
-  );
-};
-console.log(attendanceRecords, "attendanceRecords");
-const filteredRecords = attendanceRecords
-  .filter(
-    (record) =>
-      (userFilter === "All" || record.userId === userFilter) &&
-      isSameMonth(record.date, selectedMonth)
-  )
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const isSameMonth = (dateStr: string, month: Date) => {
+    const date = new Date(dateStr);
+    return (
+      date.getMonth() === month.getMonth() &&
+      date.getFullYear() === month.getFullYear()
+    );
+  };
 
+  const filteredRecords = attendanceRecords
+    .filter(
+      (record) =>
+        (userFilter === "All" || record.userId === userFilter) &&
+        isSameMonth(record.date, selectedMonth)
+    )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-const formatHours = (hours: number): string => {
-  if (!hours || hours <= 0) return "0h 0m";
-  const totalMinutes = Math.floor(hours * 60);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  return `${h}h ${m}m`;
-};
-console.log(attendanceRecords, "attendanceRecords", filteredRecords);
+  console.log(attendanceRecords, "attendanceRecords");
+  const formatHours = (hours: number): string => {
+    if (!hours || hours <= 0) return "0h 0m";
+    const totalMinutes = Math.floor(hours * 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${m}m`;
+  };
+  console.log(attendanceRecords, "attendanceRecords", filteredRecords);
   const summary = getAttendanceSummary(filteredRecords);
 
   const handleMarkAttendance = async (type: "login" | "logout") => {
@@ -142,11 +139,27 @@ console.log(attendanceRecords, "attendanceRecords", filteredRecords);
   // attandence formate
 
   // Format login/logout into readable time
+  // const formatTime = (date: string | null) => {
+  //   if (!date) return "-";
+  //   return new Date(date).toLocaleTimeString([], {
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   });
+  // };
+  // Convert UTC timestamp to IST and format as HH:MM
   const formatTime = (date: string | null) => {
     if (!date) return "-";
-    return new Date(date).toLocaleTimeString([], {
+    const d = new Date(date);
+
+    // IST is UTC + 5:30
+    const istOffset = 5.5 * 60; // minutes
+    const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+    const istTime = new Date(utc + istOffset * 60 * 1000);
+
+    return istTime.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true, // 24-hour format
     });
   };
 
@@ -174,6 +187,75 @@ console.log(attendanceRecords, "attendanceRecords", filteredRecords);
     if (login > start) return "Late";
     return "Present";
   };
+
+  const [monthlySummary, setMonthlySummary] = useState({});
+  const [monthlyRecords, setMonthlyRecords] = useState([]);
+  console.log(
+    monthlySummary,
+    "monthlySummary",
+    monthlyRecords,
+    "monthlyRecords"
+  );
+  const api_url = import.meta.env.VITE_BACKEND_URL;
+  useEffect(() => {
+    const fetchMonthlySummary = async () => {
+      try {
+        const month = format(selectedMonth, "yyyy-MM");
+
+        const url = `${api_url}/api/attendance/monthly/all/${month}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.success) {
+          setMonthlySummary(data.summary || data.summaries); // depends on role
+          setMonthlyRecords(data.records || []);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch monthly summary");
+      }
+    };
+
+    fetchMonthlySummary();
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    if (Array.isArray(monthlySummary) && monthlySummary.length > 0) {
+      const totalUsers = monthlySummary.length;
+
+      const overall = monthlySummary.reduce(
+        (acc, user) => {
+          acc.presentDays += user.presentDays || 0;
+          acc.absentDays += user.absentDays || 0;
+          acc.totalHours += user.totalHours || 0;
+          acc.halfDays += user.halfDays || 0;
+          acc.avgHours += parseFloat(user.avgHours || 0);
+          acc.attendancePercentage += parseFloat(
+            user.attendancePercentage || 0
+          );
+          return acc;
+        },
+        {
+          presentDays: 0,
+          absentDays: 0,
+          totalHours: 0,
+          halfDays: 0,
+          avgHours: 0,
+          attendancePercentage: 0,
+        }
+      );
+
+      // Compute averages
+      overall.avgHours = (overall.avgHours / totalUsers).toFixed(1);
+      overall.attendancePercentage = (
+        overall.attendancePercentage / totalUsers
+      ).toFixed(1);
+
+      setOverallSummary(overall);
+    }
+  }, [monthlySummary]);
+  console.log(overallSummary, "overallSummary");
 
   if (loading) {
     return (
@@ -208,159 +290,87 @@ console.log(attendanceRecords, "attendanceRecords", filteredRecords);
         </div>
       </div>
 
-      {/* Today's Attendance */}
-      {/* <div className="glass rounded-2xl p-6 border border-white/30">
-        <h3 className="text-lg font-semibold text-white mb-4">
-          Today's Attendance
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-white">Current Status</h4>
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  isLoggedIn
-                    ? "bg-green-500 animate-pulse"
-                    : isLoggedOut
-                    ? "bg-gray-500"
-                    : "bg-red-500"
-                }`}
-              ></div>
+      {overallSummary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="glass rounded-2xl p-6 border border-white/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm font-semibold">
+                  Present Days
+                </p>
+                <p className="text-3xl font-bold text-white mt-2">
+                  {overallSummary.presentDays}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-green-500">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <p className="text-gray-300 text-sm">
-              {isLoggedIn
-                ? "Currently logged in"
-                : isLoggedOut
-                ? "Logged out for the day"
-                : "Not logged in yet"}
-            </p>
-            {todayAttendance?.loginTime && (
-              <p className="text-white text-sm mt-2">
-                Login: {todayAttendance.loginTime}
-              </p>
-            )}
-            {todayAttendance?.logoutTime && (
-              <p className="text-white text-sm">
-                Logout: {todayAttendance.logoutTime}
-              </p>
-            )}
           </div>
 
-          <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-            <h4 className="font-semibold text-white mb-3">Working Hours</h4>
-            <div className="text-2xl font-bold text-blue-400">
-              {todayAttendance?.totalHours || 0}h
+          <div className="glass rounded-2xl p-6 border border-white/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm font-semibold">
+                  Absent Days
+                </p>
+                <p className="text-3xl font-bold text-white mt-2">
+                  {overallSummary.absentDays}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-red-500">
+                <XCircle className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <p className="text-gray-300 text-sm">
-              {isLoggedIn ? "In progress" : "Total for today"}
-            </p>
           </div>
 
-          <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-            <h4 className="font-semibold text-white mb-3">Quick Actions</h4>
-            <div className="space-y-2">
-              {!todayAttendance?.loginTime ? (
-                <button
-                  onClick={() => handleMarkAttendance("login")}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Mark Login</span>
-                </button>
-              ) : !todayAttendance?.logoutTime ? (
-                <button
-                  onClick={() => handleMarkAttendance("logout")}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Mark Logout</span>
-                </button>
-              ) : (
-                <div className="text-center text-gray-300 text-sm">
-                  Attendance marked for today
-                </div>
-              )}
+          <div className="glass rounded-2xl p-6 border border-white/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm font-semibold">Avg Hours</p>
+                <p className="text-3xl font-bold text-white mt-2">
+                  {overallSummary.avgHours}h
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-blue-500">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="glass rounded-2xl p-6 border border-white/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm font-semibold">
+                  Total Hours
+                </p>
+                <p className="text-3xl font-bold text-white mt-2">
+                  {overallSummary.totalHours.toFixed(1)}h
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-purple-500">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="glass rounded-2xl p-6 border border-white/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-300 text-sm font-semibold">
+                  Attendance %
+                </p>
+                <p className="text-3xl font-bold text-white mt-2">
+                  {overallSummary.attendancePercentage}%
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-emerald-500">
+                <Users className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
         </div>
-      </div> */}
-
-      {/* Attendance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div className="glass rounded-2xl p-6 border border-white/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-300 text-sm font-semibold">
-                Present Days
-              </p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {summary.presentDays}
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-green-500">
-              <CheckCircle className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="glass rounded-2xl p-6 border border-white/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-300 text-sm font-semibold">Absent Days</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {summary.absentDays}
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-red-500">
-              <XCircle className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="glass rounded-2xl p-6 border border-white/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-300 text-sm font-semibold">Avg Hours</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {summary.avgHours}h
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-blue-500">
-              <Clock className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="glass rounded-2xl p-6 border border-white/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-300 text-sm font-semibold">Total Hours</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {summary.totalHours}h
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-purple-500">
-              <BarChart3 className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="glass rounded-2xl p-6 border border-white/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-300 text-sm font-semibold">
-                Attendance %
-              </p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {summary.attendancePercentage}%
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-emerald-500">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
       {(profile?.role === "Admin" || profile?.role === "Manager") && (
@@ -504,6 +514,7 @@ console.log(attendanceRecords, "attendanceRecords", filteredRecords);
                       <div className="flex items-center space-x-2">
                         <LogIn className="w-4 h-4 text-green-400" />
                         <span className="text-white font-medium">
+                         
                           {formatTime(record.lastLogin) || "Not logged in"}
                         </span>
                       </div>

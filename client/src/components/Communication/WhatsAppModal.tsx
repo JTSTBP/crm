@@ -215,7 +215,9 @@ const handleSendWhatsApp = async () => {
               }}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-green-400 focus:border-green-400 focus:bg-white/20 transition-all duration-300"
             >
-              <option value="">-- Select Contact --</option>
+              <option className="bg-gray-700 text-white" value="">
+                -- Select Contact --
+              </option>
               {lead.points_of_contact?.map((contact) => {
                 const idValue =
                   typeof contact._id === "object"
@@ -223,7 +225,11 @@ const handleSendWhatsApp = async () => {
                     : contact._id;
 
                 return (
-                  <option key={idValue} value={idValue}>
+                  <option
+                    className="bg-gray-700 text-white"
+                    key={idValue}
+                    value={idValue}
+                  >
                     {contact.name} ({contact.designation})
                   </option>
                 );

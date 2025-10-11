@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const addProposalAudit = require("./audits/auditProposalTrail"); // path to the above file
+
 
 const proposalSchema = new mongoose.Schema(
   {
@@ -29,5 +31,6 @@ const proposalSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+addProposalAudit(proposalSchema);
 
 module.exports = mongoose.model("Proposal", proposalSchema);

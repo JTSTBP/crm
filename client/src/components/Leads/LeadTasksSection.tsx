@@ -23,7 +23,8 @@ const LeadTasksSection: React.FC<LeadTasksSectionProps> = ({ leadId }) => {
   const { loading } = useTasks(leadId);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
-  const { getTasksByLead, updateTask, deletetask } = useLeadsContext();
+  const { getTasksByLead, updateTask, deletetask, getAllActivities } =
+    useLeadsContext();
   const [tasks, setTasks] = useState<Remark[]>([]);
   const fetchTasks = async () => {
     const data = await getTasksByLead(leadId);
@@ -43,6 +44,7 @@ console.log(sorted, "sorted");
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
       await updateTask(taskId, { completed: !completed });
+      getAllActivities()
       fetchTasks();
       toast.success(completed ? "Task marked as pending" : "Task completed!");
     } catch (error: any) {

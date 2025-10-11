@@ -52,7 +52,7 @@ const authMiddleware = require("../middleware/auth");
 router.get("/all", async (req, res) => {
   try {
     const records = await Attendance.find()
-      .populate("user_id", "name email") // optional: include user info
+      .populate("user_id", "name email role") // optional: include user info
       .sort({ date: -1 }); // latest first
 
     res.json({ success: true, records });
@@ -79,23 +79,72 @@ router.get("/today/:userId", async (req, res) => {
 // -----------------------------
 // 4. Get Monthly Attendance
 // -----------------------------
-router.get("/monthly/:userId/:month", async (req, res) => {
+// router.get("/monthly/:userId/:month", async (req, res) => {
+//   try {
+//     const { userId, month } = req.params; // month = "2025-09"
+
+//     const records = await Attendance.find({
+//       user_id: userId,
+//       date: { $regex: `^${month}` }, // match all YYYY-MM-DD in that month
+//     });
+//   console.log(records)
+//     const presentDays = records.length;
+//     const totalHours = records.reduce((sum, r) => sum + r.totalHours, 0);
+
+//     res.json({ success: true, presentDays, totalHours, records });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// });
+
+// ✅ Get monthly summary for all users (Admin/Manager view)
+router.get("/monthly/all/:month", async (req, res) => {
   try {
-    const { userId, month } = req.params; // month = "2025-09"
-
+    const { month } = req.params;
     const records = await Attendance.find({
-      user_id: userId,
-      date: { $regex: `^${month}` }, // match all YYYY-MM-DD in that month
+      date: { $regex: `^${month}` },
     });
-  console.log(records)
-    const presentDays = records.length;
-    const totalHours = records.reduce((sum, r) => sum + r.totalHours, 0);
 
-    res.json({ success: true, presentDays, totalHours, records });
+    // Group by user_id
+    const grouped = {};
+    records.forEach((r) => {
+      if (!grouped[r.user_id]) grouped[r.user_id] = [];
+      grouped[r.user_id].push(r);
+    });
+
+    const allSummaries = Object.entries(grouped).map(([userId, userRecords]) => {
+      const presentDays = userRecords.filter(r => r.status === "Present").length;
+      const absentDays = userRecords.filter(r => r.status === "Absent").length;
+      const halfDays = userRecords.filter(r => r.status === "Half Day").length;
+      const totalHours = userRecords.reduce((sum, r) => sum + (r.totalHours || 0), 0);
+      const avgHours = userRecords.length > 0 ? (totalHours / userRecords.length).toFixed(1) : 0;
+      const daysInMonth = new Date(
+        parseInt(month.split("-")[0]),
+        parseInt(month.split("-")[1]),
+        0
+      ).getDate();
+      const attendancePercentage = (
+        ((presentDays + halfDays * 0.5) / daysInMonth) *
+        100
+      ).toFixed(1);
+
+      return {
+        userId,
+        presentDays,
+        absentDays,
+        halfDays,
+        totalHours,
+        avgHours,
+        attendancePercentage,
+      };
+    });
+
+    res.json({ success: true, summaries: allSummaries });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 // -----------------------------
 // 5. Clear All Attendance

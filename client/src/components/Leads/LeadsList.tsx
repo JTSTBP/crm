@@ -41,6 +41,9 @@ const LeadsList: React.FC = () => {
 
    const [currentPage, setCurrentPage] = useState(1);
    const pageSize = 5;
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm, stageFilter, userFilter]);
 
   const stages = [
     "All",

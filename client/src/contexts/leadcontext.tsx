@@ -89,34 +89,6 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
    const { profile } = useAuth();
 
  
-  // const fetchLeads = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const res = await axios.get(API_URL, {
-  //       headers: { Authorization: `Bearer ${getAuthToken()}` },
-  //     });
-  //     setLeads(res.data);
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // Get leads, optionally filtered by assignedBy
-  // const getLeads = async (assignedBy?: string): Promise<Lead[]> => {
-  //   try {
-  //     const query = assignedBy ? `?assignedBy=${assignedBy}` : "";
-  //     const res = await axios.get(`${url}/api/leads${query}`, {
-  //       headers: { Authorization: `Bearer ${getAuthToken()}` },
-  //     });
-  //     setLeads(res.data);
-  //     return res.data; // returns array of leads
-  //   } catch (err) {
-  //     console.error("Error fetching leads:", err);
-  //     return [];
-  //   }
-  // };
 
   const fetchLeads = async (assignedBy?: string): Promise<Lead[]> => {
     try {
@@ -193,7 +165,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     const res = await axios.delete(`${API_URL}/${leadId}/remarks/${remarkId}`, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
-
+   getAllActivities();
     setLeads((prev) =>
       prev.map((lead) =>
         lead._id === leadId ? { ...lead, remarks: res.data.remarks } : lead
@@ -214,23 +186,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // inside your existing LeadsContext.tsx, add this:
-
-  // const getAllTasks = async () => {
-  //   try {
-  //     console.log("r");
-  //     const res = await axios.get(`${url}/api/tasks`, {
-  //       headers: { Authorization: `Bearer ${getAuthToken()}` },
-  //     });
-
-  //     setAllTasks(res.data);
-  //     return res.data;
-  //     // returns array of tasks for this lead
-  //   } catch (err) {
-  //     console.error("Error fetching tasks by lead:", err);
-  //     return [];
-  //   }
-  // };
+ 
 
   const getAllTasks = async (userId?: string): Promise<Task[]> => {
     try {
@@ -274,7 +230,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await axios.put(`${url}/api/tasks/${id}`, data, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
-
+getAllActivities()
       return res.data;
     } catch (err) {
       console.error("Error updating task:", err);
@@ -313,21 +269,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Error creating proposal:", err);
     }
   };
-  // const getAllProposals = async (): Promise<Proposal[]> => {
-  //   try {
-  //     setProposalLoading(true);
-  //     const res = await axios.get(`${proposals_url}`, {
-  //       headers: { Authorization: `Bearer ${getAuthToken()}` },
-  //     });
-
-  //     setProposals(res.data);
-  //     setProposalLoading(false);
-  //     return res.data;
-  //   } catch (err) {
-  //     console.error("Error fetching proposals:", err);
-  //     return [];
-  //   }
-  // };
+ 
 const getAllProposals = async (userId?: string): Promise<Proposal[]> => {
   try {
     setProposalLoading(true);
@@ -386,6 +328,12 @@ const userId = profile.role === "BD Executive" ? profile.id : undefined;
    getAllProposals(userId);
    getAllTasks(userId);
  }, [profile]);
+  
+  useEffect(() => {
+    getAllActivities();
+    console.log("calledprop")
+  }, [leads, alltasks, proposals]);
+
 
   return (
     <LeadsContext.Provider
