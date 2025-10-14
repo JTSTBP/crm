@@ -121,10 +121,9 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     }
   }, [lead._id, getAllRemarks]);
 
-  // Safe filter for proposals
-  const filteredProposals = (proposals || []).filter(
-    (proposal) => proposal.lead_id._id === lead._id
-  );
+ const filteredProposals = (proposals || []).filter(
+   (proposal) => proposal.lead_id?._id === lead._id
+ );
 
   const handleStageUpdate = async (newStage: string) => {
     try {

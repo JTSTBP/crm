@@ -38,12 +38,11 @@ const LeadsList: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
-
-   const [currentPage, setCurrentPage] = useState(1);
-   const pageSize = 5;
-useEffect(() => {
-  setCurrentPage(1);
-}, [searchTerm, stageFilter, userFilter]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, stageFilter, userFilter]);
 
   const stages = [
     "All",
@@ -63,11 +62,10 @@ useEffect(() => {
 
     const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
 
-  const matchesUser =
-    userFilter === "All" ||
-    (userFilter === "Unassigned" && !lead.assignedBy) ||
-    lead.assignedBy?._id === userFilter;
-
+    const matchesUser =
+      userFilter === "All" ||
+      (userFilter === "Unassigned" && !lead.assignedBy) ||
+      lead.assignedBy?._id === userFilter; // ✅ safe
 
     return matchesSearch && matchesStage && matchesUser;
   });

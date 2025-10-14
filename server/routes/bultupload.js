@@ -1,5 +1,3 @@
-
-
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -19,28 +17,43 @@ function normalizeUrl(url) {
   }
 }
 
+// function parsePointsOfContact(row) {
+//   const contacts = [];
+//   let i = 0;
+//   while (
+//     row[`points_of_contact[${i}].name`] ||
+//     row[`points_of_contact[${i}].phone`] ||
+//     row[`points_of_contact[${i}].email`] ||
+//     row[`points_of_contact[${i}].linkedin_url`]
+//   ) {
+//     const name = row[`points_of_contact[${i}].name`] || "";
+//     const designation = row[`points_of_contact[${i}].designation`] || "";
+//     const phone = row[`points_of_contact[${i}].phone`] || "";
+//     const email = row[`points_of_contact[${i}].email`] || "";
+//      const linkedin_url = row[`points_of_contact[${i}].linkedin_url`] || "";
+
+//     if (name || phone || email)
+//       contacts.push({ name, designation, phone, email, linkedin_url });
+//     i++;
+//   }
+
+//   return contacts;
+// }
 function parsePointsOfContact(row) {
   const contacts = [];
-  let i = 0;
-  while (
-    row[`points_of_contact[${i}].name`] ||
-    row[`points_of_contact[${i}].phone`] ||
-    row[`points_of_contact[${i}].email`] ||
-    row[`points_of_contact[${i}].linkedin_url`]
-  ) {
-    const name = row[`points_of_contact[${i}].name`] || "";
-    const designation = row[`points_of_contact[${i}].designation`] || "";
-    const phone = row[`points_of_contact[${i}].phone`] || "";
-    const email = row[`points_of_contact[${i}].email`] || "";
-     const linkedin_url = row[`points_of_contact[${i}].linkedin_url`] || "";
-
-    if (name || phone || email)
-      contacts.push({ name, designation, phone, email, linkedin_url });
-    i++;
+  if (row["points_of_contact[0].phone"]) {
+    contacts.push({
+      name: (row["points_of_contact[0].name"] || "").trim(),
+      designation: (row["points_of_contact[0].designation"] || "").trim(),
+      phone: (row["points_of_contact[0].phone"] || "").trim(),
+      email: (row["points_of_contact[0].email"] || "").trim(),
+      linkedin_url: (row["points_of_contact[0].linkedin_url"] || "").trim(),
+      stage: "Contacted", // default stage
+    });
   }
-
   return contacts;
 }
+
 function safeParseJson(value, fallback) {
   try {
     return value ? JSON.parse(value) : fallback;
@@ -61,8 +74,6 @@ function parseHiringNeeds(value) {
       .filter(Boolean);
   }
 }
-
-
 
 router.post("/upload-csv", upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).send("No file uploaded");
@@ -99,7 +110,7 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
           if (!normalizedUrl) continue;
 
           const contacts = parsePointsOfContact(row);
-
+          console.log(contacts, "contacts");
           if (existingLeadsMap.has(normalizedUrl)) {
             // ✅ Already in DB → update
             const lead = existingLeadsMap.get(normalizedUrl);
@@ -170,15 +181,12 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
           skipped: 0,
           errors: [], // always send array
         });
-
       } catch (err) {
         fs.unlinkSync(req.file.path);
         console.error("Bulk upload error:", err);
         res.status(500).json({ error: err.message });
       }
     });
-
-
 });
 
 module.exports = router;

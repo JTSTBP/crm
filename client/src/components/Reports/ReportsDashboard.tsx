@@ -37,20 +37,18 @@ import {
   Zap,
   BarChart3,
   Shield,
-
   User,
- 
   Briefcase,
- 
 } from "lucide-react";
-
 
 import { useReports } from "../../hooks/useReports";
 import { format } from "date-fns";
+import { isToday, subDays, isWithinInterval } from "date-fns";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { useUsers } from "../../hooks/useUsers";
 import { useEmail } from "../../contexts/EmailContext";
+import { useLeadsContext } from "../../contexts/leadcontext";
 
 const ReportsDashboard: React.FC = () => {
   const {
@@ -69,18 +67,70 @@ const ReportsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity">(
     "overview"
   );
-  const [callcount,setCallCount]=useState(0)
+  const [callcount, setCallCount] = useState(0);
   const { fetchAllCallActivities } = useEmail();
 
-useEffect(() => {
-  const getCalls = async () => {
-    const calls = await fetchAllCallActivities();
-   setCallCount(calls.length);
-  };
-  getCalls();
-}, []);
+  const { leads } = useLeadsContext();
 
-  
+  const proposalSentLeads = leads.filter(
+    (lead) => lead.stage === "Proposal Sent"
+  );
+  console.log(proposalSentLeads, "proposalSentLeads");
+
+  const nonAdmins = users.filter((user) => user.role !== "Admin");
+
+  useEffect(() => {
+    const getCalls = async () => {
+      const calls = await fetchAllCallActivities();
+      console.log(calls, "cc");
+      setCallCount(calls.length);
+    };
+    getCalls();
+  }, []);
+
+  useEffect(() => {
+    const getCalls = async () => {
+      const allCalls = await fetchAllCallActivities();
+
+      const now = new Date();
+      let filteredCalls = allCalls;
+
+      // ✅ Filter by date range
+      if (filters.dateRange === "today") {
+        filteredCalls = allCalls.filter((call: any) =>
+          isToday(new Date(call.timestamp))
+        );
+      } else if (filters.dateRange === "last7days") {
+        filteredCalls = allCalls.filter((call: any) =>
+          isWithinInterval(new Date(call.timestamp), {
+            start: subDays(now, 7),
+            end: now,
+          })
+        );
+      } else if (filters.dateRange === "last30days") {
+        filteredCalls = allCalls.filter((call: any) =>
+          isWithinInterval(new Date(call.timestamp), {
+            start: subDays(now, 30),
+            end: now,
+          })
+        );
+      }
+
+      // ✅ Filter by user (if selected)
+      if (filters.userId) {
+        filteredCalls = filteredCalls.filter(
+          (call: any) => call.userId?._id === filters.userId
+        );
+      }
+
+      // Update your state
+      setCallCount(filteredCalls.length);
+      console.log("Filtered Calls:", filteredCalls);
+    };
+
+    getCalls();
+  }, [filters.dateRange, filters.userId]);
+
   const MetricCard: React.FC<{
     title: string;
     value: string | number;
@@ -118,104 +168,6 @@ useEffect(() => {
     Manager: "bg-gradient-to-r from-blue-400 to-blue-600",
     "BD executive": "bg-gradient-to-r from-green-400 to-green-600",
   };
-  // const UserMetricCard: React.FC<{ user: any; rank: number }> = ({ user, rank }) => (
-  //   <div
-  //     className={`glass rounded-xl p-4 border border-white/30 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] ${
-  //       selectedUser === user._id ? 'ring-2 ring-blue-400' : ''
-  //     }`}
-  //     onClick={() => setSelectedUser(selectedUser === user._id ? null : user._id)}
-  //   >
-  //     <div className="flex items-center justify-between mb-3">
-  //       <div className="flex items-center space-x-3">
-  //         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-  //           rank === 1 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-  //           rank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-600' :
-  //           rank === 3 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-  //           'bg-gradient-to-r from-blue-500 to-purple-600'
-  //         }`}>
-  //           {rank <= 3 ? <Crown className="w-5 h-5" /> : rank}
-  //         </div>
-  //         <div>
-  //           <p className="font-semibold text-white">{user.name}</p>
-  //           <p className="text-sm text-gray-300">{user.email}</p>
-  //         </div>
-  //       </div>
-  //       <div className="text-right">
-  //         <p className="text-lg font-bold text-emerald-400">{user.leadsOnboarded || "-"}</p>
-  //         <p className="text-xs text-gray-400">Onboarded</p>
-  //       </div>
-  //     </div>
-
-  //     <div className="grid grid-cols-4 gap-3 text-center">
-  //       <div>
-  //         <p className="text-lg font-semibold text-blue-400">{user.no_of_calls}</p>
-  //         <p className="text-xs text-gray-400">Calls</p>
-  //       </div>
-  //       <div>
-  //         <p className="text-lg font-semibold text-purple-400">{user.proposalsSent || "-" }</p>
-  //         <p className="text-xs text-gray-400">Proposals</p>
-  //       </div>
-  //       <div>
-  //         <p className="text-lg font-semibold text-green-400">{user.conversionRatio || "-" }%</p>
-  //         <p className="text-xs text-gray-400">Conversion</p>
-  //       </div>
-  //       <div>
-  //         <p className="text-lg font-semibold text-yellow-400">₹{(user.revenue / 100000).toFixed(1) || "-" }L</p>
-  //         <p className="text-xs text-gray-400">Revenue</p>
-  //       </div>
-  //     </div>
-
-  //     {selectedUser === user.id && (
-  //       <div className="mt-4 pt-4 border-t border-white/20">
-  //         <div className="grid grid-cols-2 gap-4 text-sm">
-  //           <div>
-  //             <p className="text-gray-300 mb-2">Pipeline:</p>
-  //             <div className="space-y-1">
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">New:</span>
-  //                 <span className="text-white">{user.pipeline.new}</span>
-  //               </div>
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">Contacted:</span>
-  //                 <span className="text-white">{user.pipeline.contacted}</span>
-  //               </div>
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">Proposals:</span>
-  //                 <span className="text-white">{user.pipeline.proposalSent}</span>
-  //               </div>
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">Negotiation:</span>
-  //                 <span className="text-white">{user.pipeline.negotiation}</span>
-  //               </div>
-  //             </div>
-  //           </div>
-  //           <div>
-  //             <p className="text-gray-300 mb-2">Tasks:</p>
-  //             <div className="space-y-1">
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">Completed:</span>
-  //                 <span className="text-green-400">{user.tasksCompleted}</span>
-  //               </div>
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">Pending:</span>
-  //                 <span className="text-orange-400">{user.tasksPending}</span>
-  //               </div>
-  //               <div className="flex justify-between">
-  //                 <span className="text-gray-400">Last Activity:</span>
-  //                 <span className="text-white text-xs">
-  //                   {format(new Date(user.lastActivity), 'MMM dd, HH:mm')}
-  //                 </span>
-  //               </div>
-  //             </div>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     )}
-  //   </div>
-  // )
-
- 
-
   const roleIcons = {
     Admin: <Shield className="w-5 h-5" />,
     Manager: <Users className="w-5 h-5" />,
@@ -328,13 +280,14 @@ useEffect(() => {
             <select
               value={filters.dateRange}
               onChange={(e) => handleDateRangeChange(e.target.value)}
-              className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-white/50 focus:border-white/50"
+              className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-white"
             >
               <option value="today">Today</option>
               <option value="last7days">Last 7 Days</option>
               <option value="last30days">Last 30 Days</option>
               <option value="custom">Custom Range</option>
             </select>
+
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handleExport("csv")}
@@ -391,7 +344,7 @@ useEffect(() => {
             />
             <MetricCard
               title="Proposals Sent"
-              value={overallMetrics.proposalsSent}
+              value={proposalSentLeads.length}
               icon={<FileText className="w-7 h-7 text-white" />}
               color="bg-purple-500"
               trend="+8% vs last period"
@@ -707,7 +660,7 @@ useEffect(() => {
           </div> */}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {users
+            {nonAdmins
               .filter((user) =>
                 filters.userId ? user._id === filters.userId : true
               )

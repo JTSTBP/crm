@@ -109,7 +109,10 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
       toast.error("Please select a point of contact with a valid email");
       return;
     }
-
+ if (!profile.appPassword) {
+   toast.error("To proceed, an app password must be set up.");
+   return;
+ }
     if (!subject.trim() || !content.trim()) {
       toast.error("Subject and content are required");
       return;
