@@ -37,6 +37,8 @@ const LeadsList: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState("");
+
   const pageSize = 5;
 
   const pocStages = ["All", "Contacted", "Busy", "No Answer", "Wrong Number"];
@@ -66,11 +68,15 @@ const LeadsList: React.FC = () => {
   //   const matchesUser =
   //     userFilter === "All" ||
   //     (userFilter === "Unassigned" && !lead.assignedBy) ||
-  //     lead.assignedBy?._id === userFilter; // ✅ safe
+  //     lead.assignedBy?._id === userFilter;
 
-  //   return matchesSearch && matchesStage && matchesUser;
+  //   // ✅ Filter based on points_of_contact stages
+  //   const matchesPocStage =
+  //     pocStageFilter === "All" ||
+  //     lead.points_of_contact?.some((poc) => poc.stage === pocStageFilter);
+
+  //   return matchesSearch && matchesStage && matchesUser && matchesPocStage;
   // });
-
 
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch =
@@ -84,12 +90,22 @@ const LeadsList: React.FC = () => {
       (userFilter === "Unassigned" && !lead.assignedBy) ||
       lead.assignedBy?._id === userFilter;
 
-    // ✅ Filter based on points_of_contact stages
     const matchesPocStage =
       pocStageFilter === "All" ||
       lead.points_of_contact?.some((poc) => poc.stage === pocStageFilter);
 
-    return matchesSearch && matchesStage && matchesUser && matchesPocStage;
+    const matchesDate =
+      !dateFilter ||
+      new Date(lead.createdAt).toDateString() ===
+        new Date(dateFilter).toDateString();
+
+    return (
+      matchesSearch &&
+      matchesStage &&
+      matchesUser &&
+      matchesPocStage &&
+      matchesDate
+    );
   });
 
   const totalPages = Math.ceil(filteredLeads.length / pageSize);
@@ -169,78 +185,6 @@ const LeadsList: React.FC = () => {
 
       {/* Filters */}
       <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
-        {/* <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="w-5 h-5 text-gray-300 absolute left-4 top-1/2 transform -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search leads..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-300" />
-            <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
-            >
-              {stages.map((stage) => (
-                <option
-                  className="bg-gray-700 text-white"
-                  key={stage}
-                  value={stage}
-                >
-                  {stage}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-300" />
-            <select
-              value={userFilter}
-              onChange={(e) => setUserFilter(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
-            >
-              <option value="All" className="bg-gray-700 text-white">
-                All Users
-              </option>
-              {users.map((user) => (
-                <option
-                  key={user._id}
-                  value={user._id}
-                  className="bg-gray-700 text-white"
-                >
-                  {user.name}
-                </option>
-              ))}
-              <option value="Unassigned" className="bg-gray-700 text-white">
-                Unassigned Users
-              </option>
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-300" />
-            <select
-              value={pocStageFilter}
-              onChange={(e) => setPocStageFilter(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
-            >
-              {pocStages.map((stage) => (
-                <option
-                  key={stage}
-                  value={stage}
-                  className="bg-gray-700 text-white"
-                >
-                  {stage}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div> */}
         <div className="flex flex-col sm:flex-row gap-4">
           {/* 🔹 Search Bar (takes more space) */}
           <div className="relative flex-[2]">
@@ -319,6 +263,16 @@ const LeadsList: React.FC = () => {
               ))}
             </select>
           </div>
+          {/* 🔹 Date Filter */}
+          <div className="flex items-center space-x-2 flex-[0.8]">
+            <Calendar className="w-5 h-5 text-gray-300" />
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+            />
+          </div>
         </div>
       </div>
 
@@ -372,27 +326,7 @@ const LeadsList: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-300">
-                      <div className="flex items-center space-x-2">
-                        <Building2 className="w-4 h-4" />
-                        <span className="font-medium whitespace-nowrap">
-                          {lead.contact_name} •{" "}
-                          {lead.contact_designation || "No designation"}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4" />
-                        <span className="font-medium">
-                          {lead.contact_email}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4" />
-                        <span className="font-medium">
-                          {lead.contact_phone}
-                        </span>
-                      </div>
-                    </div> */}
+
                     <div className="mt-2 text-sm text-gray-400 space-y-1">
                       <div>
                         <span className="font-medium">Industry:</span>{" "}
@@ -433,7 +367,7 @@ const LeadsList: React.FC = () => {
                     <div className="text-sm text-gray-400 flex items-center space-x-1 font-medium">
                       <Calendar className="w-4 h-4" />
                       <span>
-                        {new Date(lead.updatedAt).toLocaleDateString()}
+                        {new Date(lead.createdAt).toLocaleDateString("en-GB")}
                       </span>
                     </div>
 

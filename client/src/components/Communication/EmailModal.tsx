@@ -218,32 +218,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
               {/* Template Selection */}
               {selectedContact && (
                 <div>
-                  {/* <label className="block text-sm font-semibold text-white mb-3">
-                    Select Email Template
-                  </label> */}
-                  {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {emailTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        onClick={() => handleTemplateSelect(template)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                          selectedTemplate?.id === template.id
-                            ? "border-blue-400 bg-blue-500/20"
-                            : "border-white/20 bg-white/10 hover:border-white/40"
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3 mb-2">
-                          <FileText className="w-5 h-5 text-blue-400" />
-                          <h3 className="font-semibold text-white">
-                            {template.name}
-                          </h3>
-                        </div>
-                        <p className="text-sm text-gray-300 line-clamp-2">
-                          {template.subject}
-                        </p>
-                      </div>
-                    ))}
-                  </div> */}
                   <div className="space-y-6">
                     {/* Dropdown for quick selection */}
                     <div className="w-full max-w-md">
@@ -282,31 +256,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
                         ))}
                       </select>
                     </div>
-
-                    {/* Grid of clickable cards */}
-                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {emailTemplates.map((template) => (
-                        <div
-                          key={template.id}
-                          onClick={() => handleTemplateSelect(template)}
-                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                            selectedTemplate?.id === template.id
-                              ? "border-blue-400 bg-blue-500/20"
-                              : "border-white/20 bg-white/10 hover:border-white/40"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3 mb-2">
-                            <FileText className="w-5 h-5 text-blue-400" />
-                            <h3 className="font-semibold text-white">
-                              {template.name}
-                            </h3>
-                          </div>
-                          <p className="text-sm text-gray-300 line-clamp-2">
-                            {template.subject}
-                          </p>
-                        </div>
-                      ))}
-                    </div> */}
                   </div>
                 </div>
               )}
@@ -365,13 +314,21 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
                     <label className="block text-sm font-semibold text-white mb-3">
                       Email Content
                     </label>
-                    <textarea
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      rows={12}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300 resize-none"
-                      placeholder="Enter email content"
-                    />
+                    {selectedTemplate && (
+                      <div className="bg-white/10 p-4 rounded-xl border border-white/20 text-gray-200 max-h-64 overflow-y-auto">
+                        <h4 className="font-semibold mb-2">
+                          {selectedTemplate.subject}
+                        </h4>
+                        <p className="text-sm line-clamp-6">
+                          {/* Show a plain-text snippet without HTML */}
+                          {selectedTemplate.content
+                            .replace(/<[^>]+>/g, "") // remove HTML tags
+                            .slice(0, 500)}
+                          {/* limit to 500 chars */}
+                          {selectedTemplate.content.length > 500 && "..."}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -442,7 +399,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, lead }) => {
                     </span>
                   </div>
                 </div>
-                {/* <div className="whitespace-pre-wrap">{preview.content}</div> */}
+                
                 <div
                   className="whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: preview.content }}

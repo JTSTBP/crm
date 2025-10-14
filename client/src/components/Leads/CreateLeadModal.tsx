@@ -160,8 +160,9 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   const onSubmit = async (data: LeadFormData) => {
     try {
       const validContacts = pointsOfContact.filter(
-        (c) => c.name.trim() !== "" && c.email.trim() !== ""
+        (c) => c.name.trim() !== "" && c.phone.trim() !== ""
       );
+      console.log(pointsOfContact, "pointsOfContact");
 
       if (validContacts.length === 0) {
         toast.error("At least one point of contact is required");

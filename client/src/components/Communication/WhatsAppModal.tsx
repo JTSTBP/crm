@@ -257,42 +257,32 @@ const handleSendWhatsApp = async () => {
             <div className="space-y-6">
               {/* Template Selection */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Select WhatsApp Template
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <select
+                  value={selectedTemplate?.id || ""}
+                  onChange={(e) => {
+                    const template = whatsappTemplates.find(
+                      (t) => t.id === e.target.value
+                    );
+                    handleTemplateSelect(template);
+                  }}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300"
+                >
+                  <option className="bg-gray-700 text-white" value="" disabled>
+                    Choose a template
+                  </option>
                   {whatsappTemplates.map((template) => (
-                    <div
+                    <option
+                      className="bg-gray-700 text-white"
                       key={template.id}
-                      onClick={() => handleTemplateSelect(template)}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                        selectedTemplate?.id === template.id
-                          ? "border-green-400 bg-green-500/20"
-                          : "border-white/20 bg-white/10 hover:border-white/40"
-                      }`}
+                      value={template.id}
                     >
-                      <div className="flex items-center space-x-3 mb-2">
-                        <div className="flex items-center space-x-2">
-                          {template.type === "text" && (
-                            <FileText className="w-5 h-5 text-green-400" />
-                          )}
-                          {template.type === "image" && (
-                            <Image className="w-5 h-5 text-green-400" />
-                          )}
-                          {template.type === "document" && (
-                            <File className="w-5 h-5 text-green-400" />
-                          )}
-                          <h3 className="font-semibold text-white">
-                            {template.name}
-                          </h3>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-300 line-clamp-3">
-                        {template.content}
-                      </p>
-                    </div>
+                      {template.name}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {selectedTemplate && (

@@ -295,114 +295,6 @@ Best regards,
       "consultant_name",
     ],
   },
-
-  //   {
-  //     id: "email-3",
-  //     name: "Proposal Submission",
-  //     subject: "Recruitment Proposal - {{position_type}} for {{company_name}}",
-  //     // subject: " RE: Partnership Opportunity – {{company_name}}",
-
-  //     content: `
-  // <table style="width:100%; font-family: Arial, sans-serif; line-height:1.5; color:#333;">
-  //   <tr>
-  //     <td>
-  //       <p>Hi {{contact_name}},</p>
-
-  //       <p>It was nice talking to you. I hope this email finds you well.</p>
-
-  //       <h2 style="color:#2E86C1;">Welcome to Jobs Territory — Your Gateway to Exceptional Talent!</h2>
-
-  //       <p>With over 15 years of expertise and a team of 180+ Talent Advisors, Jobs Territory is a leading recruitment agency dedicated to connecting businesses with top talent.</p>
-
-  //       <p>We’re pleased to share our recruitment proposal for the <b>{{position_type}}</b> position at <b>{{company_name}}</b>.</p>
-
-  //       <h3>Key Highlights:</h3>
-  //       <ul>
-  //         <li><b>Turn Around Time:</b> {{tat}} days</li>
-  //         <li><b>Service Fee:</b> {{service_fee}} of Annual CTC</li>
-  //         <li><b>Replacement Guarantee:</b> {{replacement_guarantee}} days</li>
-  //       </ul>
-
-  //       <h3>Industries We Serve & Positions We've Closed:</h3>
-  //       <table style="width:100%; border-collapse: collapse;">
-  //         <thead>
-  //           <tr>
-  //             <th style="border: 1px solid #ddd; padding: 8px; text-align:left;">Industry</th>
-  //             <th style="border: 1px solid #ddd; padding: 8px; text-align:left;">Trending Positions</th>
-  //           </tr>
-  //         </thead>
-  //         <tbody>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Wholesale Building Materials</td><td style="border: 1px solid #ddd; padding: 8px;">Procurement Specialist, Sales Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Agritech</td><td style="border: 1px solid #ddd; padding: 8px;">Product Manager, Operations Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">NBFC</td><td style="border: 1px solid #ddd; padding: 8px;">Data Scientist, Finance Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">FMCG</td><td style="border: 1px solid #ddd; padding: 8px;">Sales Manager, Marketing Head</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">HVAC</td><td style="border: 1px solid #ddd; padding: 8px;">Project Engineer, Service Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Electrical Appliances</td><td style="border: 1px solid #ddd; padding: 8px;">Product Designer, QA Lead</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Manufacturing</td><td style="border: 1px solid #ddd; padding: 8px;">Plant Manager, Supply Chain Analyst</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Retail</td><td style="border: 1px solid #ddd; padding: 8px;">Store Manager, Merchandising Director</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Healthcare</td><td style="border: 1px solid #ddd; padding: 8px;">Clinical Operations Lead, HR Director</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Pharmaceuticals</td><td style="border: 1px solid #ddd; padding: 8px;">Regulatory Affairs Manager, QA Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Hospitality</td><td style="border: 1px solid #ddd; padding: 8px;">Hotel General Manager, Operations Director</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Logistics</td><td style="border: 1px solid #ddd; padding: 8px;">Logistics Coordinator, Supply Chain Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Construction</td><td style="border: 1px solid #ddd; padding: 8px;">Project Manager, Site Engineer</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Automotive</td><td style="border: 1px solid #ddd; padding: 8px;">Mechanical Engineer, Plant Supervisor</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Consumer Goods</td><td style="border: 1px solid #ddd; padding: 8px;">Brand Manager, Marketing Specialist</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">Startups</td><td style="border: 1px solid #ddd; padding: 8px;">CTO, Business Development Manager</td></tr>
-  //           <tr><td style="border: 1px solid #ddd; padding: 8px;">D2C (Direct-to-Consumer)</td><td style="border: 1px solid #ddd; padding: 8px;">E-commerce Manager, Digital Marketing Head</td></tr>
-  //         </tbody>
-  //       </table>
-
-  //       <h3>Payment Terms:</h3>
-  //       <ul>
-  //         <li>Service Charge: {{service_fee}} of Annual CTC</li>
-  //         <li>Payment Terms: 30 days from invoice date</li>
-  //         <li>Replacement: {{replacement_guarantee}} days (if a candidate leaves within this period, excluding involuntary termination, we’ll conduct a search at no additional cost)</li>
-  //       </ul>
-
-  //       <p>Request you to kindly confirm and share the JD for us.</p>
-
-  //       <p>Looking forward to partnering with <b>{{company_name}}</b> to build your dream team.</p>
-
-  //       <p>Best regards,<br>
-  //       {{consultant_name}}<br>
-  //       Jobs Territory Team</p>
-  //       <hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">
-
-  //       <table style="width:100%; font-size:0.9em; color:#555;">
-  //         <tr>
-  //           <td style="vertical-align: top;">
-  //             <img src="https://www.jobsterritory.com/images/logo.png" alt="Jobs Territory Logo" style="width:120px; height:auto; margin-bottom:10px;">
-  //           </td><br/>
-  //           <td style="vertical-align: top; padding-left:15px;">
-  //             {{consultant_name}}<br>
-  //            {{consultant_role}}<br>
-  //             <a href="https://www.facebook.com/jobsterritory" target="_blank">Facebook</a> |
-  //             <a href="https://www.linkedin.com/company/jobs-territory/?viewAsMember=true" target="_blank">LinkedIn</a> |
-  //             <a href="https://www.instagram.com/jobsterritory/" target="_blank">Instagram</a><br><br>
-  //             M: {{consultant_num}}<br>
-
-  //             W: <a href="https://www.jobsterritory.com" target="_blank">www.jobsterritory.com</a>
-  //           </td>
-  //         </tr>
-  //       </table>
-
-  //       <p>P.S. I’ve attached our company profile for your review.</p>
-  //     </td>
-  //   </tr>
-  // </table>
-  // `,
-  //     placeholders: [
-  //       "company_name",
-  //       "contact_name",
-  //       "position_type",
-  //       "tat",
-  //       "service_fee",
-  //       "replacement_guarantee",
-  //       "consultant_name",
-  //       "consultant_role",
-  //       "consultant_num",
-  //     ],
-  //   },
   {
     id: "email-3",
     name: "Proposal Submission",
@@ -507,48 +399,206 @@ Best regards,
       "consultant_num",
     ],
   },
+
+  {
+    id: "email-raas-html-full",
+    name: "RAAS Offering",
+    subject: "Recruitment As A Service Proposal – {{company_name}}",
+    content: `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      <p>Hi {{contact_name}},</p>
+
+      <p>As discussed, here’s our <strong>Recruitment As A Service (RAAS)</strong> offering. You’ll get unlimited hiring support with a dedicated team of recruiters, along with guaranteed closures every month.</p>
+
+      <h4>What you get:</h4>
+      <ul>
+        <li>Unlimited hiring across all roles shared with us</li>
+        <li>Dedicated recruiters aligned to your requirements</li>
+        <li>Access to premium job portals (Naukri, LinkedIn, Shine, iimjobs, AngelList & more)</li>
+        <li>No additional charges beyond the fixed fee</li>
+        <li>Faster, cost-effective closures with guaranteed results</li>
+      </ul>
+
+      <h4>What we need from you:</h4>
+      <ul>
+        <li>Feedback within 24–36 hours</li>
+        <li>Availability of hiring managers for interviews</li>
+        <li>Advance payment before commencement of services</li>
+      </ul>
+
+      <p>📌 <strong>Case Studies</strong><br/>
+      See how we’ve helped companies across industries hire faster, cut costs, and scale efficiently — from startups to large enterprises. Explore our success stories at: <a href="https://jobsterritory.com/case-studies" target="_blank">Jobs Territory – Case Studies</a></p>
+
+      <p>Best regards,<br>
+      {{consultant_name}}<br>
+      Jobs Territory Team</p>
+
+      <hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">
+
+      <table style="width:100%; font-size:0.9em; color:#555;">
+        <tr>
+          <td style="vertical-align: top;">
+            <img src="https://www.jobsterritory.com/images/logo.png" alt="Jobs Territory Logo" style="width:120px; height:auto; margin-bottom:10px;">
+          </td>
+          <td style="vertical-align: top; padding-left:15px;">
+            {{consultant_name}}<br>
+            {{consultant_role}}<br>
+            <a href="https://www.facebook.com/jobsterritory" target="_blank">Facebook</a> | 
+            <a href="https://www.linkedin.com/company/jobs-territory/?viewAsMember=true" target="_blank">LinkedIn</a> | 
+            <a href="https://www.instagram.com/jobsterritory/" target="_blank">Instagram</a><br><br>
+            M: {{consultant_num}}<br>
+            W: <a href="https://www.jobsterritory.com" target="_blank">www.jobsterritory.com</a>
+          </td>
+        </tr>
+      </table>
+
+      <p>P.S. I’ve attached our company profile for your review.</p>
+    </div>
+  `,
+    placeholders: [
+      "company_name",
+      "contact_name",
+      "consultant_name",
+      "consultant_role",
+      "consultant_num",
+    ],
+  },
 ];
 
 // Demo WhatsApp templates
 const demoWhatsAppTemplates: WhatsAppTemplate[] = [
+  //   {
+  //     id: "whatsapp-1",
+  //     name: "Quick Introduction",
+  //     content: `Hi {{contact_name}}! 👋
+
+  // This is {{consultant_name}} from Jobs Territory. We specialize in recruitment services and would love to discuss potential partnership opportunities with {{company_name}}.
+
+  // Would you be interested in a quick call to explore how we can support your hiring needs?`,
+  //     placeholders: ["contact_name", "consultant_name", "company_name"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-2",
+  //     name: "Proposal Shared",
+  //     content: `Hi {{contact_name}},
+
+  // I've prepared a customized recruitment proposal for {{company_name}}.
+
+  // Key details:
+  // ✅ Position: {{position_type}}
+  // ✅ TAT: {{tat}} days
+  // ✅ Competitive rates with quality guarantee
+
+  // Would you like me to share the detailed proposal via email or WhatsApp?`,
+  //     placeholders: ["contact_name", "company_name", "position_type", "tat"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-3",
+  //     name: "Follow-up Reminder",
+  //     content: `Hi {{contact_name}},
+
+  // Hope you're doing well! Just following up on our discussion about {{company_name}}'s recruitment needs.
+
+  // We have some excellent candidates in our pipeline that might be a perfect fit for your requirements.
+
+  // Let me know when would be a good time to connect! 😊`,
+  //     placeholders: ["contact_name", "company_name"],
+  //     type: "text",
+  //   },
   {
-    id: "whatsapp-1",
-    name: "Quick Introduction",
-    content: `Hi {{contact_name}}! 👋
+    id: "whatsapp-raas-1",
+    name: "Stage 1: First Contact / Cold Outreach",
+    content: `Hey {{contact_name}}, 👋
+I’m reaching out from Jobs Territory.
 
-This is {{consultant_name}} from Jobs Territory. We specialize in recruitment services and would love to discuss potential partnership opportunities with {{company_name}}.
+We help companies like {{company_name}} scale faster with our Unlimited Hiring Support — no per-hire charges, just one predictable monthly plan. 💼✨
 
-Would you be interested in a quick call to explore how we can support your hiring needs?`,
-    placeholders: ["contact_name", "consultant_name", "company_name"],
+Would you be open to a quick chat to see how this model can make your hiring faster and cost-efficient? 😊
+
+Warm regards,
+{{consultant_name}}
+Jobs Territory 🌸`,
+    placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
   {
-    id: "whatsapp-2",
-    name: "Proposal Shared",
-    content: `Hi {{contact_name}},
+    id: "whatsapp-raas-2",
+    name: "Stage 2: After Call (Proposal Shared)",
+    content: `Hey {{contact_name}}, 😊
+It was lovely speaking with you earlier! I’ve shared the proposal we discussed for {{company_name}} — it includes details of our Unlimited Hiring Model that lets you hire across multiple roles without any extra cost. 🚀
 
-I've prepared a customized recruitment proposal for {{company_name}}. 
+Take a look when you can — happy to walk you through how it can simplify your hiring and save costs.
 
-Key details:
-✅ Position: {{position_type}}
-✅ TAT: {{tat}} days
-✅ Competitive rates with quality guarantee
-
-Would you like me to share the detailed proposal via email or WhatsApp?`,
-    placeholders: ["contact_name", "company_name", "position_type", "tat"],
+Warm regards,
+{{consultant_name}}
+Jobs Territory 🌸`,
+    placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
   {
-    id: "whatsapp-3",
-    name: "Follow-up Reminder",
-    content: `Hi {{contact_name}},
+    id: "whatsapp-raas-3",
+    name: "Stage 3: Follow-Up (After Proposal Sent – No Response)",
+    content: `Hey {{contact_name}}, 👋
+Just checking in to see if you got a chance to review the proposal we shared for {{company_name}}.
 
-Hope you're doing well! Just following up on our discussion about {{company_name}}'s recruitment needs.
+Our Unlimited Hiring Plan has been helping growing teams scale without worrying about per-hire fees — I’d love to explore how it could work for you too.
 
-We have some excellent candidates in our pipeline that might be a perfect fit for your requirements.
+Would you like me to schedule a quick call this week? 😊
 
-Let me know when would be a good time to connect! 😊`,
-    placeholders: ["contact_name", "company_name"],
+Warm regards,
+{{consultant_name}}
+Jobs Territory 🌸`,
+    placeholders: ["contact_name", "company_name", "consultant_name"],
+    type: "text",
+  },
+  {
+    id: "whatsapp-raas-4",
+    name: "Stage 4: Tried Calling – No Response",
+    content: `Hey {{contact_name}}, 😊
+I tried reaching you over a quick call regarding the Unlimited Hiring proposal we shared for {{company_name}}, but couldn’t connect.
+
+Just wanted to check if you’ve had a chance to go through it — this model really helps companies hire unlimited roles under one predictable plan. 💼
+
+Would tomorrow be a good time for a quick call?
+
+Warm regards,
+{{consultant_name}}
+Jobs Territory 🌸`,
+    placeholders: ["contact_name", "company_name", "consultant_name"],
+    type: "text",
+  },
+  {
+    id: "whatsapp-raas-5",
+    name: "Stage 5: Final Follow-Up (Polite Closure)",
+    content: `Hey {{contact_name}}, 🙏
+Just following up one last time regarding the Unlimited Hiring Support proposal we shared for {{company_name}}.
+
+Please let me know if you’d like to move forward or if it’s not a priority right now — I’ll make sure not to follow up again unless you’d like me to. 👍
+
+Appreciate your time either way!
+
+Warm regards,
+{{consultant_name}}
+Jobs Territory 🌸`,
+    placeholders: ["contact_name", "company_name", "consultant_name"],
+    type: "text",
+  },
+  {
+    id: "whatsapp-raas-6",
+    name: "Stage 6: Reconnect Message (Few Weeks Later)",
+    content: `Hey {{contact_name}}, 👋
+Hope all’s going great at {{company_name}}!
+
+Just wanted to reconnect — are you currently exploring any hiring support? Our Unlimited Hiring Model continues to help companies scale effortlessly with one fixed plan and unlimited hires. 🚀
+
+Would you like me to share a quick refresher on how it works?
+
+Warm regards,
+{{consultant_name}}
+Jobs Territory 🌸`,
+    placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
 ];
