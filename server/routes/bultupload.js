@@ -41,16 +41,37 @@ function normalizeUrl(url) {
 // }
 function parsePointsOfContact(row) {
   const contacts = [];
-  if (row["points_of_contact[0].phone"]) {
-    contacts.push({
-      name: (row["points_of_contact[0].name"] || "").trim(),
-      designation: (row["points_of_contact[0].designation"] || "").trim(),
-      phone: (row["points_of_contact[0].phone"] || "").trim(),
-      email: (row["points_of_contact[0].email"] || "").trim(),
-      linkedin_url: (row["points_of_contact[0].linkedin_url"] || "").trim(),
-      stage: "Contacted", // default stage
-    });
-  }
+
+  // Find how many contacts exist by checking matching keys
+  const contactIndexes = Object.keys(row)
+    .map((key) => {
+      const match = key.match(/points_of_contact\[(\d+)\]\.name/);
+      return match ? parseInt(match[1]) : null;
+    })
+    .filter((i) => i !== null);
+
+  // Unique indexes like [0, 1, 2, ...]
+  const uniqueIndexes = [...new Set(contactIndexes)];
+
+  uniqueIndexes.forEach((i) => {
+    const name = (row[`points_of_contact[${i}].name`] || "").trim();
+    const phone = (row[`points_of_contact[${i}].phone`] || "").trim();
+
+    // ✅ Include only valid ones
+    if (name && phone) {
+      contacts.push({
+        name,
+        designation: (row[`points_of_contact[${i}].designation`] || "").trim(),
+        email: (row[`points_of_contact[${i}].email`] || "").trim(),
+        phone,
+        linkedin_url: (
+          row[`points_of_contact[${i}].linkedin_url`] || ""
+        ).trim(),
+        stage: "Contacted",
+      });
+    }
+  });
+
   return contacts;
 }
 
@@ -110,7 +131,12 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
           if (!normalizedUrl) continue;
 
           const contacts = parsePointsOfContact(row);
-          console.log(contacts, "contacts");
+          if (!contacts.length) {
+            console.warn("Skipping row — no valid points_of_contact:", row);
+            return;
+          }
+
+        
           if (existingLeadsMap.has(normalizedUrl)) {
             // ✅ Already in DB → update
             const lead = existingLeadsMap.get(normalizedUrl);

@@ -514,7 +514,6 @@ const AttendanceLog: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <LogIn className="w-4 h-4 text-green-400" />
                         <span className="text-white font-medium">
-                         
                           {formatTime(record.lastLogin) || "Not logged in"}
                         </span>
                       </div>
@@ -581,56 +580,36 @@ const AttendanceLog: React.FC = () => {
           ))}
 
           {/* Calendar Days */}
+          {/* Calendar Days */}
           {eachDayOfInterval({
             start: startOfMonth(selectedMonth),
             end: endOfMonth(selectedMonth),
           }).map((day) => {
-            const dayRecord = filteredRecords.find(
-              (record) => record.date === format(day, "yyyy-MM-dd")
-            );
-            const isCurrentDay = isToday(day);
+            const isCurrentDay = isToday(day); // Check if today
 
             return (
               <div
                 key={day.toISOString()}
                 className={`p-2 border border-white/10 rounded-lg text-center transition-all duration-300 ${
                   isCurrentDay
-                    ? "bg-blue-500/20 border-blue-400"
+                    ? "bg-green-500/20 border-green-400" // Highlight today
                     : "hover:bg-white/10"
                 }`}
               >
                 <div
                   className={`text-sm font-medium mb-1 ${
-                    isCurrentDay ? "text-blue-400" : "text-white"
+                    isCurrentDay ? "text-green-400" : "text-white"
                   }`}
                 >
                   {format(day, "d")}
                 </div>
-
-                {dayRecord && (
-                  <div
-                    className={`w-6 h-6 rounded-full mx-auto flex items-center justify-center ${
-                      dayRecord.status === "Present"
-                        ? "bg-green-500"
-                        : dayRecord.status === "Absent"
-                        ? "bg-red-500"
-                        : dayRecord.status === "Half Day"
-                        ? "bg-yellow-500"
-                        : dayRecord.status === "Late"
-                        ? "bg-orange-500"
-                        : "bg-gray-500"
-                    }`}
-                  >
-                    {getStatusIcon(dayRecord.status)}
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center space-x-6 mt-6 text-sm">
+        {/* <div className="flex items-center justify-center space-x-6 mt-6 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 bg-green-500 rounded-full"></div>
             <span className="text-gray-300">Present</span>
@@ -647,7 +626,7 @@ const AttendanceLog: React.FC = () => {
             <div className="w-4 h-4 bg-red-500 rounded-full"></div>
             <span className="text-gray-300">Absent</span>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -395,13 +395,19 @@ const formatUpdatedFields = (updatedFields: any) => {
       if (!value) return null; // skip null/undefined
 
       // If value is an object with old/new keys
-      if (typeof value === "object" && "old" in value && "new" in value) {
-        return (
-          <span key={key}>
-            {key} is changed new: {value.new};{" "}
-          </span>
-        );
-      }
+     if (typeof value === "object" && "old" in value && "new" in value) {
+       const newVal =
+         typeof value.new === "object"
+           ? value.new.name || value.new.email || JSON.stringify(value.new)
+           : value.new;
+
+       return (
+         <span key={key}>
+           {key} is changed new: {newVal};{" "}
+         </span>
+       );
+     }
+
 
       // If value is a nested object with known fields
       if (typeof value === "object") {
@@ -1293,19 +1299,12 @@ const formatUpdatedFields = (updatedFields: any) => {
                         </p>
                       )}
 
-                      {/* {activity.action !== "create" &&
-                        activity.updatedFields && (
-                          <p className="text-sm text-gray-600">
-                            Changes:{" "}
-                            {formatUpdatedFields(activity.updatedFields)}
-                          </p>
-                        )} */}
                       {activity.action !== "create" && (
-                        <p className="text-sm text-gray-600">
-                          Changes:{" "}
+                        <div className="text-sm text-gray-600">
+                          <strong>Changes:</strong>{" "}
                           {formatUpdatedFields(activity.updatedFields) ||
                             "No meaningful changes"}
-                        </p>
+                        </div>
                       )}
 
                       {activity.remarks &&
