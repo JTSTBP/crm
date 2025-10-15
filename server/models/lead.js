@@ -44,6 +44,7 @@ const LeadSchema = new mongoose.Schema(
     industry_name: { type: String },
     no_of_designations: { type: Number, default: null },
     no_of_positions: { type: Number, default: null },
+    stageProposalUpd: { type: Date, default: null },
     stage: {
       type: String,
       enum: [

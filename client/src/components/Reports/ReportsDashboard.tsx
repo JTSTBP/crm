@@ -75,27 +75,63 @@ const ReportsDashboard: React.FC = () => {
   const proposalSentLeads = leads.filter(
     (lead) => lead.stage === "Proposal Sent"
   );
-  console.log(proposalSentLeads, "proposalSentLeads");
 
   const nonAdmins = users.filter((user) => user.role !== "Admin");
 
-  useEffect(() => {
-    const getCalls = async () => {
-      const calls = await fetchAllCallActivities();
-      console.log(calls, "cc");
-      setCallCount(calls.length);
-    };
-    getCalls();
-  }, []);
+  // useEffect(() => {
+  //   const getCalls = async () => {
+  //     const allCalls = await fetchAllCallActivities();
+
+  //     const now = new Date();
+  //     let filteredCalls = allCalls;
+
+  //     // ✅ Filter by date range
+  //     if (filters.dateRange === "today") {
+  //       filteredCalls = allCalls.filter((call: any) =>
+  //         isToday(new Date(call.timestamp))
+  //       );
+  //     } else if (filters.dateRange === "last7days") {
+  //       filteredCalls = allCalls.filter((call: any) =>
+  //         isWithinInterval(new Date(call.timestamp), {
+  //           start: subDays(now, 7),
+  //           end: now,
+  //         })
+  //       );
+  //     } else if (filters.dateRange === "last30days") {
+  //       filteredCalls = allCalls.filter((call: any) =>
+  //         isWithinInterval(new Date(call.timestamp), {
+  //           start: subDays(now, 30),
+  //           end: now,
+  //         })
+  //       );
+  //     }
+
+  //     // ✅ Filter by user (if selected)
+  //     if (filters.userId) {
+  //       filteredCalls = filteredCalls.filter(
+  //         (call: any) => call.userId?._id === filters.userId
+  //       );
+  //     }
+
+  //     // Update your state
+  //     setCallCount(filteredCalls.length);
+  //     console.log("Filtered Calls:", filteredCalls);
+  //   };
+
+  //   getCalls();
+  // }, [filters.dateRange, filters.userId]);
+  const [proposalSentCount, setProposalSentCount] = useState(0);
 
   useEffect(() => {
-    const getCalls = async () => {
+    const getData = async () => {
       const allCalls = await fetchAllCallActivities();
+      // ✅ make sure this API exists
 
       const now = new Date();
       let filteredCalls = allCalls;
+      let filteredLeads = leads;
 
-      // ✅ Filter by date range
+      // ✅ Filter Calls by Date Range
       if (filters.dateRange === "today") {
         filteredCalls = allCalls.filter((call: any) =>
           isToday(new Date(call.timestamp))
@@ -116,19 +152,49 @@ const ReportsDashboard: React.FC = () => {
         );
       }
 
-      // ✅ Filter by user (if selected)
+      // ✅ Filter by User (if selected)
       if (filters.userId) {
         filteredCalls = filteredCalls.filter(
           (call: any) => call.userId?._id === filters.userId
         );
+        filteredLeads = filteredLeads.filter(
+          (lead: any) => lead.assignedBy?._id === filters.userId
+        );
       }
 
-      // Update your state
+      // ✅ Proposal Sent Leads Filter with fallback (stageProposalUpd → updatedAt)
+      const proposalSentLeads = filteredLeads.filter((lead: any) => {
+        if (lead.stage !== "Proposal Sent") return false;
+
+        const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
+        if (!dateToCheck) return false;
+
+        if (filters.dateRange === "today") {
+          return isToday(new Date(dateToCheck));
+        } else if (filters.dateRange === "last7days") {
+          return isWithinInterval(new Date(dateToCheck), {
+            start: subDays(now, 7),
+            end: now,
+          });
+        } else if (filters.dateRange === "last30days") {
+          return isWithinInterval(new Date(dateToCheck), {
+            start: subDays(now, 30),
+            end: now,
+          });
+        }
+
+        return true;
+      });
+
+      // ✅ Update State
       setCallCount(filteredCalls.length);
+      setProposalSentCount(proposalSentLeads.length);
+
       console.log("Filtered Calls:", filteredCalls);
+      console.log("Filtered Proposal Sent Leads:", proposalSentLeads);
     };
 
-    getCalls();
+    getData();
   }, [filters.dateRange, filters.userId]);
 
   const MetricCard: React.FC<{
@@ -344,7 +410,7 @@ const ReportsDashboard: React.FC = () => {
             />
             <MetricCard
               title="Proposals Sent"
-              value={proposalSentLeads.length}
+              value={proposalSentCount}
               icon={<FileText className="w-7 h-7 text-white" />}
               color="bg-purple-500"
               trend="+8% vs last period"

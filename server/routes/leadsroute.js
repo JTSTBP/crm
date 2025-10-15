@@ -175,9 +175,11 @@ router.delete("/:leadId/remarks/:remarkId", async (req, res) => {
       return res.status(404).json({ error: "Lead not found" });
     }
 
-    // Remove the remark
-    lead.remarks = lead.remarks.filter((r) => r._id.toString() !== remarkId);
-    await lead.save();
+   const updatedLead = await Lead.findOneAndUpdate(
+     { _id: leadId },
+     { $pull: { remarks: { _id: remarkId } } }, // remove the remark
+     { new: true } // ✅ ensures post hook sees the updated document
+   );
 
     res.json({ message: "Remark deleted", remarks: lead.remarks });
   } catch (err) {
@@ -202,7 +204,7 @@ router.get("/:id", async (req, res) => {
 // Update lead
 router.put("/:id", async (req, res) => {
   try {
-    const { points_of_contact } = req.body;
+    const { points_of_contact, stage } = req.body;
 
     // Check for duplicate contact phone numbers
     const phones = points_of_contact?.map((c) => c.phone) || [];
@@ -214,15 +216,22 @@ router.put("/:id", async (req, res) => {
         .json({ message: "Duplicate contact phone numbers are not allowed" });
     }
 
+    // If stage is being updated, add stageUpdatedAt
+    if (stage === "Proposal Sent") {
+      req.body.stageProposalUpd = new Date();
+    }
+
     const updated = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).populate("assignedBy", "name email role");
+
     console.log(updated, "up");
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // Delete lead
 router.delete("/:id", async (req, res) => {
