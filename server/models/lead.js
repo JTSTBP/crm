@@ -9,8 +9,8 @@ const PointOfContactSchema = new mongoose.Schema({
   linkedin_url: { type: String },
   stage: {
     type: String,
-    enum: ["Contacted", "Busy", "No Answer", "Wrong Number"],
-  
+    enum: ["New","Contacted", "Busy", "No Answer", "Wrong Number"],
+    default: "New",
   },
 });
 

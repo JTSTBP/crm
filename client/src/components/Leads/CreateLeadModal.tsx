@@ -59,7 +59,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       phone: "",
       email: "",
       linkedin_url: "",
-      stage: "",
+      stage: "New",
     },
   ]);
 
@@ -98,7 +98,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       ? {
           ...lead,
           points_of_contact: lead.points_of_contact || [
-            { name: "", designation: "", phone: "", email: "" },
+            { name: "", designation: "", phone: "", email: "", stage: "New" },
           ],
           hiring_needs: lead.hiring_needs || [],
         }
@@ -131,7 +131,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
         phone: "",
         email: "",
         linkedin_url: "",
-        stage: "Busy",
+        stage: "New",
       },
     ]);
   };
@@ -162,7 +162,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       const validContacts = pointsOfContact.filter(
         (c) => c.name.trim() !== "" && c.phone.trim() !== ""
       );
-      console.log(pointsOfContact, "pointsOfContact");
+      console.log(pointsOfContact, "pointsOfContact", validContacts);
 
       if (validContacts.length === 0) {
         toast.error("At least one point of contact is required");
@@ -173,7 +173,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
         await updateLead(lead._id, {
           ...data,
           hiring_needs: selectedHiringNeeds,
-          points_of_contact: pointsOfContact.filter((c) => c.name && c.email),
+          points_of_contact: pointsOfContact.filter((c) => c.name && c.phone),
           no_of_designations: data.no_of_designations || null,
           no_of_positions: noOfPositions || null,
         });
@@ -183,7 +183,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
         await createLead({
           ...data,
           hiring_needs: selectedHiringNeeds,
-          points_of_contact: pointsOfContact.filter((c) => c.name && c.email),
+          points_of_contact: pointsOfContact.filter((c) => c.name && c.phone),
 
           no_of_designations: data.no_of_designations || null,
           no_of_positions: noOfPositions || null,
@@ -490,11 +490,12 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                       className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white 
              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm"
                     >
+                    
                       <option
                         className="bg-gray-700 text-white"
-                        value="Contacted"
+                        value="New"
                       >
-                        Select Stage
+                        New
                       </option>
                       <option
                         className="bg-gray-700 text-white"
