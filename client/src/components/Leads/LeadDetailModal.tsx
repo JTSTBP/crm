@@ -1391,6 +1391,9 @@ export default LeadDetailModal;
 
 
 
+
+
+
 // import React, { useEffect, useRef, useState } from "react";
 // import {
 //   X,
@@ -2989,15 +2992,15 @@ export default LeadDetailModal;
 //             </h2>
 //             <select
 //               value={selectedStageAfterCall}
-//               onChange={(e) => setSelectedStageAfterCall(e.target.value)}
+//               onChange={(e) => setSelectedStageAfterCall(e.target.value) }
 //               className="w-full border border-gray-300 rounded-lg p-2 mb-4"
 //             >
+              
 //               <option value="">Select Stage</option>
-//               {stages.map((stage) => (
-//                 <option key={stage} value={stage}>
-//                   {stage}
-//                 </option>
-//               ))}
+//               <option value="Contacted">Contacted</option>
+//               <option value="Busy">Busy</option>
+//               <option value="No Answer">No Answer</option>
+//               <option value="Wrong Number">Wrong Number</option>
 //             </select>
 
 //             <div className="flex justify-end gap-2">
