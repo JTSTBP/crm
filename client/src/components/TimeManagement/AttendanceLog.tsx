@@ -63,13 +63,14 @@ const AttendanceLog: React.FC = () => {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   console.log(attendanceRecords, "attendanceRecords");
-  const formatHours = (hours: number): string => {
-    if (!hours || hours <= 0) return "0h 0m";
-    const totalMinutes = Math.floor(hours * 60);
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
-    return `${h}h ${m}m`;
-  };
+const formatHours = (hours: number): string => {
+  if (!hours || hours <= 0) return "0h 0m";
+  const totalMinutes = Math.round(hours * 60); // round instead of floor
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${h}h ${m}m`;
+};
+
   console.log(attendanceRecords, "attendanceRecords", filteredRecords);
   const summary = getAttendanceSummary(filteredRecords);
 
@@ -256,6 +257,12 @@ const AttendanceLog: React.FC = () => {
     }
   }, [monthlySummary]);
   console.log(overallSummary, "overallSummary");
+  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
+
+  const toggleSessions = (id: string) => {
+    setExpandedRecordId(expandedRecordId === id ? null : id);
+  };
+
 
   if (loading) {
     return (
@@ -430,6 +437,9 @@ const AttendanceLog: React.FC = () => {
               <thead className="bg-white/10 border-b border-white/20">
                 <tr>
                   <th className="text-left py-4 px-6 font-semibold text-white">
+                    sessions
+                  </th>
+                  <th className="text-left py-4 px-6 font-semibold text-white">
                     Date
                   </th>
                   {(profile?.role === "Admin" ||
@@ -457,105 +467,156 @@ const AttendanceLog: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {filteredRecords.map((record) => (
-                  <tr
-                    key={record}
-                    className={`${
-                      record.status === "Present"
-                        ? "bg-green-500/10"
-                        : record.status === "Absent"
-                        ? "bg-red-500/10"
-                        : record.status === "Half Day"
-                        ? "bg-yellow-500/10"
-                        : "bg-orange-500/10"
-                    }`}
-                  >
-                    <td className="py-4 px-6 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span
-                          className={`font-medium ${
-                            isToday(new Date(record.date))
-                              ? "text-blue-400"
-                              : "text-white"
-                          }`}
-                        >
-                          {format(new Date(record.date), "MMM dd, yyyy")}
-                        </span>
-                        {isToday(new Date(record.date)) && (
-                          <span className="px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
-                            TODAY
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {(profile?.role === "Admin" ||
-                      profile?.role === "Manager") && (
+                  <React.Fragment key={record._id}>
+                    <tr
+                      key={record}
+                      className={`${
+                        record.status === "Present"
+                          ? "bg-green-500/10"
+                          : record.status === "Absent"
+                          ? "bg-red-500/10"
+                          : record.status === "Half Day"
+                          ? "bg-yellow-500/10"
+                          : "bg-orange-500/10"
+                      }`}
+                    >
                       <td className="py-4 px-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 gradient-primary rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-semibold">
-                              {record.name.charAt(0)}
+                        <button
+                          onClick={() => toggleSessions(record._id)}
+                          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs font-medium"
+                        >
+                          {expandedRecordId === record._id
+                            ? "Hide Sessions"
+                            : "View Sessions"}
+                        </button>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span
+                            className={`font-medium ${
+                              isToday(new Date(record.date))
+                                ? "text-blue-400"
+                                : "text-white"
+                            }`}
+                          >
+                            {format(new Date(record.date), "MMM dd, yyyy")}
+                          </span>
+                          {isToday(new Date(record.date)) && (
+                            <span className="px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
+                              TODAY
                             </span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-white">
-                              {record.name}
-                            </p>
-                            <p className="text-gray-400 text-xs">
-                              {record.role}
-                            </p>
-                          </div>
+                          )}
                         </div>
                       </td>
-                    )}
 
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <LogIn className="w-4 h-4 text-green-400" />
-                        <span className="text-white font-medium">
-                          {formatTime(record.lastLogin) || "Not logged in"}
+                      {(profile?.role === "Admin" ||
+                        profile?.role === "Manager") && (
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 gradient-primary rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs font-semibold">
+                                {record.name.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-white">
+                                {record.name}
+                              </p>
+                              <p className="text-gray-400 text-xs">
+                                {record.role}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                      )}
+
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <LogIn className="w-4 h-4 text-green-400" />
+                          <span className="text-white font-medium">
+                            {formatTime(record.lastLogin) || "Not logged in"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <LogOut className="w-4 h-4 text-red-400" />
+                          <span className="text-white font-medium">
+                            {formatTime(record.lastLogout) || "Not logged out"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-blue-400" />
+                          <span className="text-white font-bold">
+                            {record.totalHours
+                              ? formatHours(record.totalHours)
+                              : "-"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            record.status
+                          )}`}
+                        >
+                          {getStatusIcon(record.status)}
+                          <span className="ml-1">{record.status}</span>
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <LogOut className="w-4 h-4 text-red-400" />
-                        <span className="text-white font-medium">
-                          {formatTime(record.lastLogout) || "Not logged out"}
+                      <td className="py-4 px-6">
+                        <span className="text-gray-300 text-sm">
+                          {record.notes || "-"}
                         </span>
-                      </div>
-                    </td>
+                      </td>
+                    </tr>
 
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-blue-400" />
-                        <span className="text-white font-bold">
-                          {record.totalHours
-                            ? formatHours(record.totalHours)
-                            : "-"}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          record.status
-                        )}`}
-                      >
-                        {getStatusIcon(record.status)}
-                        <span className="ml-1">{record.status}</span>
-                      </span>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <span className="text-gray-300 text-sm">
-                        {record.notes || "-"}
-                      </span>
-                    </td>
-                  </tr>
+                    {expandedRecordId === record._id &&
+                      record.sessions.length > 0 && (
+                        <tr>
+                          <td colSpan={7} className="bg-white/5 p-4">
+                            <div className="space-y-2">
+                              {record.sessions.map((session, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex justify-between items-center bg-white/10 p-2 rounded"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <LogIn className="w-4 h-4 text-green-400" />
+                                    <span className="text-white text-sm">
+                                      {formatTime(session.loginTime)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <LogOut className="w-4 h-4 text-red-400" />
+                                    <span className="text-white text-sm">
+                                      {session.logoutTime
+                                        ? formatTime(session.logoutTime)
+                                        : "-"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <Clock className="w-4 h-4 text-blue-400 inline-block mr-1" />
+                                    <span className="text-white text-sm">
+                                      {session.durationHours
+                                        ? formatHours(session.durationHours)
+                                        : "-"}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

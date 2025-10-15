@@ -271,6 +271,7 @@ console.log(profile,"p")
           name: rec.user_id?.name || "Unknown User",
           role: rec.user_id?.role || "Unknown",
           date: rec.date,
+          sessions: rec.sessions || [],
           lastLogin: rec.sessions?.length
             ? rec.sessions[0].loginTime // ✅ first session = initial login
             : null,

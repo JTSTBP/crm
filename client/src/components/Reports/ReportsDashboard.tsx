@@ -39,6 +39,11 @@ import {
   Shield,
   User,
   Briefcase,
+  MessageSquare,
+  Edit,
+  Trash,
+  Trash2,
+  PlusCircle,
 } from "lucide-react";
 
 import { useReports } from "../../hooks/useReports";
@@ -67,10 +72,11 @@ const ReportsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity">(
     "overview"
   );
+  const [activitiesgiv,setActivitiesgiv]=useState([])
   const [callcount, setCallCount] = useState(0);
   const { fetchAllCallActivities } = useEmail();
 
-  const { leads } = useLeadsContext();
+  const { leads, activities } = useLeadsContext();
 
   const proposalSentLeads = leads.filter(
     (lead) => lead.stage === "Proposal Sent"
@@ -78,48 +84,7 @@ const ReportsDashboard: React.FC = () => {
 
   const nonAdmins = users.filter((user) => user.role !== "Admin");
 
-  // useEffect(() => {
-  //   const getCalls = async () => {
-  //     const allCalls = await fetchAllCallActivities();
-
-  //     const now = new Date();
-  //     let filteredCalls = allCalls;
-
-  //     // ✅ Filter by date range
-  //     if (filters.dateRange === "today") {
-  //       filteredCalls = allCalls.filter((call: any) =>
-  //         isToday(new Date(call.timestamp))
-  //       );
-  //     } else if (filters.dateRange === "last7days") {
-  //       filteredCalls = allCalls.filter((call: any) =>
-  //         isWithinInterval(new Date(call.timestamp), {
-  //           start: subDays(now, 7),
-  //           end: now,
-  //         })
-  //       );
-  //     } else if (filters.dateRange === "last30days") {
-  //       filteredCalls = allCalls.filter((call: any) =>
-  //         isWithinInterval(new Date(call.timestamp), {
-  //           start: subDays(now, 30),
-  //           end: now,
-  //         })
-  //       );
-  //     }
-
-  //     // ✅ Filter by user (if selected)
-  //     if (filters.userId) {
-  //       filteredCalls = filteredCalls.filter(
-  //         (call: any) => call.userId?._id === filters.userId
-  //       );
-  //     }
-
-  //     // Update your state
-  //     setCallCount(filteredCalls.length);
-  //     console.log("Filtered Calls:", filteredCalls);
-  //   };
-
-  //   getCalls();
-  // }, [filters.dateRange, filters.userId]);
+ 
   const [proposalSentCount, setProposalSentCount] = useState(0);
 
   useEffect(() => {
@@ -130,6 +95,7 @@ const ReportsDashboard: React.FC = () => {
       const now = new Date();
       let filteredCalls = allCalls;
       let filteredLeads = leads;
+      let filteredActivities = activities;
 
       // ✅ Filter Calls by Date Range
       if (filters.dateRange === "today") {
@@ -186,9 +152,39 @@ const ReportsDashboard: React.FC = () => {
         return true;
       });
 
+      // ✅ Filter Activities by Date Range
+      if (filters.dateRange === "today") {
+        filteredActivities = activities.filter((activity: any) =>
+          isToday(new Date(activity.timestamp?.$date || activity.timestamp))
+        );
+      } else if (filters.dateRange === "last7days") {
+        filteredActivities = activities.filter((activity: any) =>
+          isWithinInterval(
+            new Date(activity.timestamp?.$date || activity.timestamp),
+            {
+              start: subDays(now, 7),
+              end: now,
+            }
+          )
+        );
+      } else if (filters.dateRange === "last30days") {
+        filteredActivities = activities.filter((activity: any) =>
+          isWithinInterval(
+            new Date(activity.timestamp?.$date || activity.timestamp),
+            {
+              start: subDays(now, 30),
+              end: now,
+            }
+          )
+        );
+      }
+
       // ✅ Update State
       setCallCount(filteredCalls.length);
       setProposalSentCount(proposalSentLeads.length);
+      setActivitiesgiv(filteredActivities);
+
+      console.log("Filtered Activities:", filteredActivities);
 
       console.log("Filtered Calls:", filteredCalls);
       console.log("Filtered Proposal Sent Leads:", proposalSentLeads);
@@ -227,7 +223,8 @@ const ReportsDashboard: React.FC = () => {
         <div className={`p-4 rounded-2xl ${color} shadow-lg`}>{icon}</div>
       </div>
     </div>
-  );
+    );
+  console.log(activitiesgiv, "act");
 
   const roleColors: Record<string, string> = {
     Admin: "bg-gradient-to-r from-yellow-400 to-yellow-600",
@@ -317,6 +314,93 @@ const ReportsDashboard: React.FC = () => {
   const handleUserFilter = (userId: string) => {
     updateFilters({ userId: userId === filters.userId ? undefined : userId });
   };
+
+  const formatUpdatedFields = (updatedFields: any, action?: string) => {
+    if (!updatedFields) return null;
+
+    const getDisplayValue = (v: any) => {
+      if (Array.isArray(v)) {
+        if (v.length === 0) return "none";
+        return v
+          .map(
+            (item) =>
+              item?.name || item?.email || item?.content || JSON.stringify(item)
+          )
+          .join(", ");
+      }
+      if (v && typeof v === "object") {
+        return (
+          v.name ||
+          v.email ||
+          v.title ||
+          v.company_name ||
+          v.content ||
+          JSON.stringify(v)
+        );
+      }
+      return v ?? "null";
+    };
+
+    const changes = Object.entries(updatedFields)
+      .filter(
+        ([key]) => !["points_of_contact", "files", "documents"].includes(key)
+      )
+      .map(([key, value]) => {
+        if (!value) return null;
+
+        if (
+          typeof value === "object" &&
+          value !== null &&
+          "old" in value &&
+          "new" in value
+        ) {
+          const oldVal = getDisplayValue(value.old);
+          const newVal = getDisplayValue(value.new);
+          if (oldVal === newVal) return null;
+          return (
+            <div key={key}>
+              <strong>{key}</strong> changed from <b>{oldVal}</b> →{" "}
+              <b>{newVal}</b>
+            </div>
+          );
+        }
+
+        if (key === "remark" && typeof value === "object") {
+          const author = value.profile?.name || "Unknown User";
+          const content = value.content || "(no content)";
+          const type = value.type || "text";
+          return (
+            <span key={key}>
+              By <b>{author}</b> — {content} ({type})
+            </span>
+          );
+        }
+
+        if (typeof value === "object" && value !== null) {
+          const displayValue = getDisplayValue(value);
+          if (displayValue === "{}") return null;
+          return (
+            <div key={key}>
+              <strong>{key}</strong>: {displayValue}
+            </div>
+          );
+        }
+
+        return (
+          <div key={key}>
+            <strong>{key}</strong>: {String(value)}
+          </div>
+        );
+      })
+      .filter(Boolean);
+
+    if (changes.length === 0 && updatedFields.remarks) {
+      return <div>New remark added</div>;
+    }
+
+    return changes.length > 0 ? changes : <div>No meaningful changes</div>;
+  };
+
 
   if (loading) {
     return (
@@ -719,12 +803,6 @@ const ReportsDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {users.map((user, index) => (
-              <UserMetricCard key={user.id} user={user} rank={index + 1} />
-            ))}
-          </div> */}
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {nonAdmins
               .filter((user) =>
@@ -738,7 +816,7 @@ const ReportsDashboard: React.FC = () => {
       )}
 
       {/* Activity Feed Tab */}
-      {activeTab === "activity" && (
+      {/* {activeTab === "activity" && (
         <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
           <h2 className="text-xl font-bold text-white mb-6">
             Recent Activity Feed
@@ -799,6 +877,107 @@ const ReportsDashboard: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )} */}
+
+      {/* Activity Feed Tab */}
+      {activeTab === "activity" && (
+        <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-6">
+            Recent Activity Feed
+          </h2>
+          <div
+            className="space-y-4 max-h-96 overflow-y-auto"
+            style={{ overflowX: "hidden" }}
+          >
+            {activitiesgiv.map((activity) => (
+              <div
+                key={activity.id}
+                className="flex items-start space-x-4 p-4 bg-white/5 rounded-xl border border-white/10"
+              >
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activity.action === "update"
+                      ? "bg-blue-500"
+                      : activity.action === "remark_added"
+                      ? "bg-green-500"
+                      : activity.action === "remark_deleted"
+                      ? "bg-red-500"
+                      : activity.action === "create"
+                      ? "bg-purple-500"
+                      : "bg-gray-500"
+                  }`}
+                >
+                  {activity.action === "update" && (
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  )}
+                  {activity.action === "remark_added" && (
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  )}
+                  {activity.action === "remark_deleted" && (
+                    <Trash2 className="w-5 h-5 text-white" />
+                  )}
+                  {activity.action === "create" && (
+                    <PlusCircle className="w-5 h-5 text-white" />
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-white">
+                      <span className="text-blue-400">{activity.user}</span>{" "}
+                      {activity.action.toLowerCase()}
+                    </p>
+                    <p className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                      {format(new Date(activity.timestamp), "MMM dd, HH:mm")}
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-gray-300 mt-1">
+                    {activity.leadName}
+                  </p>
+
+                  {activity.updatedFields && (
+                    <div className="mt-2 text-sm text-gray-400 space-y-1">
+                      <strong className="text-gray-300">Changes:</strong>
+                      <div className="pl-2 space-y-1">
+                        {formatUpdatedFields(activity.updatedFields)}
+                      </div>
+                    </div>
+                  )}
+
+                  {activity.remarks && activity.remarks.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-400">
+                      <strong className="text-gray-300">Remarks:</strong>
+                      <ul className="list-disc pl-5">
+                        {activity.remarks.map((remark: any) => (
+                          <li key={remark._id}>
+                            {remark.type}:{" "}
+                            {remark.content ||
+                              remark.fileUrl ||
+                              remark.voiceUrl}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {activity.details && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {activity.details}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {activitiesgiv.length === 0 && (
+              <div className="text-center py-8">
+                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-400">No recent activities yet.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
