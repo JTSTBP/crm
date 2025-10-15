@@ -67,7 +67,7 @@ function parsePointsOfContact(row) {
         linkedin_url: (
           row[`points_of_contact[${i}].linkedin_url`] || ""
         ).trim(),
-        stage: "New",
+     
       });
     }
   });
