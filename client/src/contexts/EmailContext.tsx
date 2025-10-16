@@ -58,6 +58,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
 ------------------------------ */
   const fetchAllCallActivities = async () => {
     try {
+      console.log("callllll")
       setLoading(true);
       const res = await axios.get(`${BACKEND_URL}/api/users/all`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },

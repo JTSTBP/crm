@@ -58,13 +58,12 @@ import { useLeadsContext } from "../../contexts/leadcontext";
 const ReportsDashboard: React.FC = () => {
   const {
     overallMetrics,
-  
+
     chartData,
-  
+
     filters,
     updateFilters,
     exportData,
-
   } = useReports();
   const { loading, toggleUserStatus, deleteUser } = useAuth();
   const { users } = useUsers();
@@ -140,7 +139,7 @@ const ReportsDashboard: React.FC = () => {
     const getData = async () => {
       const allCalls = await fetchAllCallActivities();
       // ✅ make sure this API exists
-      console.log(filter, "filter");
+    
 
       const now = new Date();
       let filteredCalls = allCalls;
@@ -150,6 +149,7 @@ const ReportsDashboard: React.FC = () => {
       filteredCalls = filteredCalls.filter((call: any) =>
         applyDateFilter(call.timestamp?.$date || call.timestamp)
       );
+      console.log(filteredCalls, "filteredCalls");
       filteredLeads = filteredLeads.filter((lead: any) => {
         if (lead.stage !== "Proposal Sent") return false;
         const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
@@ -177,6 +177,7 @@ const ReportsDashboard: React.FC = () => {
     filters.customEnd,
     filters.userId,
   ]);
+  console.log(callcount,"call")
 
   const MetricCard: React.FC<{
     title: string;
