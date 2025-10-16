@@ -58,13 +58,13 @@ import { useLeadsContext } from "../../contexts/leadcontext";
 const ReportsDashboard: React.FC = () => {
   const {
     overallMetrics,
-    userMetrics,
+  
     chartData,
-    activityFeed,
+  
     filters,
     updateFilters,
     exportData,
-    getUserDetails,
+
   } = useReports();
   const { loading, toggleUserStatus, deleteUser } = useAuth();
   const { users } = useUsers();
@@ -72,11 +72,15 @@ const ReportsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity">(
     "overview"
   );
-  const [activitiesgiv,setActivitiesgiv]=useState([])
+  const [activitiesgiv, setActivitiesgiv] = useState([]);
   const [callcount, setCallCount] = useState(0);
-  const { fetchAllCallActivities } = useEmail();
+  const { fetchAllCallActivities, fetchUserCalls } = useEmail();
 
   const { leads, activities } = useLeadsContext();
+  const [customRange, setCustomRange] = useState<{
+    start: string;
+    end: string;
+  }>({ start: "", end: "" });
 
   const proposalSentLeads = leads.filter(
     (lead) => lead.stage === "Proposal Sent"
@@ -84,104 +88,80 @@ const ReportsDashboard: React.FC = () => {
 
   const nonAdmins = users.filter((user) => user.role !== "Admin");
 
- 
   const [proposalSentCount, setProposalSentCount] = useState(0);
+
+  const handleCustomStartChange = (date: string) => {
+    setCustomRange((prev) => ({ ...prev, start: date }));
+    updateFilters({ customStart: date });
+  };
+
+  const handleCustomEndChange = (date: string) => {
+    setCustomRange((prev) => ({ ...prev, end: date }));
+    updateFilters({ customEnd: date });
+  };
+
+  const handleDateRangeChange = (range: string) => {
+    updateFilters({ dateRange: range as any });
+    if (range !== "custom") setCustomRange({ start: "", end: "" });
+  };
+
+  const applyDateFilter = (date: any) => {
+    if (!date) return false;
+    const dt = new Date(date);
+
+    if (filters.dateRange === "today") return isToday(dt);
+
+    if (filters.dateRange === "last7days")
+      return isWithinInterval(dt, {
+        start: subDays(new Date(), 7),
+        end: new Date(),
+      });
+
+    if (filters.dateRange === "last30days")
+      return isWithinInterval(dt, {
+        start: subDays(new Date(), 30),
+        end: new Date(),
+      });
+
+    if (
+      filters.dateRange === "custom" &&
+      filters.customStart &&
+      filters.customEnd
+    )
+      return isWithinInterval(dt, {
+        start: new Date(filters.customStart),
+        end: new Date(filters.customEnd),
+      });
+
+    return true; // fallback
+  };
 
   useEffect(() => {
     const getData = async () => {
       const allCalls = await fetchAllCallActivities();
       // ✅ make sure this API exists
+      console.log(filter, "filter");
 
       const now = new Date();
       let filteredCalls = allCalls;
       let filteredLeads = leads;
       let filteredActivities = activities;
 
-      // ✅ Filter Calls by Date Range
-      if (filters.dateRange === "today") {
-        filteredCalls = allCalls.filter((call: any) =>
-          isToday(new Date(call.timestamp))
-        );
-      } else if (filters.dateRange === "last7days") {
-        filteredCalls = allCalls.filter((call: any) =>
-          isWithinInterval(new Date(call.timestamp), {
-            start: subDays(now, 7),
-            end: now,
-          })
-        );
-      } else if (filters.dateRange === "last30days") {
-        filteredCalls = allCalls.filter((call: any) =>
-          isWithinInterval(new Date(call.timestamp), {
-            start: subDays(now, 30),
-            end: now,
-          })
-        );
-      }
-
-      // ✅ Filter by User (if selected)
-      if (filters.userId) {
-        filteredCalls = filteredCalls.filter(
-          (call: any) => call.userId?._id === filters.userId
-        );
-        filteredLeads = filteredLeads.filter(
-          (lead: any) => lead.assignedBy?._id === filters.userId
-        );
-      }
-
-      // ✅ Proposal Sent Leads Filter with fallback (stageProposalUpd → updatedAt)
-      const proposalSentLeads = filteredLeads.filter((lead: any) => {
+      filteredCalls = filteredCalls.filter((call: any) =>
+        applyDateFilter(call.timestamp?.$date || call.timestamp)
+      );
+      filteredLeads = filteredLeads.filter((lead: any) => {
         if (lead.stage !== "Proposal Sent") return false;
-
         const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
-        if (!dateToCheck) return false;
-
-        if (filters.dateRange === "today") {
-          return isToday(new Date(dateToCheck));
-        } else if (filters.dateRange === "last7days") {
-          return isWithinInterval(new Date(dateToCheck), {
-            start: subDays(now, 7),
-            end: now,
-          });
-        } else if (filters.dateRange === "last30days") {
-          return isWithinInterval(new Date(dateToCheck), {
-            start: subDays(now, 30),
-            end: now,
-          });
-        }
-
-        return true;
+        return dateToCheck ? applyDateFilter(dateToCheck) : false;
       });
-
-      // ✅ Filter Activities by Date Range
-      if (filters.dateRange === "today") {
-        filteredActivities = activities.filter((activity: any) =>
-          isToday(new Date(activity.timestamp?.$date || activity.timestamp))
-        );
-      } else if (filters.dateRange === "last7days") {
-        filteredActivities = activities.filter((activity: any) =>
-          isWithinInterval(
-            new Date(activity.timestamp?.$date || activity.timestamp),
-            {
-              start: subDays(now, 7),
-              end: now,
-            }
-          )
-        );
-      } else if (filters.dateRange === "last30days") {
-        filteredActivities = activities.filter((activity: any) =>
-          isWithinInterval(
-            new Date(activity.timestamp?.$date || activity.timestamp),
-            {
-              start: subDays(now, 30),
-              end: now,
-            }
-          )
-        );
-      }
+      filteredActivities = filteredActivities.filter((activity: any) =>
+        applyDateFilter(activity.timestamp?.$date || activity.timestamp)
+      );
 
       // ✅ Update State
       setCallCount(filteredCalls.length);
-      setProposalSentCount(proposalSentLeads.length);
+      setProposalSentCount(filteredLeads.length);
       setActivitiesgiv(filteredActivities);
 
       console.log("Filtered Activities:", filteredActivities);
@@ -191,7 +171,12 @@ const ReportsDashboard: React.FC = () => {
     };
 
     getData();
-  }, [filters.dateRange, filters.userId]);
+  }, [
+    filters.dateRange,
+    filters.customStart,
+    filters.customEnd,
+    filters.userId,
+  ]);
 
   const MetricCard: React.FC<{
     title: string;
@@ -223,8 +208,7 @@ const ReportsDashboard: React.FC = () => {
         <div className={`p-4 rounded-2xl ${color} shadow-lg`}>{icon}</div>
       </div>
     </div>
-    );
-  console.log(activitiesgiv, "act");
+  );
 
   const roleColors: Record<string, string> = {
     Admin: "bg-gradient-to-r from-yellow-400 to-yellow-600",
@@ -242,68 +226,133 @@ const ReportsDashboard: React.FC = () => {
     const colorClass =
       roleColors[role] || "bg-gradient-to-r from-gray-400 to-gray-600";
 
-    return (
-      <div
-        className={`glass rounded-xl p-4 border border-white/30 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] ${
-          selectedUser === user._id ? "ring-2 ring-blue-400" : ""
-        }`}
-        onClick={() =>
-          setSelectedUser(selectedUser === user._id ? null : user._id)
+    const [showModal, setShowModal] = useState(false);
+    const [userCalls, setUserCalls] = useState<any[]>([]); // all calls
+    console.log(userCalls, "userCalls");
+
+    useEffect(() => {
+      const getUserCalls = async () => {
+        try {
+          const data = await fetchUserCalls(user._id); // API returning populated calls
+          const now = new Date();
+          let filteredCalls = data.calls || [];
+
+          filteredCalls = filteredCalls.filter((call: any) =>
+            applyDateFilter(call.timestamp?.$date || call.timestamp)
+          );
+
+          setUserCalls(filteredCalls);
+        } catch (error) {
+          console.error("Error fetching user calls:", error);
         }
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${colorClass}`}
-            >
-              {roleIcons[role] || role.charAt(0)}
+      };
+
+      getUserCalls();
+    }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
+
+    return (
+      <>
+        <div
+          className={`glass rounded-xl p-4 border border-white/30 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02]`}
+          onClick={() => setShowModal(true)}
+        >
+          {/* Card content */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${colorClass}`}
+              >
+                {roleIcons[role] || role.charAt(0)}
+              </div>
+              <div>
+                <p className="font-semibold text-white">{user.name}</p>
+                <p className="text-sm text-gray-300">{user.email}</p>
+                <p className="text-xs text-gray-400 mt-1">{role}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-emerald-400">
+                {user.leadsOnboarded || "-"}
+              </p>
+              <p className="text-xs text-gray-400">Onboarded</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div>
+              <p className="text-lg font-semibold text-blue-400">
+                {userCalls.length}
+              </p>
+              <p className="text-xs text-gray-400">Calls</p>
             </div>
             <div>
-              <p className="font-semibold text-white">{user.name}</p>
-              <p className="text-sm text-gray-300">{user.email}</p>
-              <p className="text-xs text-gray-400 mt-1">{role}</p>
+              <p className="text-lg font-semibold text-purple-400">
+                {user.proposalsSent || "-"}
+              </p>
+              <p className="text-xs text-gray-400">Proposals</p>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-green-400">
+                {user.conversionRatio || "-"}%
+              </p>
+              <p className="text-xs text-gray-400">Conversion</p>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-yellow-400">
+                ₹{(user.revenue / 100000).toFixed(1) || "-"}L
+              </p>
+              <p className="text-xs text-gray-400">Revenue</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-emerald-400">
-              {user.leadsOnboarded || "-"}
-            </p>
-            <p className="text-xs text-gray-400">Onboarded</p>
-          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 text-center">
-          <div>
-            <p className="text-lg font-semibold text-blue-400">
-              {user.no_of_calls}
-            </p>
-            <p className="text-xs text-gray-400">Calls</p>
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-gray-900 rounded-2xl p-6 w-11/12 max-w-3xl max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl text-white font-bold">
+                  {user.name} - Calls
+                </h2>
+                <button
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => setShowModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {userCalls.length === 0 && (
+                  <p className="text-gray-400">
+                    No calls made in selected period.
+                  </p>
+                )}
+                {userCalls.map((call) => (
+                  <div
+                    key={call._id}
+                    className="p-3 bg-white/5 rounded-xl flex justify-between"
+                  >
+                    <div>
+                      <p className="text-sm text-gray-300">
+                        To: {call.leadId?.company_name || call.to} -{" "}
+                        {call.phone}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        User: {call.userId?.name}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {format(new Date(call.timestamp), "MMM dd, yyyy HH:mm")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-semibold text-purple-400">
-              {user.proposalsSent || "-"}
-            </p>
-            <p className="text-xs text-gray-400">Proposals</p>
-          </div>
-          <div>
-            <p className="text-lg font-semibold text-green-400">
-              {user.conversionRatio || "-"}%
-            </p>
-            <p className="text-xs text-gray-400">Conversion</p>
-          </div>
-          <div>
-            <p className="text-lg font-semibold text-yellow-400">
-              ₹{(user.revenue / 100000).toFixed(1) || "-"}L
-            </p>
-            <p className="text-xs text-gray-400">Revenue</p>
-          </div>
-        </div>
-      </div>
+        )}
+      </>
     );
-  };
-
-  const handleDateRangeChange = (range: string) => {
-    updateFilters({ dateRange: range as any });
   };
 
   const handleExport = (format: "csv" | "excel" | "pdf") => {
@@ -401,7 +450,6 @@ const ReportsDashboard: React.FC = () => {
     return changes.length > 0 ? changes : <div>No meaningful changes</div>;
   };
 
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -432,10 +480,18 @@ const ReportsDashboard: React.FC = () => {
               onChange={(e) => handleDateRangeChange(e.target.value)}
               className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-white"
             >
-              <option value="today">Today</option>
-              <option value="last7days">Last 7 Days</option>
-              <option value="last30days">Last 30 Days</option>
-              <option value="custom">Custom Range</option>
+              <option className="bg-gray-700 text-white" value="today">
+                Today
+              </option>
+              <option className="bg-gray-700 text-white" value="last7days">
+                Last 7 Days
+              </option>
+              <option className="bg-gray-700 text-white" value="last30days">
+                Last 30 Days
+              </option>
+              <option className="bg-gray-700 text-white" value="custom">
+                Custom Range
+              </option>
             </select>
 
             <div className="flex items-center space-x-2">
@@ -455,6 +511,24 @@ const ReportsDashboard: React.FC = () => {
               </button>
             </div>
           </div>
+          <br />
+          {filters.dateRange === "custom" && (
+            <div className="flex items-center space-x-2 ml-2">
+              <input
+                type="date"
+                value={customRange.start}
+                onChange={(e) => handleCustomStartChange(e.target.value)}
+                className="bg-white/20 border border-white/30 rounded-xl px-2 py-1 text-white"
+              />
+              <span className="text-white">to</span>
+              <input
+                type="date"
+                value={customRange.end}
+                onChange={(e) => handleCustomEndChange(e.target.value)}
+                className="bg-white/20 border border-white/30 rounded-xl px-2 py-1 text-white"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -501,14 +575,14 @@ const ReportsDashboard: React.FC = () => {
             />
             <MetricCard
               title="Leads Onboarded"
-              value={overallMetrics.onboarded}
+              value={0}
               icon={<UserCheck className="w-7 h-7 text-white" />}
               color="bg-green-500"
               trend="+15% vs last period"
             />
             <MetricCard
               title="Revenue Won"
-              value={`₹${(overallMetrics.revenueWon / 1000000).toFixed(1)}Cr`}
+              value={0}
               icon={<DollarSign className="w-7 h-7 text-white" />}
               color="bg-emerald-500"
               trend="+23% vs last period"
@@ -519,25 +593,25 @@ const ReportsDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               title="Pipeline (New)"
-              value={overallMetrics.pipeline.new}
+              value={0}
               icon={<Target className="w-6 h-6 text-white" />}
               color="bg-blue-400"
             />
             <MetricCard
               title="In Negotiation"
-              value={overallMetrics.pipeline.negotiation}
+              value={0}
               icon={<TrendingUp className="w-6 h-6 text-white" />}
               color="bg-orange-500"
             />
             <MetricCard
               title="Tasks Completed"
-              value={overallMetrics.tasksCompleted}
+              value={0}
               icon={<CheckSquare className="w-6 h-6 text-white" />}
               color="bg-green-400"
             />
             <MetricCard
               title="Deals Lost"
-              value={overallMetrics.dealsLost}
+              value={0}
               icon={<UserX className="w-6 h-6 text-white" />}
               color="bg-red-500"
             />
@@ -814,73 +888,6 @@ const ReportsDashboard: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Activity Feed Tab */}
-      {/* {activeTab === "activity" && (
-        <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
-          <h2 className="text-xl font-bold text-white mb-6">
-            Recent Activity Feed
-          </h2>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {activityFeed.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start space-x-4 p-4 bg-white/5 rounded-xl border border-white/10"
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === "call"
-                      ? "bg-blue-500"
-                      : activity.type === "proposal"
-                      ? "bg-purple-500"
-                      : activity.type === "stage_change"
-                      ? "bg-green-500"
-                      : activity.type === "task"
-                      ? "bg-orange-500"
-                      : "bg-gray-500"
-                  }`}
-                >
-                  {activity.type === "call" && (
-                    <Phone className="w-5 h-5 text-white" />
-                  )}
-                  {activity.type === "proposal" && (
-                    <FileText className="w-5 h-5 text-white" />
-                  )}
-                  {activity.type === "stage_change" && (
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  )}
-                  {activity.type === "task" && (
-                    <CheckSquare className="w-5 h-5 text-white" />
-                  )}
-                  {activity.type === "lead_created" && (
-                    <Building2 className="w-5 h-5 text-white" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-white">
-                      <span className="text-blue-400">{activity.user}</span>{" "}
-                      {activity.action.toLowerCase()}
-                    </p>
-                    <p className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                      {format(new Date(activity.timestamp), "MMM dd, HH:mm")}
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-300 mt-1">
-                    {activity.leadName}
-                  </p>
-                  {activity.details && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {activity.details}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )} */}
-
       {/* Activity Feed Tab */}
       {activeTab === "activity" && (
         <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">

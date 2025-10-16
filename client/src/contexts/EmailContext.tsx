@@ -72,6 +72,23 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const fetchUserCalls = async (userId: string) => {
+    try {
+      // optional: show loader if you have one
+      // setLoading(true);
+
+      const res = await axios.get(`${BACKEND_URL}/api/users/calls/${userId}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` }, // if using auth
+      });
+
+      return res.data || []; // return array of call logs
+    } catch (err: any) {
+      console.error("Failed to fetch calls:", err);
+      toast.error("Failed to fetch user calls");
+      return [];
+    }
+  }
+
   const logCallActivity = async ({
     userId,
     leadId,
@@ -247,6 +264,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
         deleteEmail,
         searchEmails,
         fetchAllCallActivities,
+        fetchUserCalls,
         logCallActivity,
       }}
     >

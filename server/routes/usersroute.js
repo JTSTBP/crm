@@ -132,4 +132,19 @@ router.get("/all", async (req, res) => {
   }
 });
 
+router.get("/calls/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const calls = await CallActivity.find({ userId })
+        .sort({ timestamp: -1 })
+        .populate("leadId", "company_name") // populate company_name from lead
+        .populate("userId", "name email");
+       res.status(200).json({ calls });
+    } catch (err) {
+      console.error("Error fetching call activities:", err);
+      res.status(500).json({ message: "Failed to fetch call activities" });
+    }
+});
+
+
 module.exports = router;
