@@ -22,6 +22,7 @@ import {
   TrendingUp,
   UserX,
   CheckSquare,
+  Mail,
   Clock,
   DollarSign,
   Award,
@@ -47,7 +48,7 @@ import {
 } from "lucide-react";
 
 import { useReports } from "../../hooks/useReports";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { isToday, subDays, isWithinInterval } from "date-fns";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
@@ -73,21 +74,25 @@ const ReportsDashboard: React.FC = () => {
   );
   const [activitiesgiv, setActivitiesgiv] = useState([]);
   const [callcount, setCallCount] = useState(0);
-  const { fetchAllCallActivities, fetchUserCalls } = useEmail();
-
-  const { leads, activities } = useLeadsContext();
+  const { fetchAllCallActivities, fetchUserCalls, allemails } = useEmail();
+  const { leads, activities, alltasks } = useLeadsContext();
   const [customRange, setCustomRange] = useState<{
     start: string;
     end: string;
   }>({ start: "", end: "" });
+  const [totalpos, setTotalPos] = useState(0);
+  const [proposalSentCount, setProposalSentCount] = useState(0);
+  const [negocount, setNegoCount] = useState(0);
+  const [filterTask, setFilterTask] = useState(0);
+  const [totalleadsupl, setTotalLeadsUpl] = useState(0);
+  const [sendEmails, setSendEmails] = useState(0);
+  const [timeseriesData, setTimeSeriesData] = useState([]);
 
   const proposalSentLeads = leads.filter(
     (lead) => lead.stage === "Proposal Sent"
   );
 
   const nonAdmins = users.filter((user) => user.role !== "Admin");
-
-  const [proposalSentCount, setProposalSentCount] = useState(0);
 
   const handleCustomStartChange = (date: string) => {
     setCustomRange((prev) => ({ ...prev, start: date }));
@@ -135,39 +140,178 @@ const ReportsDashboard: React.FC = () => {
     return true; // fallback
   };
 
+  // useEffect(() => {
+  //   const getData = async () => {
+  //     const allCalls = await fetchAllCallActivities();
+
+  //     const now = new Date();
+  //     let filteredCalls = allCalls;
+  //     let filteredLeads = leads;
+  //     let filteredActivities = activities;
+  //     let filteredTask = alltasks;
+  //     let filteredEmails = await allemails();
+
+  //     const filteredEmailSend = filteredEmails.filter((email: any) => {
+  //       const dateToCheck = email.date;
+  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
+  //     });
+
+  //     filteredCalls = filteredCalls.filter((call: any) =>
+  //       applyDateFilter(call.timestamp?.$date || call.timestamp)
+  //     );
+  //     // ✅ Calculate total no_of_positions from filtered leads
+  //     const totalNoOfPositions = filteredLeads.reduce(
+  //       (sum: number, lead: any) => sum + (lead.no_of_positions || 0),
+  //       0
+  //     );
+
+  //     const totalleadsupl = filteredLeads.filter((lead: any) => {
+  //       const dateToCheck = lead.createdAt;
+  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
+  //     });
+
+  //     const filteredLeadsNego = filteredLeads.filter((lead: any) => {
+  //       if (lead.stage !== "Negotiation") return false;
+  //       return true;
+  //     });
+
+  //     const filterPoposalsend = filteredLeads.filter((lead: any) => {
+  //       if (lead.stage !== "Proposal Sent") return false;
+  //       const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
+  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
+  //     });
+
+  //     filteredActivities = filteredActivities.filter((activity: any) =>
+  //       applyDateFilter(activity.timestamp?.$date || activity.timestamp)
+  //     );
+
+  //     filteredTask = filteredTask.filter((task: any) => {
+  //       if (!task.completed) return false;
+  //       const dateToCheck =
+  //         task.completedAt || task.updated_at || task.created_at;
+  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
+  //     });
+
+  //     setCallCount(filteredCalls.length);
+  //     setProposalSentCount(filterPoposalsend.length);
+  //     setActivitiesgiv(filteredActivities);
+  //     setTotalPos(totalNoOfPositions);
+  //     setNegoCount(filteredLeadsNego.length);
+  //     setFilterTask(filteredTask.length);
+  //     setTotalLeadsUpl(totalleadsupl.length);
+  //     setSendEmails(filteredEmailSend.length);
+  //   };
+
+  //   getData();
+  // }, [
+  //   filters.dateRange,
+  //   filters.customStart,
+  //   filters.customEnd,
+  //   filters.userId,
+  // ]);
+
   useEffect(() => {
     const getData = async () => {
       const allCalls = await fetchAllCallActivities();
-      // ✅ make sure this API exists
-    
-
-      const now = new Date();
       let filteredCalls = allCalls;
       let filteredLeads = leads;
       let filteredActivities = activities;
+      let filteredTask = alltasks;
+      let filteredEmails = await allemails();
+
+      const filteredEmailSend = filteredEmails.filter((email: any) => {
+        const dateToCheck = email.date;
+        return dateToCheck ? applyDateFilter(dateToCheck) : false;
+      });
 
       filteredCalls = filteredCalls.filter((call: any) =>
         applyDateFilter(call.timestamp?.$date || call.timestamp)
       );
-      console.log(filteredCalls, "filteredCalls");
-      filteredLeads = filteredLeads.filter((lead: any) => {
+
+      const totalNoOfPositions = filteredLeads.reduce(
+        (sum: number, lead: any) => sum + (lead.no_of_positions || 0),
+        0
+      );
+
+      const totalleadsupl = filteredLeads.filter((lead: any) => {
+        const dateToCheck = lead.createdAt;
+        return dateToCheck ? applyDateFilter(dateToCheck) : false;
+      });
+
+      const filteredLeadsNego = filteredLeads.filter(
+        (lead: any) => lead.stage === "Negotiation"
+      );
+
+      const filterPoposalsend = filteredLeads.filter((lead: any) => {
         if (lead.stage !== "Proposal Sent") return false;
         const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
         return dateToCheck ? applyDateFilter(dateToCheck) : false;
       });
+
       filteredActivities = filteredActivities.filter((activity: any) =>
         applyDateFilter(activity.timestamp?.$date || activity.timestamp)
       );
 
-      // ✅ Update State
+      filteredTask = filteredTask.filter((task: any) => {
+        if (!task.completed) return false;
+        const dateToCheck =
+          task.completedAt || task.updated_at || task.created_at;
+        return dateToCheck ? applyDateFilter(dateToCheck) : false;
+      });
+
+      // -------------------------------
+      // ✅ Create timeSeriesData array
+      // -------------------------------
+      const datesSet = new Set<string>();
+      filteredCalls.forEach((c: any) =>
+        datesSet.add(
+          new Date(c.timestamp?.$date || c.timestamp)
+            .toISOString()
+            .split("T")[0]
+        )
+      );
+      filterPoposalsend.forEach((p: any) =>
+        datesSet.add(
+          new Date(p.stageProposalUpd || p.updatedAt)
+            .toISOString()
+            .split("T")[0]
+        )
+      );
+      totalleadsupl.forEach((l: any) =>
+        datesSet.add(new Date(l.createdAt).toISOString().split("T")[0])
+      );
+
+      const timeSeriesData = Array.from(datesSet)
+        .sort()
+        .map((date) => {
+          const calls = filteredCalls.filter(
+            (c: any) =>
+              new Date(c.timestamp?.$date || c.timestamp)
+                .toISOString()
+                .split("T")[0] === date
+          ).length;
+          const proposals = filterPoposalsend.filter(
+            (p: any) =>
+              new Date(p.stageProposalUpd || p.updatedAt)
+                .toISOString()
+                .split("T")[0] === date
+          ).length;
+          const leads = totalleadsupl.filter(
+            (l: any) =>
+              new Date(l.createdAt).toISOString().split("T")[0] === date
+          ).length;
+          return { date, calls, proposals, leads };
+        });
+
       setCallCount(filteredCalls.length);
-      setProposalSentCount(filteredLeads.length);
+      setProposalSentCount(filterPoposalsend.length);
       setActivitiesgiv(filteredActivities);
-
-      console.log("Filtered Activities:", filteredActivities);
-
-      console.log("Filtered Calls:", filteredCalls);
-      console.log("Filtered Proposal Sent Leads:", proposalSentLeads);
+      setTotalPos(totalNoOfPositions);
+      setNegoCount(filteredLeadsNego.length);
+      setFilterTask(filteredTask.length);
+      setTotalLeadsUpl(totalleadsupl.length);
+      setSendEmails(filteredEmailSend.length);
+      setTimeSeriesData(timeSeriesData);
     };
 
     getData();
@@ -177,7 +321,56 @@ const ReportsDashboard: React.FC = () => {
     filters.customEnd,
     filters.userId,
   ]);
-  console.log(callcount,"call")
+
+  const stageColors: Record<string, string> = {
+    New: "#3B82F6",
+    Contacted: "#EAB308",
+    "Proposal Sent": "#8B5CF6",
+    Negotiation: "#F59E0B",
+    Won: "#10B981",
+    Lost: "#EF4444",
+  };
+
+  // Generate stageData dynamically
+  const stageData = Object.keys(stageColors).map((stageName) => {
+    const count = leads.filter((lead: any) => lead.stage === stageName).length;
+    return {
+      name: stageName,
+      count,
+      color: stageColors[stageName],
+    };
+  });
+
+  // Define colors
+  const conversionColors = {
+    Won: "#10B981",
+    Lost: "#EF4444",
+    "In Progress": "#3B82F6",
+  };
+
+  // Count Won leads
+  const wonCount = leads.filter((lead: any) => lead.stage === "Won").length;
+
+  // Count Lost leads
+  const lostCount = leads.filter((lead: any) => lead.stage === "Lost").length;
+
+  // Count In Progress leads (all others)
+  const inProgressCount = leads.filter(
+    (lead: any) => lead.stage !== "Won" && lead.stage !== "Lost"
+  ).length;
+
+  // Build array
+  const conversionData = [
+    { name: "Won", value: wonCount, color: conversionColors.Won },
+    { name: "Lost", value: lostCount, color: conversionColors.Lost },
+    {
+      name: "In Progress",
+      value: inProgressCount,
+      color: conversionColors["In Progress"],
+    },
+  ];
+
+  console.log(conversionData);
 
   const MetricCard: React.FC<{
     title: string;
@@ -582,9 +775,9 @@ const ReportsDashboard: React.FC = () => {
               trend="+15% vs last period"
             />
             <MetricCard
-              title="Revenue Won"
-              value={0}
-              icon={<DollarSign className="w-7 h-7 text-white" />}
+              title="No of Positions"
+              value={totalpos}
+              icon={<Users className="w-7 h-7 text-white" />}
               color="bg-emerald-500"
               trend="+23% vs last period"
             />
@@ -593,39 +786,45 @@ const ReportsDashboard: React.FC = () => {
           {/* Secondary Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
-              title="Pipeline (New)"
-              value={0}
+              title="Total Leads Uploaded"
+              value={totalleadsupl}
               icon={<Target className="w-6 h-6 text-white" />}
               color="bg-blue-400"
             />
             <MetricCard
               title="In Negotiation"
-              value={0}
+              value={negocount}
               icon={<TrendingUp className="w-6 h-6 text-white" />}
               color="bg-orange-500"
             />
             <MetricCard
               title="Tasks Completed"
-              value={0}
+              value={filterTask}
               icon={<CheckSquare className="w-6 h-6 text-white" />}
               color="bg-green-400"
             />
             <MetricCard
-              title="Deals Lost"
-              value={0}
-              icon={<UserX className="w-6 h-6 text-white" />}
+              title="Total Emails Send"
+              value={sendEmails}
+              icon={<Mail className="w-6 h-6 text-white" />}
               color="bg-red-500"
             />
           </div>
+          <h6 className="text-gray-400 text-sm mt-2 italic">
+            *Note: The chart shows all-time data for all leads, filters do not
+            apply here.*
+          </h6>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Sales Pipeline Chart */}
+
             <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
               <h2 className="text-xl font-bold text-white mb-6">
                 Sales Pipeline
               </h2>
+
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData.stageData}>
+                <BarChart data={stageData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis
                     dataKey="name"
@@ -647,6 +846,7 @@ const ReportsDashboard: React.FC = () => {
                   <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+              {/* Notice about chart */}
             </div>
 
             {/* Conversion Overview */}
@@ -657,7 +857,7 @@ const ReportsDashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={chartData.conversionData}
+                    data={conversionData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -680,7 +880,7 @@ const ReportsDashboard: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="grid grid-cols-1 gap-2 mt-4">
-                {chartData.conversionData.map((item, index) => (
+                {conversionData.map((item, index) => (
                   <div
                     key={item.name}
                     className="flex items-center justify-between"
@@ -707,7 +907,7 @@ const ReportsDashboard: React.FC = () => {
               Activity Timeline
             </h2>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData.timeSeriesData}>
+              <AreaChart data={timeseriesData}>
                 <defs>
                   <linearGradient
                     id="callsGradient"
@@ -791,7 +991,7 @@ const ReportsDashboard: React.FC = () => {
           </div>
 
           {/* Lead Source & Industry Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
               <h2 className="text-xl font-bold text-white mb-6">
                 Lead Sources
@@ -845,7 +1045,7 @@ const ReportsDashboard: React.FC = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </div> */}
         </>
       )}
 

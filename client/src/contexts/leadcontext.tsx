@@ -86,9 +86,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [proposalsLoading, setProposalLoading] = useState(true);
-   const { profile } = useAuth();
-
- 
+  const { profile } = useAuth();
 
   const fetchLeads = async (assignedBy?: string): Promise<Lead[]> => {
     try {
@@ -116,7 +114,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(res,"res")
+      console.log(res, "res");
       fetchLeads(profile.role === "BD Executive" ? profile.id : undefined);
       return res.data;
     } catch (err) {
@@ -165,7 +163,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     const res = await axios.delete(`${API_URL}/${leadId}/remarks/${remarkId}`, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
-   getAllActivities();
+    getAllActivities();
     setLeads((prev) =>
       prev.map((lead) =>
         lead._id === leadId ? { ...lead, remarks: res.data.remarks } : lead
@@ -185,8 +183,6 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
       return [];
     }
   };
-
- 
 
   const getAllTasks = async (userId?: string): Promise<Task[]> => {
     try {
@@ -230,7 +226,8 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await axios.put(`${url}/api/tasks/${id}`, data, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
-getAllActivities()
+      getAllActivities();
+      getAllTasks()
       return res.data;
     } catch (err) {
       console.error("Error updating task:", err);
@@ -260,7 +257,6 @@ getAllActivities()
   // proposals
   const createProposal = async (data: any) => {
     try {
-
       const res = await axios.post(`${proposals_url}`, data, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
@@ -269,23 +265,23 @@ getAllActivities()
       console.error("Error creating proposal:", err);
     }
   };
- 
-const getAllProposals = async (userId?: string): Promise<Proposal[]> => {
-  try {
-    setProposalLoading(true);
-    const query = userId ? `?userId=${userId}` : "";
-    const res = await axios.get(`${proposals_url}${query}`, {
-      headers: { Authorization: `Bearer ${getAuthToken()}` },
-    });
-    setProposals(res.data);
-    setProposalLoading(false);
-    return res.data;
-  } catch (err) {
-    console.error("Error fetching proposals:", err);
-    setProposalLoading(false);
-    return [];
-  }
-};
+
+  const getAllProposals = async (userId?: string): Promise<Proposal[]> => {
+    try {
+      setProposalLoading(true);
+      const query = userId ? `?userId=${userId}` : "";
+      const res = await axios.get(`${proposals_url}${query}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      setProposals(res.data);
+      setProposalLoading(false);
+      return res.data;
+    } catch (err) {
+      console.error("Error fetching proposals:", err);
+      setProposalLoading(false);
+      return [];
+    }
+  };
 
   const updateProposal = async (id: string, data: Partial<Proposal>) => {
     try {
@@ -319,21 +315,20 @@ const getAllProposals = async (userId?: string): Promise<Proposal[]> => {
     }
   };
 
- useEffect(() => {
-   if (!profile) return;
-const userId = profile.role === "BD Executive" ? profile.id : undefined;
+  useEffect(() => {
+    if (!profile) return;
+    const userId = profile.role === "BD Executive" ? profile.id : undefined;
 
-   fetchLeads(userId);
-   getAllActivities();
-   getAllProposals(userId);
-   getAllTasks(userId);
- }, [profile]);
-  
+    fetchLeads(userId);
+    getAllActivities();
+    getAllProposals(userId);
+    getAllTasks(userId);
+  }, [profile]);
+
   useEffect(() => {
     getAllActivities();
-    console.log("calledprop")
+    console.log("calledprop");
   }, [leads, alltasks, proposals]);
-
 
   return (
     <LeadsContext.Provider

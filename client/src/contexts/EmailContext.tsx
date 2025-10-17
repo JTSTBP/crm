@@ -58,7 +58,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
 ------------------------------ */
   const fetchAllCallActivities = async () => {
     try {
-      console.log("callllll")
+      console.log("callllll");
       setLoading(true);
       const res = await axios.get(`${BACKEND_URL}/api/users/all`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
@@ -88,7 +88,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
       toast.error("Failed to fetch user calls");
       return [];
     }
-  }
+  };
 
   const logCallActivity = async ({
     userId,
@@ -132,6 +132,22 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
         params: { userEmail },
       });
       setSentEmails(res.data || []);
+    } catch (err: any) {
+      console.error("Fetch Sent Error:", err);
+      setError("Failed to fetch sent emails");
+      toast.error("Failed to fetch sent emails");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const allemails = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${BACKEND_URL}/api/emails/all`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      return res.data
     } catch (err: any) {
       console.error("Fetch Sent Error:", err);
       setError("Failed to fetch sent emails");
@@ -261,6 +277,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
         sentEmails,
         inboxEmails,
         sendEmail,
+        allemails,
         fetchSentEmails,
         deleteEmail,
         searchEmails,

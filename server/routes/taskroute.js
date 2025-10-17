@@ -55,6 +55,18 @@ router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
+    const { completed } = req.body;
+
+    // If task is marked as completed, add completedAt timestamp
+    if (completed === true) {
+      req.body.completedAt = new Date();
+    }
+
+    // If task is being uncompleted, remove the timestamp
+    if (completed === false) {
+      req.body.completedAt = null;
+    }
+
     // { new: true } makes sure it returns the updated document
     const updatedTask = await Task.findByIdAndUpdate(id, req.body, {
       new: true,

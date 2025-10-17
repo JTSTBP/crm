@@ -165,6 +165,18 @@ router.post("/send-email", upload.array("attachments"), async (req, res) => {
   }
 });
 
+router.get("/all", async (req, res) => {
+  try {
+   
+    const emails = await Email.find().sort({ date: -1 });
+    res.status(200).json(emails);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch emails", error: err.message });
+  }
+});
+
 router.get("/:type", async (req, res) => {
   try {
     const userEmail = req.user?.email || req.query.userEmail; // depending on auth

@@ -9,6 +9,7 @@ const taskSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   lead_id: { type: mongoose.Schema.Types.ObjectId, ref: "Lead", default: null },
   completed: { type: Boolean, default: false },
+  completedAt: { type: Date },
   created_at: { type: Date, default: Date.now },
 });
 
