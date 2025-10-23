@@ -354,10 +354,9 @@ const ReportsDashboard: React.FC = () => {
   // Count Lost leads
   const lostCount = leads.filter((lead: any) => lead.stage === "Lost").length;
 
-  // Count In Progress leads (all others)
-  const inProgressCount = leads.filter(
-    (lead: any) => lead.stage !== "Won" && lead.stage !== "Lost"
-  ).length;
+const inProgressCount = leads.filter(
+  (lead: any) => lead.stage === "Negotiation" || lead.stage === "Proposal Sent"
+).length;
 
   // Build array
   const conversionData = [
