@@ -507,97 +507,209 @@ const demoWhatsAppTemplates: WhatsAppTemplate[] = [
   //     placeholders: ["contact_name", "company_name"],
   //     type: "text",
   //   },
+  //   {
+  //     id: "whatsapp-raas-1",
+  //     name: "Stage 1: First Contact / Cold Outreach",
+  //     content: `Hey {{contact_name}}, 👋
+  // I’m reaching out from Jobs Territory.
+
+  // We help companies like {{company_name}} scale faster with our Unlimited Hiring Support — no per-hire charges, just one predictable monthly plan. 💼✨
+
+  // Would you be open to a quick chat to see how this model can make your hiring faster and cost-efficient? 😊
+
+  // Warm regards,
+  // {{consultant_name}}
+  // Jobs Territory 🌸`,
+  //     placeholders: ["contact_name", "company_name", "consultant_name"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-raas-2",
+  //     name: "Stage 2: After Call (Proposal Shared)",
+  //     content: `Hey {{contact_name}}, 😊
+  // It was lovely speaking with you earlier! I’ve shared the proposal we discussed for {{company_name}} — it includes details of our Unlimited Hiring Model that lets you hire across multiple roles without any extra cost. 🚀
+
+  // Take a look when you can — happy to walk you through how it can simplify your hiring and save costs.
+
+  // Warm regards,
+  // {{consultant_name}}
+  // Jobs Territory 🌸`,
+  //     placeholders: ["contact_name", "company_name", "consultant_name"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-raas-3",
+  //     name: "Stage 3: Follow-Up (After Proposal Sent – No Response)",
+  //     content: `Hey {{contact_name}}, 👋
+  // Just checking in to see if you got a chance to review the proposal we shared for {{company_name}}.
+
+  // Our Unlimited Hiring Plan has been helping growing teams scale without worrying about per-hire fees — I’d love to explore how it could work for you too.
+
+  // Would you like me to schedule a quick call this week? 😊
+
+  // Warm regards,
+  // {{consultant_name}}
+  // Jobs Territory 🌸`,
+  //     placeholders: ["contact_name", "company_name", "consultant_name"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-raas-4",
+  //     name: "Stage 4: Tried Calling – No Response",
+  //     content: `Hey {{contact_name}}, 😊
+  // I tried reaching you over a quick call regarding the Unlimited Hiring proposal we shared for {{company_name}}, but couldn’t connect.
+
+  // Just wanted to check if you’ve had a chance to go through it — this model really helps companies hire unlimited roles under one predictable plan. 💼
+
+  // Would tomorrow be a good time for a quick call?
+
+  // Warm regards,
+  // {{consultant_name}}
+  // Jobs Territory 🌸`,
+  //     placeholders: ["contact_name", "company_name", "consultant_name"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-raas-5",
+  //     name: "Stage 5: Final Follow-Up (Polite Closure)",
+  //     content: `Hey {{contact_name}}, 🙏
+  // Just following up one last time regarding the Unlimited Hiring Support proposal we shared for {{company_name}}.
+
+  // Please let me know if you’d like to move forward or if it’s not a priority right now — I’ll make sure not to follow up again unless you’d like me to. 👍
+
+  // Appreciate your time either way!
+
+  // Warm regards,
+  // {{consultant_name}}
+  // Jobs Territory 🌸`,
+  //     placeholders: ["contact_name", "company_name", "consultant_name"],
+  //     type: "text",
+  //   },
+  //   {
+  //     id: "whatsapp-raas-6",
+  //     name: "Stage 6: Reconnect Message (Few Weeks Later)",
+  //     content: `Hey {{contact_name}}, 👋
+  // Hope all’s going great at {{company_name}}!
+
+  // Just wanted to reconnect — are you currently exploring any hiring support? Our Unlimited Hiring Model continues to help companies scale effortlessly with one fixed plan and unlimited hires. 🚀
+
+  // Would you like me to share a quick refresher on how it works?
+
+  // Warm regards,
+  // {{consultant_name}}
+  // Jobs Territory 🌸`,
+  //     placeholders: ["contact_name", "company_name", "consultant_name"],
+  //     type: "text",
+  //   },
+
   {
     id: "whatsapp-raas-1",
     name: "Stage 1: First Contact / Cold Outreach",
-    content: `Hey {{contact_name}}, 👋
-I’m reaching out from Jobs Territory.
+    content: `*Hey {{contact_name}},*
+I’m reaching out from *Jobs Territory*.
 
-We help companies like {{company_name}} scale faster with our Unlimited Hiring Support — no per-hire charges, just one predictable monthly plan. 💼✨
+We help companies like *{{company_name}}* hire faster and smarter through our *Pay-Per-Hire model* — you only pay when we successfully close your position. No retainers, no hidden costs.
 
-Would you be open to a quick chat to see how this model can make your hiring faster and cost-efficient? 😊
+Would you be open to a short discussion to see how this model can make your hiring faster and more efficient?
 
-Warm regards,
-{{consultant_name}}
-Jobs Territory 🌸`,
+Warm regards,  
+*{{consultant_name}}*  
+Jobs Territory  
+
+👉 [View a quick case study here](https://jobsterritory.com/casestudy)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
+
   {
     id: "whatsapp-raas-2",
     name: "Stage 2: After Call (Proposal Shared)",
-    content: `Hey {{contact_name}}, 😊
-It was lovely speaking with you earlier! I’ve shared the proposal we discussed for {{company_name}} — it includes details of our Unlimited Hiring Model that lets you hire across multiple roles without any extra cost. 🚀
+    content: `*Hey {{contact_name}},*
+It was great speaking with you earlier. I’ve shared the proposal we discussed for *{{company_name}}*, outlining how our *Pay-Per-Hire model* ensures cost-effective and quality-driven hiring support.
 
-Take a look when you can — happy to walk you through how it can simplify your hiring and save costs.
+Please have a look when you get a chance — happy to walk you through how it can simplify your hiring process and help you close positions faster.
 
-Warm regards,
-{{consultant_name}}
-Jobs Territory 🌸`,
+Warm regards,  
+*{{consultant_name}}*  
+Jobs Territory  
+
+👉 [You can also check out this case study for reference](https://jobsterritory.com/casestudy)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
+
   {
     id: "whatsapp-raas-3",
     name: "Stage 3: Follow-Up (After Proposal Sent – No Response)",
-    content: `Hey {{contact_name}}, 👋
-Just checking in to see if you got a chance to review the proposal we shared for {{company_name}}.
+    content: `*Hey {{contact_name}},*
+Just checking in to see if you’ve had a chance to review the proposal we sent for *{{company_name}}*.
 
-Our Unlimited Hiring Plan has been helping growing teams scale without worrying about per-hire fees — I’d love to explore how it could work for you too.
+Our *Pay-Per-Hire model* has been helping companies scale efficiently — you only pay for successful hires, ensuring complete accountability and zero risk.
 
-Would you like me to schedule a quick call this week? 😊
+Would you like me to schedule a quick call this week to discuss how it can fit your hiring plans?
 
-Warm regards,
-{{consultant_name}}
-Jobs Territory 🌸`,
+Warm regards,  
+*{{consultant_name}}*  
+Jobs Territory  
+
+👉 [Here’s a case study showing our results](https://jobsterritory.com/casestudy)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
+
   {
     id: "whatsapp-raas-4",
     name: "Stage 4: Tried Calling – No Response",
-    content: `Hey {{contact_name}}, 😊
-I tried reaching you over a quick call regarding the Unlimited Hiring proposal we shared for {{company_name}}, but couldn’t connect.
+    content: `*Hey {{contact_name}},*
+I tried reaching you for a quick discussion regarding the *Pay-Per-Hire proposal* we shared for *{{company_name}}*, but couldn’t connect.
 
-Just wanted to check if you’ve had a chance to go through it — this model really helps companies hire unlimited roles under one predictable plan. 💼
+Just wanted to check if you’ve had a chance to review it — this model gives you complete flexibility while ensuring high-quality, performance-based hiring.
 
-Would tomorrow be a good time for a quick call?
+Would tomorrow be a good time for a short call?
 
-Warm regards,
-{{consultant_name}}
-Jobs Territory 🌸`,
+Warm regards,  
+*{{consultant_name}}*  
+Jobs Territory  
+
+👉 [You can also review this short case study](https://jobsterritory.com/casestudy)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
+
   {
     id: "whatsapp-raas-5",
     name: "Stage 5: Final Follow-Up (Polite Closure)",
-    content: `Hey {{contact_name}}, 🙏
-Just following up one last time regarding the Unlimited Hiring Support proposal we shared for {{company_name}}.
+    content: `*Hey {{contact_name}},*
+Just following up one last time regarding the *Pay-Per-Hire proposal* we shared for *{{company_name}}*.
 
-Please let me know if you’d like to move forward or if it’s not a priority right now — I’ll make sure not to follow up again unless you’d like me to. 👍
+Please let me know if you’d like to move forward or if it’s not a current priority — I’ll hold off further follow-ups unless you’d like me to reconnect later.
 
-Appreciate your time either way!
+Appreciate your time either way.
 
-Warm regards,
-{{consultant_name}}
-Jobs Territory 🌸`,
+Warm regards,  
+*{{consultant_name}}*  
+Jobs Territory  
+
+👉 [Here’s a quick case study on how our model delivers results](https://jobsterritory.com/casestudy)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
+
   {
     id: "whatsapp-raas-6",
     name: "Stage 6: Reconnect Message (Few Weeks Later)",
-    content: `Hey {{contact_name}}, 👋
-Hope all’s going great at {{company_name}}!
+    content: `*Hey {{contact_name}},*
+Hope all’s going well at *{{company_name}}*.
 
-Just wanted to reconnect — are you currently exploring any hiring support? Our Unlimited Hiring Model continues to help companies scale effortlessly with one fixed plan and unlimited hires. 🚀
+Just wanted to reconnect and check if you’re currently exploring any hiring support. Our *Pay-Per-Hire model* continues to help companies close positions quickly while maintaining complete flexibility and cost control.
 
-Would you like me to share a quick refresher on how it works?
+Would you like me to share a short refresher on how it works?
 
-Warm regards,
-{{consultant_name}}
-Jobs Territory 🌸`,
+Warm regards,  
+*{{consultant_name}}*  
+Jobs Territory  
+
+👉 [Here’s a case study that shows how we’ve supported similar clients](https://jobsterritory.com/casestudy)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },

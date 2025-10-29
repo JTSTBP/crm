@@ -1858,127 +1858,146 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   //   return changes.length > 0 ? changes : null;
   // };
-    
-  
+
   const handleCall = async (poc) => {
-      setSelectedPOC(poc);
-   
+    setSelectedPOC(poc);
 
-      // Log call activity
-      try {
-        await logCallActivity({
-          userId: profile?.id,
-          leadId: lead._id,
-          phone: poc.phone,
-          url,
-        });
-      } catch (err) {
-        console.error("Failed to log call", err);
-      }
-
-      setTimeout(() => {
-        setShowCallCompletePopup(true);
-      }, 3000);
-    };
-  const formatUpdatedFields = (updatedFields: any, action?: string) => {
-    if (!updatedFields) return null;
-
-    const getDisplayValue = (v: any) => {
-      if (Array.isArray(v)) {
-        if (v.length === 0) return "none";
-        return v
-          .map(
-            (item) =>
-              item?.name || item?.email || item?.content || JSON.stringify(item)
-          )
-          .join(", ");
-      }
-      if (v && typeof v === "object") {
-        return (
-          v.name ||
-          v.email ||
-          v.title ||
-          v.company_name ||
-          v.content ||
-          JSON.stringify(v)
-        );
-      }
-      return v ?? "null";
-    };
-
-    const changes = Object.entries(updatedFields)
-      .filter(
-        ([key]) => !["points_of_contact", "files", "documents"].includes(key)
-      )
-      .map(([key, value]) => {
-        if (!value) return null;
-
-        // 🟦 Case 1: value has old/new
-        if (
-          typeof value === "object" &&
-          value !== null &&
-          "old" in value &&
-          "new" in value
-        ) {
-          const oldVal = getDisplayValue(value.old);
-          const newVal = getDisplayValue(value.new);
-          if (oldVal === newVal) return null;
-          return (
-            <div key={key}>
-              <strong>{key}</strong> changed from <b>{oldVal}</b> →{" "}
-              <b>{newVal}</b>
-            </div>
-          );
-        }
-
-        // 🟩 Case 2: "remark" single object (like remark_added)
-        if (key === "remark" && typeof value === "object") {
-          const author = value.profile?.name || "Unknown User";
-          const content = value.content || "(no content)";
-          const type = value.type || "text";
-          return (
-            <span key={key}>
-              By <b>{author}</b> — {content} ({type})
-            </span>
-          );
-        }
-
-        // 🟨 Case 3: Simple object (no old/new)
-        if (typeof value === "object" && value !== null) {
-          const displayValue = getDisplayValue(value);
-          if (displayValue === "{}") return null;
-          return (
-            <div key={key}>
-              <strong>{key}</strong>: {displayValue}
-            </div>
-          );
-        }
-
-        // 🟧 Case 4: Primitive (string/number)
-        return (
-          <div key={key}>
-            <strong>{key}</strong>: {String(value)}
-          </div>
-        );
-      })
-      .filter(Boolean);
-
-    // 🟢 Special fallback for remark-related updates
-    if (changes.length === 0 && updatedFields.remarks) {
-      return <div>New remark added</div>;
+    // Log call activity
+    try {
+      await logCallActivity({
+        userId: profile?.id,
+        leadId: lead._id,
+        phone: poc.phone,
+        url,
+      });
+    } catch (err) {
+      console.error("Failed to log call", err);
     }
 
-    return changes.length > 0 ? changes : <div>No meaningful changes</div>;
+    setTimeout(() => {
+      setShowCallCompletePopup(true);
+    }, 3000);
+  };
+  //   const formatUpdatedFields = (updatedFields: any, action?: string) => {
+  //     if (!updatedFields) return null;
+  // console.log(updatedFields, "updatedFields");
+  //     const getDisplayValue = (v: any) => {
+  //       if (Array.isArray(v)) {
+  //         if (v.length === 0) return "none";
+  //         return v
+  //           .map(
+  //             (item) =>
+  //               item?.name || item?.email || item?.content || JSON.stringify(item)
+  //           )
+  //           .join(", ");
+  //       }
+  //       if (v && typeof v === "object") {
+  //         return (
+  //           v.name ||
+  //           v.email ||
+  //           v.title ||
+  //           v.company_name ||
+  //           v.content ||
+  //           JSON.stringify(v)
+  //         );
+  //       }
+  //       return v ?? "null";
+  //     };
+
+  //     const changes = Object.entries(updatedFields)
+  //       .filter(
+  //         ([key]) => !["points_of_contact", "files", "documents"].includes(key)
+  //       )
+  //       .map(([key, value]) => {
+  //         if (!value) return null;
+
+  //         // 🟦 Case 1: value has old/new
+  //         if (
+  //           typeof value === "object" &&
+  //           value !== null &&
+  //           "old" in value &&
+  //           "new" in value
+  //         ) {
+  //           const oldVal = getDisplayValue(value.old);
+  //           const newVal = getDisplayValue(value.new);
+  //           if (oldVal === newVal) return null;
+  //           return (
+  //             <div key={key}>
+  //               <strong>{key}</strong> changed from <b>{oldVal}</b> →{" "}
+  //               <b>{newVal}</b>
+  //             </div>
+  //           );
+  //         }
+
+  //         // 🟩 Case 2: "remark" single object (like remark_added)
+  //         if (key === "remark" && typeof value === "object") {
+  //           const author = value.profile?.name || "Unknown User";
+  //           const content = value.content || "(no content)";
+  //           const type = value.type || "text";
+  //           return (
+  //             <span key={key}>
+  //               By <b>{author}</b> — {content} ({type})
+  //             </span>
+  //           );
+  //         }
+
+  //         // 🟨 Case 3: Simple object (no old/new)
+  //         if (typeof value === "object" && value !== null) {
+  //           const displayValue = getDisplayValue(value);
+  //           if (displayValue === "{}") return null;
+  //           return (
+  //             <div key={key}>
+  //               <strong>{key}</strong>: {displayValue}
+  //             </div>
+  //           );
+  //         }
+
+  //         // 🟧 Case 4: Primitive (string/number)
+  //         return (
+  //           <div key={key}>
+  //             <strong>{key}</strong>: {String(value)}
+  //           </div>
+  //         );
+  //       })
+  //       .filter(Boolean);
+
+  //     // 🟢 Special fallback for remark-related updates
+  //     if (changes.length === 0 && updatedFields.remarks) {
+  //       return <div>New remark added</div>;
+  //     }
+
+  //     return changes.length > 0 ? changes : <div>No meaningful changes</div>;
+  //   };
+  const formatUpdatedFields = (updatedFields: any) => {
+    if (!updatedFields) return null;
+
+    // Get all changed keys except unwanted ones
+    const changedKeys = Object.keys(updatedFields).filter(
+      (key) => !["files", "documents"].includes(key)
+    );
+
+    if (changedKeys.length === 0) {
+      return <div>No meaningful changes</div>;
+    }
+
+    return (
+      <div>
+        <strong>Changed: </strong>
+        {changedKeys.map((key) => (
+          <div key={key}>{key} changed</div>
+        ))}
+      </div>
+    );
   };
 
   const filteredActivities = activities?.filter(
     (activity) => activity.entityId === lead._id || activity.leadId === lead._id
   );
+  console.log(filteredActivities, "filteredActivities");
   // Sort descending (latest first)
   const sortedRemarks = remarks.sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
-
 
   return (
     <div
@@ -2925,7 +2944,6 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
                       {activity.action !== "create" && (
                         <div className="text-sm text-gray-600">
-                          <strong>Changes:</strong>{" "}
                           {formatUpdatedFields(activity.updatedFields) ||
                             "No meaningful changes"}
                         </div>
@@ -3073,7 +3091,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
                     toast.success("POC stage and remark updated successfully!");
                     setShowRemarksPopup(false);
-                     handleStageUpdate("Contacted");
+                    handleStageUpdate("Contacted");
                     setSelectedStageAfterCall("");
                     setRemarkAfterCall("");
                   } catch (error: any) {

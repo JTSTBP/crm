@@ -140,75 +140,6 @@ const ReportsDashboard: React.FC = () => {
     return true; // fallback
   };
 
-  // useEffect(() => {
-  //   const getData = async () => {
-  //     const allCalls = await fetchAllCallActivities();
-
-  //     const now = new Date();
-  //     let filteredCalls = allCalls;
-  //     let filteredLeads = leads;
-  //     let filteredActivities = activities;
-  //     let filteredTask = alltasks;
-  //     let filteredEmails = await allemails();
-
-  //     const filteredEmailSend = filteredEmails.filter((email: any) => {
-  //       const dateToCheck = email.date;
-  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
-  //     });
-
-  //     filteredCalls = filteredCalls.filter((call: any) =>
-  //       applyDateFilter(call.timestamp?.$date || call.timestamp)
-  //     );
-  //     // ✅ Calculate total no_of_positions from filtered leads
-  //     const totalNoOfPositions = filteredLeads.reduce(
-  //       (sum: number, lead: any) => sum + (lead.no_of_positions || 0),
-  //       0
-  //     );
-
-  //     const totalleadsupl = filteredLeads.filter((lead: any) => {
-  //       const dateToCheck = lead.createdAt;
-  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
-  //     });
-
-  //     const filteredLeadsNego = filteredLeads.filter((lead: any) => {
-  //       if (lead.stage !== "Negotiation") return false;
-  //       return true;
-  //     });
-
-  //     const filterPoposalsend = filteredLeads.filter((lead: any) => {
-  //       if (lead.stage !== "Proposal Sent") return false;
-  //       const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
-  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
-  //     });
-
-  //     filteredActivities = filteredActivities.filter((activity: any) =>
-  //       applyDateFilter(activity.timestamp?.$date || activity.timestamp)
-  //     );
-
-  //     filteredTask = filteredTask.filter((task: any) => {
-  //       if (!task.completed) return false;
-  //       const dateToCheck =
-  //         task.completedAt || task.updated_at || task.created_at;
-  //       return dateToCheck ? applyDateFilter(dateToCheck) : false;
-  //     });
-
-  //     setCallCount(filteredCalls.length);
-  //     setProposalSentCount(filterPoposalsend.length);
-  //     setActivitiesgiv(filteredActivities);
-  //     setTotalPos(totalNoOfPositions);
-  //     setNegoCount(filteredLeadsNego.length);
-  //     setFilterTask(filteredTask.length);
-  //     setTotalLeadsUpl(totalleadsupl.length);
-  //     setSendEmails(filteredEmailSend.length);
-  //   };
-
-  //   getData();
-  // }, [
-  //   filters.dateRange,
-  //   filters.customStart,
-  //   filters.customEnd,
-  //   filters.userId,
-  // ]);
 
   useEffect(() => {
     const getData = async () => {
@@ -369,8 +300,6 @@ const inProgressCount = leads.filter(
     },
   ];
 
-  console.log(conversionData);
-
   const MetricCard: React.FC<{
     title: string;
     value: string | number;
@@ -421,27 +350,60 @@ const inProgressCount = leads.filter(
 
     const [showModal, setShowModal] = useState(false);
     const [userCalls, setUserCalls] = useState<any[]>([]); // all calls
-    console.log(userCalls, "userCalls");
 
-    useEffect(() => {
-      const getUserCalls = async () => {
-        try {
-          const data = await fetchUserCalls(user._id); // API returning populated calls
-          const now = new Date();
-          let filteredCalls = data.calls || [];
+    // useEffect(() => {
+    //   const getUserCalls = async () => {
+    //     try {
+    //       const data = await fetchUserCalls(user._id); // API returning populated calls
+    //       const now = new Date();
+    //       let filteredCalls = data.calls || [];
 
-          filteredCalls = filteredCalls.filter((call: any) =>
-            applyDateFilter(call.timestamp?.$date || call.timestamp)
-          );
+    //       filteredCalls = filteredCalls.filter((call: any) =>
+    //         applyDateFilter(call.timestamp?.$date || call.timestamp)
+    //       );
 
-          setUserCalls(filteredCalls);
-        } catch (error) {
-          console.error("Error fetching user calls:", error);
-        }
-      };
+    //       setUserCalls(filteredCalls);
+    //     } catch (error) {
+    //       console.error("Error fetching user calls:", error);
+    //     }
+    //   };
 
-      getUserCalls();
-    }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
+    //   getUserCalls();
+    // }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
+   
+   useEffect(() => {
+     const getUserCalls = async () => {
+       try {
+         const data = await fetchUserCalls(user._id); // API returning populated calls
+         let filteredCalls = data.calls || [];
+
+         // Apply date filter
+         filteredCalls = filteredCalls.filter((call: any) =>
+           applyDateFilter(call.timestamp?.$date || call.timestamp)
+         );
+
+         // Map through each call and attach stage from matching point_of_contact
+         const enhancedCalls = filteredCalls.map((call: any) => {
+           const contact = call.leadId?.points_of_contact?.find(
+             (p: any) => p.phone === call.phone
+           );
+           return {
+             ...call,
+             contactStage: contact?.stage || "N/A", // fallback if no match
+           };
+         });
+
+         setUserCalls(enhancedCalls);
+       } catch (error) {
+         console.error("Error fetching user calls:", error);
+       }
+     };
+
+     getUserCalls();
+   }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
+
+
+
 
     return (
       <>
@@ -536,6 +498,9 @@ const inProgressCount = leads.filter(
                       </p>
                     </div>
                     <p className="text-xs text-gray-400">
+                      Stage: {call.contactStage}
+                    </p>
+                    <p className="text-xs text-gray-400">
                       {format(new Date(call.timestamp), "MMM dd, yyyy HH:mm")}
                     </p>
                   </div>
@@ -557,91 +522,123 @@ const inProgressCount = leads.filter(
     updateFilters({ userId: userId === filters.userId ? undefined : userId });
   };
 
-  const formatUpdatedFields = (updatedFields: any, action?: string) => {
+  // const formatUpdatedFields = (updatedFields: any, action?: string) => {
+  //   if (!updatedFields) return null;
+
+  //   const getDisplayValue = (v: any) => {
+  //     if (Array.isArray(v)) {
+  //       if (v.length === 0) return "none";
+  //       return v
+  //         .map(
+  //           (item) =>
+  //             item?.name || item?.email || item?.content || JSON.stringify(item)
+  //         )
+  //         .join(", ");
+  //     }
+  //     if (v && typeof v === "object") {
+  //       return (
+  //         v.name ||
+  //         v.email ||
+  //         v.title ||
+  //         v.company_name ||
+  //         v.content ||
+  //         JSON.stringify(v)
+  //       );
+  //     }
+  //     return v ?? "null";
+  //   };
+
+  //   const changes = Object.entries(updatedFields)
+  //     .filter(
+  //       ([key]) => !["points_of_contact", "files", "documents"].includes(key)
+  //     )
+  //     .map(([key, value]) => {
+  //       if (!value) return null;
+
+  //       if (
+  //         typeof value === "object" &&
+  //         value !== null &&
+  //         "old" in value &&
+  //         "new" in value
+  //       ) {
+  //         const oldVal = getDisplayValue(value.old);
+  //         const newVal = getDisplayValue(value.new);
+  //         if (oldVal === newVal) return null;
+  //         return (
+  //           <div key={key}>
+  //             <strong>{key}</strong> changed from <b>{oldVal}</b> →{" "}
+  //             <b>{newVal}</b>
+  //           </div>
+  //         );
+  //       }
+
+  //       if (key === "remark" && typeof value === "object") {
+  //         const author = value.profile?.name || "Unknown User";
+  //         const content = value.content || "(no content)";
+  //         const type = value.type || "text";
+  //         return (
+  //           <span key={key}>
+  //             By <b>{author}</b> — {content} ({type})
+  //           </span>
+  //         );
+  //       }
+
+  //       if (typeof value === "object" && value !== null) {
+  //         const displayValue = getDisplayValue(value);
+  //         if (displayValue === "{}") return null;
+  //         return (
+  //           <div key={key}>
+  //             <strong>{key}</strong>: {displayValue}
+  //           </div>
+  //         );
+  //       }
+
+  //       return (
+  //         <div key={key}>
+  //           <strong>{key}</strong>: {String(value)}
+  //         </div>
+  //       );
+  //     })
+  //     .filter(Boolean);
+
+  //   if (changes.length === 0 && updatedFields.remarks) {
+  //     return <div>New remark added</div>;
+  //   }
+
+  //   return changes.length > 0 ? changes : <div>No meaningful changes</div>;
+  // };
+
+
+  const toReadable = (key: string) =>
+    key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+
+  const formatUpdatedFields = (updatedFields: any) => {
     if (!updatedFields) return null;
 
-    const getDisplayValue = (v: any) => {
-      if (Array.isArray(v)) {
-        if (v.length === 0) return "none";
-        return v
-          .map(
-            (item) =>
-              item?.name || item?.email || item?.content || JSON.stringify(item)
-          )
-          .join(", ");
-      }
-      if (v && typeof v === "object") {
-        return (
-          v.name ||
-          v.email ||
-          v.title ||
-          v.company_name ||
-          v.content ||
-          JSON.stringify(v)
-        );
-      }
-      return v ?? "null";
-    };
+    const changedKeys = Object.keys(updatedFields).filter(
+      (key) => !["files", "documents"].includes(key)
+    );
 
-    const changes = Object.entries(updatedFields)
-      .filter(
-        ([key]) => !["points_of_contact", "files", "documents"].includes(key)
-      )
-      .map(([key, value]) => {
-        if (!value) return null;
-
-        if (
-          typeof value === "object" &&
-          value !== null &&
-          "old" in value &&
-          "new" in value
-        ) {
-          const oldVal = getDisplayValue(value.old);
-          const newVal = getDisplayValue(value.new);
-          if (oldVal === newVal) return null;
-          return (
-            <div key={key}>
-              <strong>{key}</strong> changed from <b>{oldVal}</b> →{" "}
-              <b>{newVal}</b>
-            </div>
-          );
-        }
-
-        if (key === "remark" && typeof value === "object") {
-          const author = value.profile?.name || "Unknown User";
-          const content = value.content || "(no content)";
-          const type = value.type || "text";
-          return (
-            <span key={key}>
-              By <b>{author}</b> — {content} ({type})
-            </span>
-          );
-        }
-
-        if (typeof value === "object" && value !== null) {
-          const displayValue = getDisplayValue(value);
-          if (displayValue === "{}") return null;
-          return (
-            <div key={key}>
-              <strong>{key}</strong>: {displayValue}
-            </div>
-          );
-        }
-
-        return (
-          <div key={key}>
-            <strong>{key}</strong>: {String(value)}
-          </div>
-        );
-      })
-      .filter(Boolean);
-
-    if (changes.length === 0 && updatedFields.remarks) {
-      return <div>New remark added</div>;
+    if (changedKeys.length === 0) {
+      return <span>No meaningful changes</span>;
     }
 
-    return changes.length > 0 ? changes : <div>No meaningful changes</div>;
+    // Limit to first 5
+    const visibleKeys = changedKeys.slice(0, 5);
+    const hasMore = changedKeys.length > 5;
+
+    const displayText = visibleKeys
+      .map((key) => `${toReadable(key)} changed`)
+      .join(", ");
+
+    return (
+      <span>
+        {displayText}
+        {hasMore && ", ..."}
+      </span>
+    );
   };
+
 
   if (loading) {
     return (
@@ -1142,8 +1139,9 @@ const inProgressCount = leads.filter(
                   </div>
 
                   <p className="text-sm text-gray-300 mt-1">
-                    {activity.leadName}
+                    {activity.entity}: {activity.entityName}
                   </p>
+                
 
                   {activity.updatedFields && (
                     <div className="mt-2 text-sm text-gray-400 space-y-1">

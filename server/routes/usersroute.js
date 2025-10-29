@@ -137,7 +137,7 @@ router.get("/calls/:userId", async (req, res) => {
       const { userId } = req.params;
       const calls = await CallActivity.find({ userId })
         .sort({ timestamp: -1 })
-        .populate("leadId", "company_name") // populate company_name from lead
+        .populate("leadId", "company_name points_of_contact") // populate company_name from lead
         .populate("userId", "name email");
        res.status(200).json({ calls });
     } catch (err) {

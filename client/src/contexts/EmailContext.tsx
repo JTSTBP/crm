@@ -81,7 +81,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
       const res = await axios.get(`${BACKEND_URL}/api/users/calls/${userId}`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` }, // if using auth
       });
-
+     
       return res.data || []; // return array of call logs
     } catch (err: any) {
       console.error("Failed to fetch calls:", err);
@@ -147,7 +147,7 @@ export const EmailProvider: React.FC<{ children: React.ReactNode }> = ({
       const res = await axios.get(`${BACKEND_URL}/api/emails/all`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
-      return res.data
+      return res.data;
     } catch (err: any) {
       console.error("Fetch Sent Error:", err);
       setError("Failed to fetch sent emails");

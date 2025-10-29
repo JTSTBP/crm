@@ -364,11 +364,15 @@ const LeadsList: React.FC = () => {
                     )}
                   </div>
                   <div className="flex flex-col items-end space-y-2">
-                    <div className="text-sm text-gray-400 flex items-center space-x-1 font-medium">
-                      <Calendar className="w-4 h-4" />
-                      <span>
-                        {new Date(lead.createdAt).toLocaleDateString("en-GB")}
-                      </span>
+                    <div className="flex flex-col items-end space-y-2">
+                      <div className="text-sm text-gray-400 flex items-center space-x-1 font-medium">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {new Date(lead.createdAt).toLocaleString("en-US", {
+                            month: "long",
+                          })}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
