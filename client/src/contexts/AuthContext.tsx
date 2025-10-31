@@ -1,5 +1,3 @@
-
-
 import React, {
   createContext,
   useContext,
@@ -104,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-console.log(profile,"p")
+  console.log(profile, "p");
   const [attendanceRecords, setAttendanceRecords] = useState<
     AttendanceRecord[]
   >([]);
@@ -199,6 +197,8 @@ console.log(profile,"p")
     if (!session) return;
 
     let timer: NodeJS.Timeout;
+
+    if (profile.role === "Admin") return;
     const resetTimer = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => signOut(), 5 * 60 * 1000); // 5 min
@@ -262,7 +262,7 @@ console.log(profile,"p")
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       const records = res.data.records;
-      console.log(records,"rr")
+      console.log(records, "rr");
       const transformed = records
         .filter((rec: any) => rec && rec.user_id)
         .map((rec: any) => ({
