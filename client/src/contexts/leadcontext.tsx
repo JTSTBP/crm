@@ -134,6 +134,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     const res = await axios.put(`${API_URL}/${id}`, data, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
+    console.log(res.data,"resss")
     setLeads((prev) => prev.map((lead) => (lead._id === id ? res.data : lead)));
   };
 

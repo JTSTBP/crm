@@ -383,6 +383,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await axios.post(API_URL, data, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
+      console.log(data, "dtaa");
       await fetchUsers();
       toast.success("User created successfully");
     } catch (err: any) {

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/users");
+  const bcrypt = require("bcryptjs");
 const CallActivity = require("../models/call");
 const authMiddleware = require("../middleware/auth"); // JWT auth middleware
 
@@ -19,6 +20,7 @@ router.get("/", authMiddleware, async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   const { name, email, password, role, phone, appPassword } = req.body;
   try {
+
     const existing = await User.findOne({ email });
     if (existing)
       return res.status(400).json({ message: "Email already exists" });
@@ -31,6 +33,7 @@ router.post("/", authMiddleware, async (req, res) => {
       phone,
     });
     await user.save();
+    console.log(user, "user");
     res.status(201).json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -52,10 +55,45 @@ router.patch("/:id/status", authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/users/:id/change-password - Change user password
+router.put("/:id/change-password", async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    // Validate
+    console.log(password, password.length);
+    if (!password || password.trim().length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long" });
+    }
+
+    // Find user
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Hash the new password before saving (best practice)
+  
+
+
+    // Update password
+    user.password = password;
+    user.updated_at = Date.now();
+
+    await user.save();
+    console.log(user, "user");
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Error updating password:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // PUT /api/users/:id - Update user info
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const { name, email, role, phone, status,appPassword } = req.body;
+    const { name, email, role, phone, status, appPassword } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -115,8 +153,6 @@ router.post("/log", async (req, res) => {
   }
 });
 
-
-
 router.get("/all", async (req, res) => {
   try {
     // Optionally, you can populate user or lead info
@@ -133,18 +169,17 @@ router.get("/all", async (req, res) => {
 });
 
 router.get("/calls/:userId", async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const calls = await CallActivity.find({ userId })
-        .sort({ timestamp: -1 })
-        .populate("leadId", "company_name points_of_contact") // populate company_name from lead
-        .populate("userId", "name email");
-       res.status(200).json({ calls });
-    } catch (err) {
-      console.error("Error fetching call activities:", err);
-      res.status(500).json({ message: "Failed to fetch call activities" });
-    }
+  try {
+    const { userId } = req.params;
+    const calls = await CallActivity.find({ userId })
+      .sort({ timestamp: -1 })
+      .populate("leadId", "company_name points_of_contact") // populate company_name from lead
+      .populate("userId", "name email");
+    res.status(200).json({ calls });
+  } catch (err) {
+    console.error("Error fetching call activities:", err);
+    res.status(500).json({ message: "Failed to fetch call activities" });
+  }
 });
-
 
 module.exports = router;

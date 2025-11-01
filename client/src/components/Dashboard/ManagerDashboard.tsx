@@ -24,7 +24,7 @@ const usersWithStats = users
   .filter((exec) => exec.role !== "Admin" && exec.role !== "Manager") // exclude admin & manager
   .map((exec) => {
     // Filter leads for this exec
-    const execLeads = leads.filter((lead) => lead.assignedBy._id === exec._id);
+    const execLeads = leads.filter((lead) => lead.assignedBy?._id === exec._id);
 
     // Count by stage
     const newLeads = execLeads.filter((l) => l.stage === "New").length;

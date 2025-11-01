@@ -1,86 +1,136 @@
-import React, { useState } from 'react'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit3, 
-  Trash2, 
-  UserX, 
+import React, { useState } from "react";
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit3,
+  Trash2,
+  UserX,
   UserCheck,
   Users,
   Mail,
   Phone,
-  Shield
-} from 'lucide-react'
-import { useUsers } from '../../hooks/useUsers'
-import CreateUserModal from './CreateUserModal'
-import EditUserModal from './EditUserModal'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
-import { useAuth } from '../../contexts/AuthContext'
+  Shield,
+} from "lucide-react";
+import { useUsers } from "../../hooks/useUsers";
+import CreateUserModal from "./CreateUserModal";
+import EditUserModal from "./EditUserModal";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
+import { useAuth } from "../../contexts/AuthContext";
+import { KeyRound } from "lucide-react";
 
 const UserManagement: React.FC = () => {
-  const { users, loading, toggleUserStatus, deleteUser } = useAuth();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [roleFilter, setRoleFilter] = useState('All')
-  const [statusFilter, setStatusFilter] = useState('All')
+  const { users, loading, toggleUserStatus, deleteUser, profile } = useAuth();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const url = import.meta.env.VITE_BACKEND_URL;
+  console.log(selectedUser, "selectedUser");
+  const roles = ["All", "Admin", "Manager", "BD Executive"];
+  const statuses = ["All", "Active", "Inactive"];
 
-  const roles = ['All', 'Admin', 'Manager', 'BD Executive']
-  const statuses = ['All', 'Active', 'Inactive']
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "All" || user.role === roleFilter;
+    const matchesStatus =
+      statusFilter === "All" || user.status === statusFilter;
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = roleFilter === 'All' || user.role === roleFilter
-    const matchesStatus = statusFilter === 'All' || user.status === statusFilter
-    console.log(user,"user")
-    return matchesSearch && matchesRole && matchesStatus
-  
-  })
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
-  const handleToggleStatus = async (userId: string, currentStatus: 'Active' | 'Inactive') => {
-    try {
-      await toggleUserStatus(userId, currentStatus)
-      toast.success(`User ${currentStatus === 'Active' ? 'deactivated' : 'activated'} successfully`)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update user status')
+  const handleChangePassword = (userId, newPassword) => {
+    if (!newPassword.trim()) {
+      toast.error("Please enter a new password");
+      return;
     }
-  }
+
+    fetch(`${url}/api/users/${userId}/change-password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: newPassword }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+
+        if (!res.ok) {
+          // Backend sent an error response (e.g., 400, 404, 500)
+          throw new Error(data.message || "Something went wrong");
+        }
+
+        // Success case
+        toast.success(data.message);
+        setShowPasswordModal(false);
+        setNewPassword("");
+      })
+      .catch((err) => {
+        console.error("Password change error:", err);
+        toast.error(err.message || "Error updating password");
+      });
+  };
+
+  const handleToggleStatus = async (
+    userId: string,
+    currentStatus: "Active" | "Inactive"
+  ) => {
+    try {
+      await toggleUserStatus(userId, currentStatus);
+      toast.success(
+        `User ${
+          currentStatus === "Active" ? "deactivated" : "activated"
+        } successfully`
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update user status");
+    }
+  };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${userName}? This action cannot be undone.`
+      )
+    ) {
       try {
-        await deleteUser(userId)
-       
+        await deleteUser(userId);
       } catch (error: any) {
-        toast.error(error.message || 'Failed to delete user')
+        toast.error(error.message || "Failed to delete user");
       }
     }
-  }
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Admin': return 'bg-red-100 text-red-800'
-      case 'Manager': return 'bg-purple-100 text-purple-800'
-      case 'BD Executive': return 'bg-blue-100 text-blue-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case "Admin":
+        return "bg-red-100 text-red-800";
+      case "Manager":
+        return "bg-purple-100 text-purple-800";
+      case "BD Executive":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
-    return status === 'Active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-gray-100 text-gray-800'
-  }
+    return status === "Active"
+      ? "bg-green-100 text-green-800"
+      : "bg-gray-100 text-gray-800";
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -111,6 +161,8 @@ const UserManagement: React.FC = () => {
             <Search className="w-5 h-5 text-gray-300 absolute left-4 top-1/2 transform -translate-y-1/2" />
             <input
               type="text"
+              autoComplete="off"
+              name="search"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -285,6 +337,17 @@ const UserManagement: React.FC = () => {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setShowPasswordModal(true);
+                          }}
+                          className="p-2 text-gray-400 hover:text-yellow-400 transition-colors hover:bg-white/20 rounded-lg"
+                          title="Change Password"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -294,6 +357,46 @@ const UserManagement: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* change password */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 w-96">
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Change Password
+            </h2>
+
+            <input
+              type="password"
+              placeholder="Enter new password"
+              value={newPassword}
+              autoComplete="new-password"
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full p-2 rounded-lg bg-white/20 text-white placeholder-gray-300 outline-none mb-4"
+            />
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setNewPassword("");
+                }}
+                className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  handleChangePassword(selectedUser._id, newPassword)
+                }
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {isCreateModalOpen && (
@@ -312,6 +415,6 @@ const UserManagement: React.FC = () => {
       )}
     </div>
   );
-}
+};
 
-export default UserManagement
+export default UserManagement;

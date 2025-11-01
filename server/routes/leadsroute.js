@@ -201,6 +201,28 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// PUT /api/leads/bulk-assign
+router.put("/bulk-assign", async (req, res) => {
+  try {
+    const { leadIds, assignedBy } = req.body;
+
+    if (!leadIds?.length || !assignedBy) {
+      return res.status(400).json({ message: "Invalid data" });
+    }
+
+    await Lead.updateMany(
+      { _id: { $in: leadIds } },
+      { $set: { assignedBy, updated_at: Date.now() } }
+    );
+
+    res.json({ message: "Leads assigned successfully" });
+  } catch (error) {
+    console.error("Bulk assign error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // Update lead
 router.put("/:id", async (req, res) => {
   try {
