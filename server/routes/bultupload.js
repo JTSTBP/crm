@@ -67,7 +67,6 @@ function parsePointsOfContact(row) {
         linkedin_url: (
           row[`points_of_contact[${i}].linkedin_url`] || ""
         ).trim(),
-     
       });
     }
   });
@@ -133,10 +132,9 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
           const contacts = parsePointsOfContact(row);
           if (!contacts.length) {
             console.warn("Skipping row — no valid points_of_contact:", row);
-            return;
+            continue;
           }
 
-        
           if (existingLeadsMap.has(normalizedUrl)) {
             // ✅ Already in DB → update
             const lead = existingLeadsMap.get(normalizedUrl);
