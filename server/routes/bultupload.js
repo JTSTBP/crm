@@ -131,9 +131,19 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
 
           const contacts = parsePointsOfContact(row);
           if (!contacts.length) {
-            console.warn("Skipping row — no valid points_of_contact:", row);
-            continue;
+            fs.unlinkSync(req.file.path); // cleanup uploaded file
+            console.warn(
+              "Invalid CSV: no valid points_of_contact found in one or more rows:",
+              row
+            );
+            return res.status(400).json({
+              success: false,
+              message: `Each company must have at least one valid point of contact (with name and phone). Missing for: ${
+                row.company_name || "Unknown Company"
+              }`,
+            });
           }
+
 
           if (existingLeadsMap.has(normalizedUrl)) {
             // ✅ Already in DB → update
