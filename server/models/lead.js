@@ -5,11 +5,12 @@ const PointOfContactSchema = new mongoose.Schema({
   name: { type: String, required: true },
   designation: { type: String },
   phone: { type: String, required: true },
+  alternate_phone: { type: String, default: "" },
   email: { type: String },
   linkedin_url: { type: String },
   stage: {
     type: String,
-    enum: ["New","Contacted", "Busy", "No Answer", "Wrong Number"],
+    enum: ["New", "Contacted", "Busy", "No Answer", "Wrong Number"],
     default: "New",
   },
 });

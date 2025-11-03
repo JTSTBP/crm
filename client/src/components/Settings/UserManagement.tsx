@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { KeyRound } from "lucide-react";
-
+import { FiCopy } from "react-icons/fi";
 const UserManagement: React.FC = () => {
   const { users, loading, toggleUserStatus, deleteUser, profile } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -216,7 +216,7 @@ const UserManagement: React.FC = () => {
         ) : (
           <div className="o overflow-x-auto w-full">
             <table className="min-w-full">
-              <thead className="bg-white/10 border-b border-white/20">
+              <thead className="bg-white/10 border-b border-white/20 whitespace-nowrap">
                 <tr>
                   <th className="text-left py-4 px-6 font-semibold text-white">
                     User
@@ -233,6 +233,12 @@ const UserManagement: React.FC = () => {
                   <th className="text-left py-4 px-6 font-semibold text-white">
                     Created
                   </th>
+                  {profile?.role === "Admin" && (
+                    <th className="text-left py-4 px-6 font-semibold text-white">
+                      View User
+                    </th>
+                  )}
+
                   <th className="text-right py-4 px-6 font-semibold text-white">
                     Actions
                   </th>
@@ -300,6 +306,32 @@ const UserManagement: React.FC = () => {
                     <td className="py-4 px-6 text-gray-300 text-sm">
                       {format(new Date(user.created_at), "MMM dd, yyyy")}
                     </td>
+                    {profile?.role === "Admin" && (
+                      <td className="flex items-center gap-2">
+                        {user._id ? (
+                          <>
+                            <span
+                              className="text-gray-300 text-sm cursor-pointer"
+                              title={user._id}
+                            >
+                              {user._id.slice(0, 8)}... {/* short preview */}
+                            </span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(user._id);
+                                toast.success("User ID copied!");
+                              }}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Copy User ID"
+                            >
+                              <FiCopy size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    )}
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-end space-x-2">
                         <button

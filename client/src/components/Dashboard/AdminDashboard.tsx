@@ -30,8 +30,8 @@ import { useUsers } from "../../hooks/useUsers";
 const AdminDashboard: React.FC = () => {
   const { leads, activities } = useLeadsContext();
   const { users } = useUsers();
+const leadsSafe = Array.isArray(leads) ? leads : [];
 
-  const leadsSafe = leads ?? [];
 
   const stats = {
     totalUsers: users.length,
@@ -376,7 +376,8 @@ const AdminDashboard: React.FC = () => {
             className="space-y-4 max-h-96 overflow-y-auto"
             style={{ overflowX: "hidden" }}
           >
-            {activities.map((activity: any) => (
+            {Array.isArray(activities)
+  ?activities?.map((activity: any) => (
               <div
                 key={activity.id}
                 className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
@@ -461,7 +462,7 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </div>
               </div>
-            ))}
+            )):""}
 
             {activities.length === 0 && (
               <div className="text-center py-8">

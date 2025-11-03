@@ -810,6 +810,24 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                           </div>
                           <div className="flex flex-col">
                             <label className="text-xs font-medium text-gray-600 mb-1">
+                              Alternate Number
+                            </label>
+                            <input
+                              value={contact.alternate_phone || ""}
+                              onChange={(e) =>
+                                handlePOCChange(
+                                  index,
+                                  "alternate_phone",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Alternate Number"
+                              className="px-3 py-2 border rounded-lg text-sm w-28"
+                            />
+                          </div>
+
+                          <div className="flex flex-col">
+                            <label className="text-xs font-medium text-gray-600 mb-1">
                               Email
                             </label>
                             <input
@@ -872,7 +890,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                     <div className="overflow-x-auto">
                       <table className="border-separate border-spacing-x-6 border-spacing-y-2 w-full ">
                         <thead>
-                          <tr className="border-b border-purple-200">
+                          <tr className="border-b border-purple-200 whitespace-nowrap">
                             <th className="text-left py-2 px-3 text-sm font-medium text-gray-600">
                               Name
                             </th>
@@ -882,6 +900,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                             <th className="text-left py-2 px-3 text-sm font-medium text-gray-600">
                               Phone
                             </th>
+                            <th className="text-left py-2 px-3 text-sm font-medium text-gray-600 ">
+                              Alternate Number
+                            </th>
+
                             <th className="text-left py-2 px-3 text-sm font-medium text-gray-600">
                               Email
                             </th>
@@ -902,20 +924,22 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                               <td className="">{contact.name}</td>
                               <td>{contact.designation || "-"}</td>
                               <td>{contact.phone || "-"}</td>
+                              <td>{contact.alternate_phone || "-"}</td>
+
                               <td>
                                 <a
                                   href={`mailto:${contact.email}`}
                                   className="text-blue-600 hover:text-blue-800 underline"
                                 >
-                                  {contact.email}
+                                  {contact.email || "-"}
                                 </a>
                               </td>
                               <td>
                                 <a
                                   href={contact.linkedin_url}
-                                  className="text-blue-600 hover:text-blue-800 underline"
+                                  className="text-blue-600 hover:text-blue-800"
                                 >
-                                  {contact.linkedin_url}
+                                  {contact.linkedin_url || "-"}
                                 </a>
                               </td>
                               <td>{contact.stage || "-"}</td>

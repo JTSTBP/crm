@@ -76,7 +76,11 @@ router.post("/", async (req, res) => {
     }
 
     // Check for duplicate contact phone numbers
-    const phones = points_of_contact?.map((c) => c.phone) || [];
+    const phones =
+      points_of_contact?.flatMap(
+        (c) => [c.phone, c.alternate_phone].filter(Boolean) // include only non-empty numbers
+      ) || [];
+
     const uniquePhones = new Set(phones);
 
     if (phones.length !== uniquePhones.size) {
@@ -104,13 +108,10 @@ router.get("/", async (req, res) => {
       filter.assignedBy = assignedBy; // filter leads assigned by specific user
     }
 
-    const leads = await Lead.find(filter).populate(
-      "assignedBy",
-      "name email role"
-    );
+    const leads = await Lead.find(filter)
+      .populate("assignedBy", "name email role")
+      .sort({ createdAt: -1 });
     res.json(leads);
-    // const leads = await Lead.find().populate("assignedBy", "name email role");
-    // res.json(leads);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -175,11 +176,11 @@ router.delete("/:leadId/remarks/:remarkId", async (req, res) => {
       return res.status(404).json({ error: "Lead not found" });
     }
 
-   const updatedLead = await Lead.findOneAndUpdate(
-     { _id: leadId },
-     { $pull: { remarks: { _id: remarkId } } }, // remove the remark
-     { new: true } // ✅ ensures post hook sees the updated document
-   );
+    const updatedLead = await Lead.findOneAndUpdate(
+      { _id: leadId },
+      { $pull: { remarks: { _id: remarkId } } }, // remove the remark
+      { new: true } // ✅ ensures post hook sees the updated document
+    );
 
     res.json({ message: "Remark deleted", remarks: lead.remarks });
   } catch (err) {
@@ -222,15 +223,19 @@ router.put("/bulk-assign", async (req, res) => {
   }
 });
 
-
 // Update lead
 router.put("/:id", async (req, res) => {
   try {
     const { points_of_contact, stage } = req.body;
 
     // Check for duplicate contact phone numbers
-    const phones = points_of_contact?.map((c) => c.phone) || [];
-    const uniquePhones = new Set(phones);
+ const phones =
+   points_of_contact?.flatMap(
+     (c) => [c.phone, c.alternate_phone].filter(Boolean) // include only non-empty numbers
+   ) || [];
+
+ const uniquePhones = new Set(phones);
+
 
     if (phones.length !== uniquePhones.size) {
       return res
@@ -253,7 +258,6 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
-
 
 // Delete lead
 router.delete("/:id", async (req, res) => {

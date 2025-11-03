@@ -4,6 +4,7 @@ const multer = require("multer");
 const csv = require("csv-parser");
 const fs = require("fs");
 const Lead = require("../models/lead");
+const User = require("../models/users"); 
 
 const upload = multer({ dest: "uploads/" });
 
@@ -17,32 +18,9 @@ function normalizeUrl(url) {
   }
 }
 
-// function parsePointsOfContact(row) {
-//   const contacts = [];
-//   let i = 0;
-//   while (
-//     row[`points_of_contact[${i}].name`] ||
-//     row[`points_of_contact[${i}].phone`] ||
-//     row[`points_of_contact[${i}].email`] ||
-//     row[`points_of_contact[${i}].linkedin_url`]
-//   ) {
-//     const name = row[`points_of_contact[${i}].name`] || "";
-//     const designation = row[`points_of_contact[${i}].designation`] || "";
-//     const phone = row[`points_of_contact[${i}].phone`] || "";
-//     const email = row[`points_of_contact[${i}].email`] || "";
-//      const linkedin_url = row[`points_of_contact[${i}].linkedin_url`] || "";
-
-//     if (name || phone || email)
-//       contacts.push({ name, designation, phone, email, linkedin_url });
-//     i++;
-//   }
-
-//   return contacts;
-// }
 function parsePointsOfContact(row) {
   const contacts = [];
 
-  // Find how many contacts exist by checking matching keys
   const contactIndexes = Object.keys(row)
     .map((key) => {
       const match = key.match(/points_of_contact\[(\d+)\]\.name/);
@@ -50,20 +28,23 @@ function parsePointsOfContact(row) {
     })
     .filter((i) => i !== null);
 
-  // Unique indexes like [0, 1, 2, ...]
   const uniqueIndexes = [...new Set(contactIndexes)];
 
   uniqueIndexes.forEach((i) => {
     const name = (row[`points_of_contact[${i}].name`] || "").trim();
     const phone = (row[`points_of_contact[${i}].phone`] || "").trim();
+    const alternate_phone = (
+      row[`points_of_contact[${i}].alternate_phone`] || ""
+    ).trim();
 
-    // ✅ Include only valid ones
-    if (name && phone) {
+    // ✅ Include contact if it has a name and at least one phone number
+    if (name && (phone || alternate_phone)) {
       contacts.push({
         name,
         designation: (row[`points_of_contact[${i}].designation`] || "").trim(),
         email: (row[`points_of_contact[${i}].email`] || "").trim(),
         phone,
+        alternate_phone,
         linkedin_url: (
           row[`points_of_contact[${i}].linkedin_url`] || ""
         ).trim(),
@@ -73,6 +54,7 @@ function parsePointsOfContact(row) {
 
   return contacts;
 }
+
 
 function safeParseJson(value, fallback) {
   try {
@@ -144,22 +126,38 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
             });
           }
 
-
           if (existingLeadsMap.has(normalizedUrl)) {
             // ✅ Already in DB → update
             const lead = existingLeadsMap.get(normalizedUrl);
 
             contacts.forEach((contact) => {
-              if (
-                !lead.points_of_contact.some((c) => c.phone === contact.phone)
-              ) {
-                lead.points_of_contact.push(contact);
-              }
+            if (
+              !lead.points_of_contact.some(
+                (c) =>
+                  c.phone === contact.phone ||
+                  c.phone === contact.alternate_phone ||
+                  c.alternate_phone === contact.phone ||
+                  c.alternate_phone === contact.alternate_phone
+              )
+            ) {
+              lead.points_of_contact.push(contact);
+            }
             });
 
             await lead.save(); // 🔑 save updated lead immediately
           } else {
             // ✅ Not in DB → new lead
+            // Convert email → user ID if possible
+            let assignedById = null;
+            if (row.assignedBy) {
+              const user = await User.findOne({ email: row.assignedBy.trim() });
+              if (user) {
+                assignedById = user._id; // ✅ store ObjectId
+              } else {
+                console.warn(`No user found with email: ${row.assignedBy}`);
+              }
+            }
+
             if (!leadsMap.has(normalizedUrl)) {
               leadsMap.set(normalizedUrl, {
                 company_name: row.company_name || "",
@@ -176,7 +174,7 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
                 no_of_designations: row.no_of_designations || null,
                 no_of_positions: row.no_of_positions || null,
                 stage: row.stage || "New",
-                assignedBy: row.assignedBy || null,
+                assignedBy: assignedById,
                 remarks: safeParseJson(row.remarks, []),
               });
             } else {
@@ -185,7 +183,11 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
               contacts.forEach((contact) => {
                 if (
                   !existing.points_of_contact.some(
-                    (c) => c.phone === contact.phone
+                    (c) =>
+                      c.phone === contact.phone ||
+                      c.phone === contact.alternate_phone ||
+                      c.alternate_phone === contact.phone ||
+                      c.alternate_phone === contact.alternate_phone
                   )
                 ) {
                   existing.points_of_contact.push(contact);
