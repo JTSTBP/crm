@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Plus,
@@ -48,12 +47,18 @@ const LeadsList: React.FC = () => {
 
   const pageSize = 5;
 
-  const pocStages = ["All","New", "Contacted", "Busy", "No Answer", "Wrong Number"];
+  const pocStages = [
+    "All",
+    "New",
+    "Contacted",
+    "Busy",
+    "No Answer",
+    "Wrong Number",
+  ];
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [searchTerm, stageFilter, userFilter, pocStageFilter, dateFilter]);
-
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, stageFilter, userFilter, pocStageFilter, dateFilter]);
 
   const stages = [
     "All",
@@ -86,10 +91,47 @@ useEffect(() => {
   //   return matchesSearch && matchesStage && matchesUser && matchesPocStage;
   // });
 
+  // const filteredLeads = leads.filter((lead) => {
+  //   const matchesSearch =
+  //     lead.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     lead.contact_email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+  //   const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
+
+  //   const matchesUser =
+  //     userFilter === "All" ||
+  //     (userFilter === "Unassigned" && !lead.assignedBy) ||
+  //     lead.assignedBy?._id === userFilter;
+
+  //   const matchesPocStage =
+  //     pocStageFilter === "All" ||
+  //     lead.points_of_contact?.some((poc) => poc.stage === pocStageFilter);
+
+  //   const matchesDate =
+  //     !dateFilter ||
+  //     new Date(lead.createdAt).toDateString() ===
+  //       new Date(dateFilter).toDateString();
+
+  //   return (
+  //     matchesSearch &&
+  //     matchesStage &&
+  //     matchesUser &&
+  //     matchesPocStage &&
+  //     matchesDate
+  //   );
+  // });
   const filteredLeads = leads.filter((lead) => {
+    const lowerSearch = searchTerm.toLowerCase();
+
+    // 🔹 Search matches company name, email, or any POC's phone/alternate_num
     const matchesSearch =
-      lead.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.contact_email?.toLowerCase().includes(searchTerm.toLowerCase());
+      lead.company_name.toLowerCase().includes(lowerSearch) ||
+      lead.contact_email?.toLowerCase().includes(lowerSearch) ||
+      lead.points_of_contact?.some(
+        (poc) =>
+          poc.phone?.toLowerCase().includes(lowerSearch) ||
+          poc.alternate_phone?.toLowerCase().includes(lowerSearch)
+      );
 
     const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
 
@@ -115,6 +157,7 @@ useEffect(() => {
       matchesDate
     );
   });
+
   console.log(filteredLeads.length, "filteredLeads length");
   const totalPages = Math.ceil(filteredLeads.length / pageSize);
   const paginatedLeads = filteredLeads.slice(
@@ -248,7 +291,7 @@ useEffect(() => {
             <Search className="w-5 h-5 text-gray-300 absolute left-4 top-1/2 transform -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search leads..."
+              placeholder="Search leads / Phone Numbers"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
