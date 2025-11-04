@@ -616,7 +616,8 @@ Warm regards,
 *{{consultant_name}}*  
 Jobs Territory  
 
-👉 [View a quick case study here](https://jobsterritory.com/casestudy)`,
+[View our case studies](https://jobsterritory.com/casestudies)  
+[See what our clients say](https://www.jobsterritory.com/#testimonials)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
@@ -627,13 +628,14 @@ Jobs Territory
     content: `*Hey {{contact_name}},*
 It was great speaking with you earlier. I’ve shared the proposal we discussed for *{{company_name}}*, outlining how our *Pay-Per-Hire model* ensures cost-effective and quality-driven hiring support.
 
-Please have a look when you get a chance — happy to walk you through how it can simplify your hiring process and help you close positions faster.
+Please take a look when you get a moment — happy to walk you through how it simplifies your hiring and speeds up closures.
 
 Warm regards,  
 *{{consultant_name}}*  
 Jobs Territory  
 
-👉 [You can also check out this case study for reference](https://jobsterritory.com/casestudy)`,
+[Check out our case studies](https://jobsterritory.com/casestudies)  
+[Hear from our happy clients](https://www.jobsterritory.com/#testimonials)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
@@ -644,15 +646,16 @@ Jobs Territory
     content: `*Hey {{contact_name}},*
 Just checking in to see if you’ve had a chance to review the proposal we sent for *{{company_name}}*.
 
-Our *Pay-Per-Hire model* has been helping companies scale efficiently — you only pay for successful hires, ensuring complete accountability and zero risk.
+Our *Pay-Per-Hire model* helps companies scale efficiently — you only pay for successful hires, ensuring complete accountability and zero risk.
 
-Would you like me to schedule a quick call this week to discuss how it can fit your hiring plans?
+Would you like me to schedule a quick call this week to discuss how it fits into your hiring plans?
 
 Warm regards,  
 *{{consultant_name}}*  
 Jobs Territory  
 
-👉 [Here’s a case study showing our results](https://jobsterritory.com/casestudy)`,
+[View our case studies](https://jobsterritory.com/casestudies)  
+[See our client testimonials](https://www.jobsterritory.com/#testimonials)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
@@ -661,9 +664,9 @@ Jobs Territory
     id: "whatsapp-raas-4",
     name: "Stage 4: Tried Calling – No Response",
     content: `*Hey {{contact_name}},*
-I tried reaching you for a quick discussion regarding the *Pay-Per-Hire proposal* we shared for *{{company_name}}*, but couldn’t connect.
+I tried reaching you for a quick chat regarding the *Pay-Per-Hire proposal* we shared for *{{company_name}}*, but couldn’t connect.
 
-Just wanted to check if you’ve had a chance to review it — this model gives you complete flexibility while ensuring high-quality, performance-based hiring.
+Just wanted to check if you’ve had a chance to review it — our model offers complete flexibility with performance-based hiring and zero upfront cost.
 
 Would tomorrow be a good time for a short call?
 
@@ -671,7 +674,8 @@ Warm regards,
 *{{consultant_name}}*  
 Jobs Territory  
 
-👉 [You can also review this short case study](https://jobsterritory.com/casestudy)`,
+[Check our case studies](https://jobsterritory.com/casestudies)  
+[Read client success stories](https://www.jobsterritory.com/#testimonials)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
@@ -682,7 +686,7 @@ Jobs Territory
     content: `*Hey {{contact_name}},*
 Just following up one last time regarding the *Pay-Per-Hire proposal* we shared for *{{company_name}}*.
 
-Please let me know if you’d like to move forward or if it’s not a current priority — I’ll hold off further follow-ups unless you’d like me to reconnect later.
+Please let me know if you’d like to move forward or if it’s not a current priority — I’ll pause follow-ups unless you’d like me to reconnect later.
 
 Appreciate your time either way.
 
@@ -690,7 +694,8 @@ Warm regards,
 *{{consultant_name}}*  
 Jobs Territory  
 
-👉 [Here’s a quick case study on how our model delivers results](https://jobsterritory.com/casestudy)`,
+[See our case studies](https://jobsterritory.com/casestudies)  
+[What clients say about us](https://www.jobsterritory.com/#testimonials)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
@@ -701,15 +706,16 @@ Jobs Territory
     content: `*Hey {{contact_name}},*
 Hope all’s going well at *{{company_name}}*.
 
-Just wanted to reconnect and check if you’re currently exploring any hiring support. Our *Pay-Per-Hire model* continues to help companies close positions quickly while maintaining complete flexibility and cost control.
+Just wanted to reconnect and check if you’re currently exploring any hiring support. Our *Pay-Per-Hire model* continues to help companies close roles quickly while maintaining flexibility and cost control.
 
-Would you like me to share a short refresher on how it works?
+Would you like me to share a quick refresher on how it works?
 
 Warm regards,  
 *{{consultant_name}}*  
 Jobs Territory  
 
-👉 [Here’s a case study that shows how we’ve supported similar clients](https://jobsterritory.com/casestudy)`,
+[Explore our case studies](https://jobsterritory.com/casestudies)  
+[See client feedback](https://www.jobsterritory.com/#testimonials)`,
     placeholders: ["contact_name", "company_name", "consultant_name"],
     type: "text",
   },
