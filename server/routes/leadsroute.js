@@ -205,16 +205,37 @@ router.get("/:id", async (req, res) => {
 // PUT /api/leads/bulk-assign
 router.put("/bulk-assign", async (req, res) => {
   try {
-    const { leadIds, assignedBy } = req.body;
+    const { leadIds, assignedBy, stage } = req.body;
 
-    if (!leadIds?.length || !assignedBy) {
+    if (!leadIds?.length) {
       return res.status(400).json({ message: "Invalid data" });
     }
 
-    await Lead.updateMany(
-      { _id: { $in: leadIds } },
-      { $set: { assignedBy, updated_at: Date.now() } }
-    );
+    // await Lead.updateMany(
+    //   { _id: { $in: leadIds } },
+    //   {
+    //     $set: {
+    //       assignedBy,
+    //       updated_at: Date.now(),
+    //       stage: stage ,
+    //     },
+    //   }
+    // );
+
+    const updateData = {};
+
+    // ✅ Only include fields if they exist in the request
+    if (assignedBy) updateData.assignedBy = assignedBy;
+    if (stage) updateData.stage = stage;
+    console.log(updateData, "updateData");
+
+    if (Object.keys(updateData).length === 0) {
+      return res
+        .status(400)
+        .json({ message: "No valid fields provided for update" });
+    }
+
+    await Lead.updateMany({ _id: { $in: leadIds } }, { $set: updateData });
 
     res.json({ message: "Leads assigned successfully" });
   } catch (error) {
@@ -229,13 +250,12 @@ router.put("/:id", async (req, res) => {
     const { points_of_contact, stage } = req.body;
 
     // Check for duplicate contact phone numbers
- const phones =
-   points_of_contact?.flatMap(
-     (c) => [c.phone, c.alternate_phone].filter(Boolean) // include only non-empty numbers
-   ) || [];
+    const phones =
+      points_of_contact?.flatMap(
+        (c) => [c.phone, c.alternate_phone].filter(Boolean) // include only non-empty numbers
+      ) || [];
 
- const uniquePhones = new Set(phones);
-
+    const uniquePhones = new Set(phones);
 
     if (phones.length !== uniquePhones.size) {
       return res
