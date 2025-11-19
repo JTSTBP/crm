@@ -70,6 +70,7 @@ const LeadsList: React.FC = () => {
     "Won",
     "Lost",
     "Onboarded",
+    "No vendor",
   ];
 
   const filteredLeads = leads.filter((lead) => {
