@@ -36,7 +36,7 @@ app.use("/api/emails", sendmails);
 
 // checking route
 app.get("/", (req, res) => {
-  res.send("Jobs Territory crm API is running");
+  res.send("Jobs Territory crm API is runningg");
 });
 
 const PORT = process.env.PORT || 5000;

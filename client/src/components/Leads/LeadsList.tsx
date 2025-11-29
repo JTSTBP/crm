@@ -23,7 +23,7 @@ import toast from "react-hot-toast";
 
 const LeadsList: React.FC = () => {
   // const { leads, loading } = useLeads()
-  const { fetchLeads, leads, loading, createLead, updateLead, deleteLead } =
+  const { fetchLeads, leads, loading, pagination, createLead, updateLead, deleteLead } =
     useLeadsContext();
   const { users } = useUsers();
   const { profile } = useAuth();
@@ -46,7 +46,7 @@ const LeadsList: React.FC = () => {
   const url = import.meta.env.VITE_BACKEND_URL;
   const [bulkStage, setBulkStage] = useState("");
 
-  const pageSize = 5;
+  const pageSize = 10; // Increased from 5 for better UX
 
   const pocStages = [
     "All",
@@ -57,6 +57,39 @@ const LeadsList: React.FC = () => {
     "Wrong Number",
   ];
 
+  // Debounce search term to avoid excessive API calls
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+
+  useEffect(() => {
+    // If search is cleared, update immediately
+    if (searchTerm === "") {
+      setDebouncedSearchTerm("");
+      return;
+    }
+
+    // Otherwise, debounce the search
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch leads whenever filters or page changes
+  useEffect(() => {
+    const filters = {
+      assignedBy: userFilter !== "All" ? userFilter : undefined,
+      stage: stageFilter !== "All" ? stageFilter : undefined,
+      search: debouncedSearchTerm || undefined,
+      pocStage: pocStageFilter !== "All" ? pocStageFilter : undefined,
+      date: dateFilter || undefined,
+      page: currentPage,
+      limit: pageSize,
+    };
+    fetchLeads(filters);
+  }, [debouncedSearchTerm, stageFilter, userFilter, pocStageFilter, dateFilter, currentPage]);
+
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, stageFilter, userFilter, pocStageFilter, dateFilter]);
@@ -73,53 +106,8 @@ const LeadsList: React.FC = () => {
     "No vendor",
   ];
 
-  const filteredLeads = leads.filter((lead) => {
-    const lowerSearch = searchTerm.toLowerCase();
-
-    // 🔹 Search matches company name, email, or any POC's phone/alternate_num
-    const matchesSearch =
-      lead.company_name.toLowerCase().includes(lowerSearch) ||
-      lead.contact_email?.toLowerCase().includes(lowerSearch) ||
-      lead.points_of_contact?.some(
-        (poc) =>
-          poc.phone?.toLowerCase().includes(lowerSearch) ||
-          poc.alternate_phone?.toLowerCase().includes(lowerSearch)
-      );
-
-    const matchesStage = stageFilter === "All" || lead.stage === stageFilter;
-
-    const matchesUser =
-      userFilter === "All" ||
-      (userFilter === "Unassigned" && !lead.assignedBy) ||
-      lead.assignedBy?._id === userFilter;
-
-    const matchesPocStage =
-      pocStageFilter === "All" ||
-      lead.points_of_contact?.some((poc) => poc.stage === pocStageFilter);
-
-    const matchesDate =
-      !dateFilter ||
-      new Date(lead.createdAt).toDateString() ===
-        new Date(dateFilter).toDateString();
-
-    return (
-      matchesSearch &&
-      matchesStage &&
-      matchesUser &&
-      matchesPocStage &&
-      matchesDate
-    );
-  });
-
-  console.log(filteredLeads.length, "filteredLeads length");
-  const totalPages = Math.ceil(filteredLeads.length / pageSize);
-  const paginatedLeads = filteredLeads.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
   const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= pagination.totalPages) {
       setCurrentPage(page);
     }
   };
@@ -147,7 +135,7 @@ const LeadsList: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData),
       });
-      fetchLeads();
+
       const data = await response.json();
 
       if (!response.ok) throw new Error(data.message || "Failed to assign");
@@ -155,19 +143,20 @@ const LeadsList: React.FC = () => {
       toast.success("Leads assigned successfully!");
       setBulkAssignee("");
       setBulkStage("");
-      // Optionally update local state (instant UI update)
-      const updatedUser = users.find((u) => u._id === bulkAssignee);
-      if (updatedUser) {
-        const updatedLeads = filteredLeads.map((lead) =>
-          selectedLeads.includes(lead._id)
-            ? { ...lead, assignedBy: updatedUser }
-            : lead
-        );
-        // update context if possible
+      setSelectedLeads([]);
+      setSelectAll(false);
 
-        setSelectedLeads([]);
-        setSelectAll(false);
-      }
+      // Refresh leads with current filters
+      const filters = {
+        assignedBy: userFilter !== "All" ? userFilter : undefined,
+        stage: stageFilter !== "All" ? stageFilter : undefined,
+        search: searchTerm || undefined,
+        pocStage: pocStageFilter !== "All" ? pocStageFilter : undefined,
+        date: dateFilter || undefined,
+        page: currentPage,
+        limit: pageSize,
+      };
+      fetchLeads(filters);
     } catch (error) {
       toast.error(error.message || "Error assigning leads");
     } finally {
@@ -195,14 +184,6 @@ const LeadsList: React.FC = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -353,14 +334,14 @@ const LeadsList: React.FC = () => {
         <input
           type="checkbox"
           checked={
-            filteredLeads.length > 0 &&
-            selectedLeads.length === filteredLeads.length
+            leads.length > 0 &&
+            selectedLeads.length === pagination.total
           }
           onChange={(e) => {
             const checked = e.target.checked;
             if (checked) {
-              // ✅ Select all filtered leads
-              setSelectedLeads(filteredLeads.map((lead) => lead._id));
+              // ✅ Select all leads (note: this only selects current page in practice)
+              setSelectedLeads(leads.map((lead) => lead._id));
             } else {
               // ❌ Deselect all
               setSelectedLeads([]);
@@ -368,8 +349,8 @@ const LeadsList: React.FC = () => {
           }}
         />
         <span className="text-white font-medium">
-          {selectedLeads.length === filteredLeads.length &&
-          filteredLeads.length > 0
+          {selectedLeads.length === leads.length &&
+            leads.length > 0
             ? "Deselect All Leads"
             : "Select All Leads"}
         </span>
@@ -429,8 +410,13 @@ const LeadsList: React.FC = () => {
       )}
 
       {/* Leads List */}
-      <div className="glass rounded-2xl border border-white/30 overflow-hidden shadow-xl">
-        {filteredLeads.length === 0 ? (
+      <div className="glass rounded-2xl border border-white/30 overflow-hidden shadow-xl relative">
+        {loading && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-10 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+        {leads.length === 0 && !loading ? (
           <div className="p-8 text-center">
             <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-6" />
             <h3 className="text-xl font-semibold text-white mb-3">
@@ -448,12 +434,12 @@ const LeadsList: React.FC = () => {
             <div className="flex items-center space-x-2 p-4 bg-white/5 border-b border-white/10">
               <input
                 type="checkbox"
-                checked={paginatedLeads.every((lead) =>
+                checked={leads.every((lead) =>
                   selectedLeads.includes(lead._id)
                 )}
                 onChange={(e) => {
                   const checked = e.target.checked;
-                  const currentPageIds = paginatedLeads.map((lead) => lead._id);
+                  const currentPageIds = leads.map((lead) => lead._id);
 
                   if (checked) {
                     // ✅ Add only current page’s leads to selected list
@@ -469,11 +455,11 @@ const LeadsList: React.FC = () => {
                 }}
               />
               <span className="text-white font-medium">
-                Select All on This Page ({paginatedLeads.length})
+                Select All on This Page ({leads.length})
               </span>
             </div>
 
-            {paginatedLeads.map((lead) => (
+            {leads.map((lead) => (
               <div
                 key={lead._id}
                 className="p-6 hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-[1.02]"
@@ -611,7 +597,7 @@ const LeadsList: React.FC = () => {
             ))}
           </div>
         )}
-        {totalPages > 1 && (
+        {pagination.totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 p-4">
             {/* Prev button */}
             <button
@@ -623,22 +609,21 @@ const LeadsList: React.FC = () => {
             </button>
 
             {/* Page buttons */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
               (page, idx, arr) => {
                 if (
                   page === 1 ||
-                  page === totalPages ||
+                  page === pagination.totalPages ||
                   Math.abs(page - currentPage) <= 1
                 ) {
                   return (
                     <button
                       key={page}
                       onClick={() => goToPage(page)}
-                      className={`px-3 py-1 rounded-lg font-medium transition ${
-                        page === currentPage
-                          ? "bg-gradient-to-r from-[#db2777] via-[#a855f7] to-[#667eea] text-white shadow-lg"
-                          : "bg-[#764ba2] text-white hover:bg-[#a855f7]"
-                      }`}
+                      className={`px-3 py-1 rounded-lg font-medium transition ${page === currentPage
+                        ? "bg-gradient-to-r from-[#db2777] via-[#a855f7] to-[#667eea] text-white shadow-lg"
+                        : "bg-[#764ba2] text-white hover:bg-[#a855f7]"
+                        }`}
                     >
                       {page}
                     </button>
@@ -661,7 +646,7 @@ const LeadsList: React.FC = () => {
             {/* Next button */}
             <button
               onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === pagination.totalPages}
               className="px-3 py-1 rounded-lg bg-[#667eea] text-white hover:bg-[#764ba2] disabled:opacity-50 transition"
             >
               &gt;

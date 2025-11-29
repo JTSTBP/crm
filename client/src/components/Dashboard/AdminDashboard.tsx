@@ -30,7 +30,7 @@ import { useUsers } from "../../hooks/useUsers";
 const AdminDashboard: React.FC = () => {
   const { leads, activities } = useLeadsContext();
   const { users } = useUsers();
-const leadsSafe = Array.isArray(leads) ? leads : [];
+  const leadsSafe = Array.isArray(leads) ? leads : [];
 
 
   const stats = {
@@ -44,19 +44,19 @@ const leadsSafe = Array.isArray(leads) ? leads : [];
     conversionRate:
       leadsSafe.length > 0
         ? Math.round(
-            (leadsSafe.filter((l) => l.stage === "Won").length /
-              leadsSafe.length) *
-              100
-          )
+          (leadsSafe.filter((l) => l.stage === "Won").length /
+            leadsSafe.length) *
+          100
+        )
         : 0,
     avgDealSize:
       leadsSafe.filter((l) => l.stage === "Won").length > 0
         ? Math.round(
-            leadsSafe
-              .filter((l) => l.stage === "Won")
-              .reduce((sum, l) => sum + (l.value ?? 0), 0) /
-              leadsSafe.filter((l) => l.stage === "Won").length
-          )
+          leadsSafe
+            .filter((l) => l.stage === "Won")
+            .reduce((sum, l) => sum + (l.value ?? 0), 0) /
+          leadsSafe.filter((l) => l.stage === "Won").length
+        )
         : 0,
   };
 
@@ -377,92 +377,91 @@ const leadsSafe = Array.isArray(leads) ? leads : [];
             style={{ overflowX: "hidden" }}
           >
             {Array.isArray(activities)
-  ?activities?.map((activity: any) => (
-              <div
-                key={activity.id}
-                className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                {/* Activity Icon */}
+              ? activities?.map((activity: any) => (
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.action === "update"
-                      ? "bg-blue-100"
-                      : activity.action === "remark_added"
-                      ? "bg-green-100"
-                      : activity.action === "remark_deleted"
-                      ? "bg-red-100"
-                      : activity.action === "create"
-                      ? "bg-purple-100"
-                      : "bg-gray-100"
-                  }`}
+                  key={activity.id}
+                  className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
                 >
-                  {activity.action === "update" && (
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                  )}
-                  {activity.action === "remark_added" && (
-                    <MessageSquare className="w-5 h-5 text-green-600" />
-                  )}
-                  {activity.action === "remark_deleted" && (
-                    <Trash2 className="w-5 h-5 text-red-600" />
-                  )}
-                  {activity.action === "create" && (
-                    <PlusCircle className="w-5 h-5 text-purple-600" />
-                  )}
-                </div>
-
-                {/* Activity Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900">
-                      <span className="text-blue-600">{activity.user}</span>{" "}
-                      {activity.action.toLowerCase()}
-                    </p>
-                    <p className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                      {format(new Date(activity.timestamp), "MMM dd, HH:mm")}
-                    </p>
+                  {/* Activity Icon */}
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.action === "update"
+                        ? "bg-blue-100"
+                        : activity.action === "remark_added"
+                          ? "bg-green-100"
+                          : activity.action === "remark_deleted"
+                            ? "bg-red-100"
+                            : activity.action === "create"
+                              ? "bg-purple-100"
+                              : "bg-gray-100"
+                      }`}
+                  >
+                    {activity.action === "update" && (
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    )}
+                    {activity.action === "remark_added" && (
+                      <MessageSquare className="w-5 h-5 text-green-600" />
+                    )}
+                    {activity.action === "remark_deleted" && (
+                      <Trash2 className="w-5 h-5 text-red-600" />
+                    )}
+                    {activity.action === "create" && (
+                      <PlusCircle className="w-5 h-5 text-purple-600" />
+                    )}
                   </div>
 
-                  {/* Lead name */}
-                  <p className="text-sm text-gray-700 mt-1">
-                    {activity.leadName}
-                  </p>
-
-                  {/* Updated Fields */}
-                  {activity.updatedFields && (
-                    <div className="mt-2 text-sm text-gray-600 space-y-1">
-                      <strong className="text-gray-800">Changes:</strong>
-                      <div className="pl-2 space-y-1">
-                        {formatUpdatedFields(activity.updatedFields)}
-                      </div>
+                  {/* Activity Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900">
+                        <span className="text-blue-600">{activity.user}</span>{" "}
+                        {activity.action.toLowerCase()}
+                      </p>
+                      <p className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                        {format(new Date(activity.timestamp), "MMM dd, HH:mm")}
+                      </p>
                     </div>
-                  )}
 
-                  {/* Remarks */}
-                  {activity.remarks && activity.remarks.length > 0 && (
-                    <div className="mt-2 text-xs text-gray-600">
-                      <strong className="text-gray-800">Remarks:</strong>
-                      <ul className="list-disc pl-5">
-                        {activity.remarks.map((remark: any) => (
-                          <li key={remark._id}>
-                            {remark.type}:{" "}
-                            {remark.content ||
-                              remark.fileUrl ||
-                              remark.voiceUrl}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Additional Details */}
-                  {activity.details && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {activity.details}
+                    {/* Lead name */}
+                    <p className="text-sm text-gray-700 mt-1">
+                      {activity.leadName}
                     </p>
-                  )}
+
+                    {/* Updated Fields */}
+                    {activity.updatedFields && (
+                      <div className="mt-2 text-sm text-gray-600 space-y-1">
+                        <strong className="text-gray-800">Changes:</strong>
+                        <div className="pl-2 space-y-1">
+                          {formatUpdatedFields(activity.updatedFields)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Remarks */}
+                    {activity.remarks && activity.remarks.length > 0 && (
+                      <div className="mt-2 text-xs text-gray-600">
+                        <strong className="text-gray-800">Remarks:</strong>
+                        <ul className="list-disc pl-5">
+                          {activity.remarks.map((remark: any) => (
+                            <li key={remark._id}>
+                              {remark.type}:{" "}
+                              {remark.content ||
+                                remark.fileUrl ||
+                                remark.voiceUrl}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Additional Details */}
+                    {activity.details && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {activity.details}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )):""}
+              )) : ""}
 
             {activities.length === 0 && (
               <div className="text-center py-8">

@@ -45,7 +45,13 @@ interface Lead {
 interface LeadsContextType {
   leads: Lead[];
   loading: boolean;
-  fetchLeads: () => void;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  fetchLeads: (filters?: any) => void;
 
   createLead: (data: any) => Promise<void>;
   updateLead: (id: string, data: any) => Promise<void>;
@@ -86,18 +92,43 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [proposalsLoading, setProposalLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
   const { profile } = useAuth();
 
-  const fetchLeads = async (assignedBy?: string): Promise<Lead[]> => {
+  const fetchLeads = async (filters?: any): Promise<Lead[]> => {
     try {
       setLoading(true);
 
-      const query = assignedBy ? `?assignedBy=${assignedBy}` : "";
+      // Build query params
+      const params = new URLSearchParams();
+      if (filters?.assignedBy) params.append("assignedBy", filters.assignedBy);
+      if (filters?.stage) params.append("stage", filters.stage);
+      if (filters?.search) params.append("search", filters.search);
+      if (filters?.pocStage) params.append("pocStage", filters.pocStage);
+      if (filters?.date) params.append("date", filters.date);
+      if (filters?.page) params.append("page", filters.page.toString());
+      if (filters?.limit) params.append("limit", filters.limit.toString());
+
+      const query = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(`${API_URL}${query}`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
-      setLeads(res.data);
-      return res.data;
+
+      // Handle both old and new response formats
+      if (res.data.leads) {
+        setLeads(res.data.leads);
+        setPagination(res.data.pagination);
+        return res.data.leads;
+      } else {
+        // Fallback for old format
+        setLeads(res.data);
+        return res.data;
+      }
     } catch (err) {
       console.error("Error fetching leads:", err);
       return [];
@@ -134,7 +165,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     const res = await axios.put(`${API_URL}/${id}`, data, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
-    console.log(res.data,"resss")
+    console.log(res.data, "resss")
     setLeads((prev) => prev.map((lead) => (lead._id === id ? res.data : lead)));
   };
 
@@ -320,7 +351,8 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     if (!profile) return;
     const userId = profile.role === "BD Executive" ? profile.id : undefined;
 
-    fetchLeads(userId);
+    // Don't fetch leads here - let LeadsList component control it with filters
+    // fetchLeads(userId);
     getAllActivities();
     getAllProposals(userId);
     getAllTasks(userId);
@@ -336,6 +368,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         leads,
         loading,
+        pagination,
         fetchLeads,
 
         bulkUploadLeads,

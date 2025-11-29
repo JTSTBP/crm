@@ -70,6 +70,13 @@ const LeadSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Add indexes for better query performance
+LeadSchema.index({ assignedBy: 1 });
+LeadSchema.index({ stage: 1 });
+LeadSchema.index({ createdAt: -1 });
+LeadSchema.index({ company_name: 1 });
+LeadSchema.index({ assignedBy: 1, stage: 1 });
+
 // Attach audit logging
 addAuditTrail(LeadSchema, "Leads");
 
