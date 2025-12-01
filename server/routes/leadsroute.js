@@ -3,6 +3,7 @@ const router = express.Router();
 const Lead = require("../models/lead");
 const multer = require("multer");
 const path = require("path");
+const authMiddleware = require("../middleware/auth");
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -98,20 +99,97 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get all leads
-router.get("/", async (req, res) => {
+// Get all leads with pagination and filtering
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const { assignedBy } = req.query; // optional query param
+    const {
+      assignedBy,
+      stage,
+      search,
+      pocStage,
+      date,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
     let filter = {};
 
-    if (assignedBy) {
-      filter.assignedBy = assignedBy; // filter leads assigned by specific user
+    // Role-based filtering: BD Executives can only see their own leads
+    if (req.user.role === "BD Executive") {
+      filter.assignedBy = req.user._id;
+    } else {
+      // Admin and Manager can see all leads, or filter by assignedBy if specified
+      if (assignedBy && assignedBy !== "All") {
+        if (assignedBy === "Unassigned") {
+          filter.assignedBy = { $exists: false };
+        } else {
+          filter.assignedBy = assignedBy;
+        }
+      }
     }
 
-    const leads = await Lead.find(filter)
-      .populate("assignedBy", "name email role")
-      .sort({ createdAt: -1 });
-    res.json(leads);
+    // Filter by stage
+    if (stage && stage !== "All") {
+      filter.stage = stage;
+    }
+
+    // Search filter
+    if (search) {
+      filter.$or = [
+        { company_name: { $regex: search, $options: "i" } },
+        { company_email: { $regex: search, $options: "i" } },
+        { "points_of_contact.phone": { $regex: search, $options: "i" } },
+        {
+          "points_of_contact.alternate_phone": {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    // Filter by POC stage
+    if (pocStage && pocStage !== "All") {
+      filter["points_of_contact.stage"] = pocStage;
+    }
+
+    // Filter by date
+    if (date) {
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      filter.createdAt = { $gte: startDate, $lte: endDate };
+    }
+
+    // Calculate pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Run count and find queries in parallel for better performance
+    const [total, leads] = await Promise.all([
+      Lead.countDocuments(filter),
+      Lead.find(filter)
+        .select(
+          "company_name company_email company_size website_url industry_name lead_source hiring_needs stage points_of_contact no_of_designations no_of_positions createdAt updatedAt locked assignedBy stageProposalUpd"
+        )
+        .populate("assignedBy", "name email role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(), // Convert to plain JavaScript objects for better performance
+    ]);
+
+    res.json({
+      leads,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
