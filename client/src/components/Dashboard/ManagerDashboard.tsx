@@ -15,92 +15,71 @@ import { useLeadsContext } from '../../contexts/leadcontext'
 import { useUsers } from '../../hooks/useUsers'
 
 const ManagerDashboard: React.FC = () => {
-  const { leads } = useLeadsContext();
+  const { leads, dashboardStats, fetchDashboardStats } = useLeadsContext();
   const { users } = useUsers();
 
-  console.log(leads, "leads");
+  React.useEffect(() => {
+    fetchDashboardStats();
+  }, []);
 
-  const usersWithStats = users
-    .filter((exec) => exec.role !== "Admin" && exec.role !== "Manager") // exclude admin & manager
-    .map((exec) => {
-      // Filter leads for this exec
-      const execLeads = leads.filter((lead) => lead.assignedBy?._id === exec._id);
+  const usersWithStats = dashboardStats?.userStats?.map((stat) => {
+    const totalLeads = stat.leads || 0;
+    const won = stat.won || 0;
+    const winRate = totalLeads ? Math.round((won / totalLeads) * 100) : 0;
 
-      // Count by stage
-      const newLeads = execLeads.filter((l) => l.stage === "New").length;
-      const contacted = execLeads.filter((l) => l.stage === "Contacted").length;
-      const proposals = execLeads.filter(
-        (l) => l.stage === "Proposal Sent"
-      ).length;
-      const negotiations = execLeads.filter(
-        (l) => l.stage === "Negotiation"
-      ).length;
-      const won = execLeads.filter((l) => l.stage === "Won").length;
-      const lost = execLeads.filter((l) => l.stage === "Lost").length;
-
-      // Total leads
-      const totalLeads = execLeads.length;
-
-      // Revenue (sum of all won leads revenue)
-      const revenue = execLeads
-        .filter((l) => l.stage === "Won")
-        .reduce((sum, l) => sum + (l.revenue || 0), 0);
-
-      // Win %
-      const winRate = totalLeads ? Math.round((won / totalLeads) * 100) : 0;
-
-      return {
-        name: exec.name,
-        leads: totalLeads,
-        proposals,
-        won,
-        revenue,
-        winRate,
-        stageBreakdown: {
-          New: newLeads,
-          Contacted: contacted,
-          Proposal: proposals,
-          Negotiation: negotiations,
-          Won: won,
-          Lost: lost,
-        },
-      };
-    });
+    return {
+      name: stat.name,
+      leads: totalLeads,
+      proposals: stat.proposals || 0,
+      won: won,
+      revenue: stat.revenue || 0,
+      winRate,
+      stageBreakdown: {
+        New: stat.newLeads || 0,
+        Contacted: stat.contacted || 0,
+        Proposal: stat.proposals || 0,
+        Negotiation: stat.negotiation || 0,
+        Won: won,
+        Lost: stat.lost || 0,
+      },
+    };
+  }) || [];
 
   const stats = {
-    totalLeads: leads.length,
-    activeDeals: leads.filter((l) =>
-      ["Contacted", "Proposal Sent", "Negotiation"].includes(l.stage)
-    ).length,
-    won: leads.filter((l) => l.stage === "Won").length,
-    revenue: leads
-      .filter((l) => l.stage === "Won")
-      .reduce((sum, l) => sum + (l.value || 0), 0),
+    totalLeads: dashboardStats?.totalLeads || 0,
+    activeDeals:
+      (dashboardStats?.stageStats?.["Contacted"] || 0) +
+      (dashboardStats?.stageStats?.["Proposal Sent"] || 0) +
+      (dashboardStats?.stageStats?.["Negotiation"] || 0),
+    won: dashboardStats?.stageStats?.["Won"] || 0,
+    revenue: dashboardStats?.totalRevenue || 0,
     conversionRate:
-      leads.length > 0
+      (dashboardStats?.totalLeads || 0) > 0
         ? Math.round(
-          (leads.filter((l) => l.stage === "Won").length / leads.length) * 100
+          ((dashboardStats?.stageStats?.["Won"] || 0) /
+            (dashboardStats?.totalLeads || 1)) *
+          100
         )
         : 0,
   };
 
   // Chart data
   const stageData = [
-    { name: "New", count: leads.filter((l) => l.stage === "New").length },
+    { name: "New", count: dashboardStats?.stageStats?.["New"] || 0 },
     {
       name: "Contacted",
-      count: leads.filter((l) => l.stage === "Contacted").length,
+      count: dashboardStats?.stageStats?.["Contacted"] || 0,
     },
     {
       name: "Proposal",
-      count: leads.filter((l) => l.stage === "Proposal Sent").length,
+      count: dashboardStats?.stageStats?.["Proposal Sent"] || 0,
     },
     {
       name: "Negotiation",
-      count: leads.filter((l) => l.stage === "Negotiation").length,
+      count: dashboardStats?.stageStats?.["Negotiation"] || 0,
     },
-    { name: "Won", count: leads.filter((l) => l.stage === "Won").length },
-    { name: "Lost", count: leads.filter((l) => l.stage === "Lost").length },
+    { name: "Won", count: dashboardStats?.stageStats?.["Won"] || 0 },
+    { name: "Lost", count: dashboardStats?.stageStats?.["Lost"] || 0 },
   ];
 
   const pieColors = [

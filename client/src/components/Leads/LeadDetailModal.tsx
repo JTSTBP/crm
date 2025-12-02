@@ -103,6 +103,9 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   const [isEditingOwner, setIsEditingOwner] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState("");
+  const [loadingPOCId, setLoadingPOCId] = useState(null);
+
+
 
   const stages = [
     "New",
@@ -135,21 +138,6 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const filteredProposals = (proposals || []).filter(
     (proposal) => proposal.lead_id?._id === lead._id
   );
-  // const handleOwnerChange = async () => {
-  //   if (!selectedOwner) {
-  //     toast.error("Please select a new owner");
-  //     return;
-  //   }
-
-  //   try {
-  //     await updateLead(lead._id, { assignedBy: selectedOwner });
-  //     toast.success("Lead owner updated successfully!");
-  //     setIsEditingOwner(false);
-  //     setLocalLead({ ...localLead, assignedBy: selectedOwner });
-  //   } catch (error: any) {
-  //     toast.error(error.response?.data?.message || "Failed to update owner");
-  //   }
-  // };
 
 
   const handleOwnerChange = async () => {
@@ -391,25 +379,24 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   };
 
   console.log(lead, "llll", localLead);
-  const handleCall = async (poc) => {
-    setSelectedPOC(poc);
+  // const handleCall = async (poc) => {
+  //   setLoadingPOCId(poc._id);   // <-- Only clicked POC button shows loading
 
-    // Log call activity
-    try {
-      await logCallActivity({
-        userId: profile?.id,
-        leadId: lead._id,
-        phone: poc.phone,
-        url,
-      });
-    } catch (err) {
-      console.error("Failed to log call", err);
-    }
+  //   try {
+  //     await logCallActivity({
+  //       userId: profile?.id,
+  //       leadId: lead._id,
+  //       phone: poc.phone,
+  //       url,
+  //     });
+  //   } catch (err) {
+  //     console.error("Failed to log call", err);
+  //   } finally {
+  //     setLoadingPOCId(null);   // reset after completed
+  //   }
+  // };
 
-    setTimeout(() => {
-      setShowCallCompletePopup(true);
-    }, 3000);
-  };
+
   //   const formatUpdatedFields = (updatedFields: any, action?: string) => {
   //     if (!updatedFields) return null;
   // console.log(updatedFields, "updatedFields");
@@ -500,6 +487,26 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   //     return changes.length > 0 ? changes : <div>No meaningful changes</div>;
   //   };
+
+  const handleCall = async (poc) => {
+    setLoadingPOCId(poc._id);
+    setSelectedPOC(poc);
+
+    try {
+      await logCallActivity({
+        userId: profile?.id,
+        leadId: lead._id,
+        phone: poc.phone,
+        url,
+      });
+    } catch (err) {
+      console.error("Failed to log call", err);
+    } finally {
+      setLoadingPOCId(null);
+
+    }
+  };
+
   const formatUpdatedFields = (updatedFields: any) => {
     if (!updatedFields) return null;
 
@@ -562,16 +569,14 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                       <div
                         key={stage}
                         className={`px-3 py-1 rounded text-sm font-medium transition-all duration-200
-            ${
-              isCurrent
-                ? "bg-blue-500 text-white shadow-lg"
-                : "bg-gray-200 text-gray-800"
-            }
-            ${
-              canUpdate
-                ? "cursor-pointer hover:bg-gray-300"
-                : "opacity-60 cursor-not-allowed"
-            }
+            ${isCurrent
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-200 text-gray-800"
+                          }
+            ${canUpdate
+                            ? "cursor-pointer hover:bg-gray-300"
+                            : "opacity-60 cursor-not-allowed"
+                          }
           `}
                         onClick={() => {
                           if (canUpdate) {
@@ -632,11 +637,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${activeTab === tab.id
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 <tab.icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -747,14 +751,14 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
                   {(profile?.role === "BD Executive" ||
                     profile?.role === "Admin") && (
-                    <button
-                      onClick={() => setIsEditingPOCs(!isEditingPOCs)}
-                      className="p-2 text-gray-600 hover:text-blue-600 transition"
-                      title={isEditingPOCs ? "Cancel Edit" : "Edit Contacts"}
-                    >
-                      {isEditingPOCs ? <FiX size={18} /> : <FiEdit size={18} />}
-                    </button>
-                  )}
+                      <button
+                        onClick={() => setIsEditingPOCs(!isEditingPOCs)}
+                        className="p-2 text-gray-600 hover:text-blue-600 transition"
+                        title={isEditingPOCs ? "Cancel Edit" : "Edit Contacts"}
+                      >
+                        {isEditingPOCs ? <FiX size={18} /> : <FiEdit size={18} />}
+                      </button>
+                    )}
                 </div>
                 <div className="overflow-auto">
                   {isEditingPOCs ? (
@@ -1039,8 +1043,8 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                               ? localLead.assignedBy.name
                               : "Unassigned"
                             : lead.assignedBy
-                            ? lead.assignedBy.name
-                            : "Unassigned"}
+                              ? lead.assignedBy.name
+                              : "Unassigned"}
                         </p>
                       </div>
                     </div>
@@ -1189,19 +1193,26 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                               onClick={async () => {
                                 await handleCall(poc);
                                 setIsCallModalOpen(false);
-
-                                setSelectedPOC(poc); // ✅ define which contact was called
                                 window.location.href = `tel:${poc.phone}`;
+
                                 setTimeout(() => {
                                   setShowCallCompletePopup(true);
                                 }, 3000);
-
-                                // close modal on call
                               }}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                              disabled={loadingPOCId === poc._id}
+                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
                             >
-                              Call
+                              {loadingPOCId === poc._id ? (
+                                <>
+                                  <span className="loader mr-2"></span>
+                                  Logging...
+                                </>
+                              ) : (
+                                "Call"
+                              )}
                             </button>
+
+
                           </div>
                         ))}
                       </div>
@@ -1250,53 +1261,52 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             <div className="space-y-4">
               {(profile?.role === "BD Executive" ||
                 profile?.role === "Admin") && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Add Remark
-                  </h3>
-                  <div className="flex space-x-3">
-                    <textarea
-                      value={newRemark}
-                      onChange={(e) => setNewRemark(e.target.value)}
-                      placeholder="Add a remark..."
-                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      rows={3}
-                    />
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={handleAddRemark}
-                        className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                      >
-                        <Send className="w-5 h-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleVoiceRecord}
-                        className={`p-2 rounded-lg transition-colors ${
-                          isRecording
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Add Remark
+                    </h3>
+                    <div className="flex space-x-3">
+                      <textarea
+                        value={newRemark}
+                        onChange={(e) => setNewRemark(e.target.value)}
+                        placeholder="Add a remark..."
+                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        rows={3}
+                      />
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={handleAddRemark}
+                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          <Send className="w-5 h-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleVoiceRecord}
+                          className={`p-2 rounded-lg transition-colors ${isRecording
                             ? "bg-red-500 text-white animate-pulse"
                             : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                        }`}
-                        title="Record Voice Note"
-                      >
-                        <Mic className="w-5 h-5" />
-                      </button>
-                      <label
-                        className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
-                        title="Upload File"
-                      >
-                        <Paperclip className="w-5 h-5" />
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileUpload}
-                          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                        />
-                      </label>
+                            }`}
+                          title="Record Voice Note"
+                        >
+                          <Mic className="w-5 h-5" />
+                        </button>
+                        <label
+                          className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
+                          title="Upload File"
+                        >
+                          <Paperclip className="w-5 h-5" />
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileUpload}
+                            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Remarks Timeline */}
               <div className="space-y-4">
@@ -1325,12 +1335,12 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                           </span>
                           {(profile?.role === "BD Executive" ||
                             profile?.role === "Admin") && (
-                            <FaTrash
-                              style={{ cursor: "pointer", color: "red" }}
-                              onClick={() => handleDelete(remark._id)}
-                              title="Delete remark"
-                            />
-                          )}
+                              <FaTrash
+                                style={{ cursor: "pointer", color: "red" }}
+                                onClick={() => handleDelete(remark._id)}
+                                title="Delete remark"
+                              />
+                            )}
                         </div>
                       </div>
 
@@ -1665,11 +1675,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   setShowRemarksPopup(true);
                 }}
                 disabled={!selectedStageAfterCall}
-                className={`px-4 py-2 rounded-lg text-white ${
-                  selectedStageAfterCall
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-gray-400"
-                }`}
+                className={`px-4 py-2 rounded-lg text-white ${selectedStageAfterCall
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-400"
+                  }`}
               >
                 Next
               </button>

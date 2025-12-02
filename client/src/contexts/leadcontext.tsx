@@ -38,8 +38,57 @@ interface Lead {
   _id: string;
   company_name: string;
   contact_name: string;
+  industry_name?: string;
   remarks?: Remark[];
   // add other fields as needed
+  value?: number;
+  stage: string;
+  assignedBy?: { _id: string; name: string; email: string; role: string };
+  createdAt?: string | { $date: string };
+}
+
+interface DashboardStats {
+  totalLeads: number;
+  stageStats: Record<string, number>;
+  totalRevenue: number;
+  monthlyStats: {
+    month: string;
+    year: number;
+    leads: number;
+    revenue: number;
+  }[];
+  userStats: {
+    name: string;
+    leads: number;
+    won: number;
+    revenue: number;
+    proposals: number;
+    newLeads: number;
+    contacted: number;
+    negotiation: number;
+    lost: number;
+  }[];
+  newLeadsThisWeek?: number;
+  totalCalls?: number;
+  totalEmails?: number;
+  callStats?: Record<string, number>;
+  dailyStats?: {
+    date: string;
+    leads: number;
+    proposals: number;
+    calls: number;
+  }[];
+}
+
+interface Task {
+  _id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  dueDate: string;
+  assignedTo: string;
+  lead: string;
 }
 
 interface LeadsContextType {
@@ -51,8 +100,11 @@ interface LeadsContextType {
     limit: number;
     totalPages: number;
   };
+  dashboardStats: DashboardStats | null;
+  fetchDashboardStats: (filters?: any) => Promise<void>;
   fetchLeads: (filters?: any) => void;
 
+  bulkUploadLeads: (formData: any) => Promise<any>;
   createLead: (data: any) => Promise<void>;
   updateLead: (id: string, data: any) => Promise<void>;
   deleteLead: (id: string) => Promise<void>;
@@ -62,11 +114,22 @@ interface LeadsContextType {
   getAllRemarks: (leadId: string) => Promise<Remark[]>;
 
   createTask: (data: any) => Promise<void>;
+  getAllTasks: (userId?: string) => Promise<Task[]>;
+  getTasksByLead: (leadId: string) => Promise<Task[]>;
+  alltasks: Task[];
+  updateTask: (id: string, data: any) => Promise<any>;
+  deletetask: (id: string) => Promise<void>;
+
+  activities: ActivityLog[];
+  getAllActivities: () => Promise<ActivityLog[]>;
 
   createProposal: (data: any) => Promise<void>;
-  getAllProposals: () => Promise<Proposal[]>;
+  getAllProposals: (userId?: string) => Promise<Proposal[]>;
   getProposalsByLead: (leadId: string) => Promise<Proposal[]>;
   proposals: Proposal[];
+  proposalsLoading: boolean;
+  updateProposal: (id: string, data: Partial<Proposal>) => Promise<any>;
+  deleteProposal: (id: string) => Promise<void>;
 }
 
 const activities_url = `${url}/api/activitylogs`;
@@ -86,7 +149,6 @@ const LeadsContext = createContext<LeadsContextType | undefined>(undefined);
 
 export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [tasks, setTasks] = useState([]);
   const [alltasks, setAllTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
@@ -98,6 +160,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     limit: 10,
     totalPages: 0,
   });
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const { profile } = useAuth();
 
   const fetchLeads = async (filters?: any): Promise<Lead[]> => {
@@ -137,6 +200,26 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchDashboardStats = async (filters?: any) => {
+    try {
+      // Build query params
+      const params = new URLSearchParams();
+      if (filters?.assignedBy) params.append("assignedBy", filters.assignedBy);
+      if (filters?.date) params.append("date", filters.date);
+      if (filters?.startDate) params.append("startDate", filters.startDate);
+      if (filters?.endDate) params.append("endDate", filters.endDate);
+
+      const query = params.toString() ? `?${params.toString()}` : "";
+      const res = await axios.get(`${API_URL}/dashboard-stats${query}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+
+      setDashboardStats(res.data);
+    } catch (err) {
+      console.error("Error fetching dashboard stats:", err);
+    }
+  };
+
   const bulkUploadLeads = async (formData) => {
     try {
       const res = await axios.post(`${API_URL}/upload-csv`, formData, {
@@ -146,7 +229,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
       console.log(res, "res");
-      fetchLeads(profile.role === "BD Executive" ? profile.id : undefined);
+      fetchLeads(profile?.role === "BD Executive" ? profile.id : undefined);
       return res.data;
     } catch (err) {
       console.error("Error uploading bulk leads:", err);
@@ -232,7 +315,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
 
   const createTask = async (data: any) => {
     try {
-      const res = await axios.post(`${task_url}`, data, {
+      await axios.post(`${task_url}`, data, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       getAllTasks();
@@ -315,6 +398,18 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const getProposalsByLead = async (leadId: string): Promise<Proposal[]> => {
+    try {
+      const res = await axios.get(`${proposals_url}?leadId=${leadId}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      return res.data;
+    } catch (err) {
+      console.error("Error fetching proposals by lead:", err);
+      return [];
+    }
+  };
+
   const updateProposal = async (id: string, data: Partial<Proposal>) => {
     try {
       const res = await axios.put(`${proposals_url}/${id}`, data, {
@@ -353,8 +448,8 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     // Fetch leads on mount - backend will filter by user role automatically
     fetchLeads();
     getAllActivities();
-    getAllProposals(profile.role === "BD Executive" ? profile.id : undefined);
-    getAllTasks(profile.role === "BD Executive" ? profile.id : undefined);
+    getAllProposals(profile?.role === "BD Executive" ? profile.id : undefined);
+    getAllTasks(profile?.role === "BD Executive" ? profile.id : undefined);
   }, [profile]);
 
   useEffect(() => {
@@ -369,6 +464,8 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         pagination,
         fetchLeads,
+        fetchDashboardStats,
+        dashboardStats,
 
         bulkUploadLeads,
         createLead,
@@ -388,6 +485,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
         createProposal,
         proposals,
         getAllProposals,
+        getProposalsByLead,
         proposalsLoading,
         updateProposal,
         deleteProposal,

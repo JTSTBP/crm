@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Lead = require("../models/lead");
+const CallActivity = require("../models/call");
+const Email = require("../models/email");
 const multer = require("multer");
 const path = require("path");
 const authMiddleware = require("../middleware/auth");
@@ -96,6 +98,261 @@ router.post("/", async (req, res) => {
         res.status(201).json(lead);
     } catch (err) {
         res.status(400).json({ message: err.message });
+    }
+});
+
+// Get dashboard stats
+router.get("/dashboard-stats", authMiddleware, async (req, res) => {
+    try {
+        const { assignedBy, date, startDate: qStartDate, endDate: qEndDate } = req.query;
+        let matchStage = {};
+
+        // Role-based filtering
+        if (req.user.role === "BD Executive") {
+            matchStage.assignedBy = req.user._id;
+        } else if (assignedBy && assignedBy !== "All") {
+            if (assignedBy === "Unassigned") {
+                matchStage.assignedBy = { $exists: false };
+            } else {
+                const mongoose = require('mongoose');
+                matchStage.assignedBy = new mongoose.Types.ObjectId(assignedBy);
+            }
+        }
+
+        // Date filtering
+        let start, end;
+        if (qStartDate && qEndDate) {
+            start = new Date(qStartDate);
+            start.setHours(0, 0, 0, 0);
+            end = new Date(qEndDate);
+            end.setHours(23, 59, 59, 999);
+            matchStage.createdAt = { $gte: start, $lte: end };
+        } else if (date) {
+            start = new Date(date);
+            start.setHours(0, 0, 0, 0);
+            end = new Date(date);
+            end.setHours(23, 59, 59, 999);
+            matchStage.createdAt = { $gte: start, $lte: end };
+        }
+
+        // Calculate start of current week (Sunday)
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+
+        // Date filter for Calls and Emails (same as leads)
+        let matchDate = {};
+        if (start && end) {
+            matchDate = { timestamp: { $gte: start, $lte: end } };
+        }
+
+        // Parallel execution of aggregations
+        const [
+            totalLeads,
+            stageStats,
+            revenueStats,
+            monthlyStats,
+            userStats,
+            newLeadsThisWeek,
+            totalCalls,
+            totalEmails,
+            callStats,
+            dailyStats
+        ] = await Promise.all([
+            // 1. Total Leads
+            Lead.countDocuments(matchStage),
+
+            // 2. Leads by Stage
+            Lead.aggregate([
+                { $match: matchStage },
+                { $group: { _id: "$stage", count: { $sum: 1 } } }
+            ]),
+
+            // 3. Total Revenue (Won leads)
+            Lead.aggregate([
+                { $match: { ...matchStage, stage: "Won" } },
+                { $group: { _id: null, total: { $sum: "$value" } } }
+            ]),
+
+            // 4. Monthly Stats (Last 12 months or all time)
+            Lead.aggregate([
+                { $match: matchStage },
+                {
+                    $group: {
+                        _id: {
+                            month: { $month: "$createdAt" },
+                            year: { $year: "$createdAt" }
+                        },
+                        count: { $sum: 1 },
+                        revenue: {
+                            $sum: {
+                                $cond: [{ $eq: ["$stage", "Won"] }, "$value", 0]
+                            }
+                        }
+                    }
+                },
+                { $sort: { "_id.year": 1, "_id.month": 1 } }
+            ]),
+
+            // 5. User Stats (for Manager Dashboard) - Only if user is Admin or Manager
+            (req.user.role === "Admin" || req.user.role === "Manager") ?
+                Lead.aggregate([
+                    { $match: matchStage }, // Apply global filters first
+                    {
+                        $group: {
+                            _id: "$assignedBy",
+                            leads: { $sum: 1 },
+                            won: {
+                                $sum: { $cond: [{ $eq: ["$stage", "Won"] }, 1, 0] }
+                            },
+                            revenue: {
+                                $sum: { $cond: [{ $eq: ["$stage", "Won"] }, "$value", 0] }
+                            },
+                            proposals: {
+                                $sum: { $cond: [{ $eq: ["$stage", "Proposal Sent"] }, 1, 0] }
+                            },
+                            newLeads: {
+                                $sum: { $cond: [{ $eq: ["$stage", "New"] }, 1, 0] }
+                            },
+                            contacted: {
+                                $sum: { $cond: [{ $eq: ["$stage", "Contacted"] }, 1, 0] }
+                            },
+                            negotiation: {
+                                $sum: { $cond: [{ $eq: ["$stage", "Negotiation"] }, 1, 0] }
+                            },
+                            lost: {
+                                $sum: { $cond: [{ $eq: ["$stage", "Lost"] }, 1, 0] }
+                            }
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "users", // Assumes collection name is 'users'
+                            localField: "_id",
+                            foreignField: "_id",
+                            as: "userInfo"
+                        }
+                    },
+                    { $unwind: { path: "$userInfo", preserveNullAndEmptyArrays: true } },
+                    {
+                        $project: {
+                            name: { $ifNull: ["$userInfo.name", "Unassigned"] },
+                            leads: 1,
+                            won: 1,
+                            revenue: 1,
+                            proposals: 1,
+                            newLeads: 1,
+                            contacted: 1,
+                            negotiation: 1,
+                            lost: 1
+                        }
+                    }
+                ]) : Promise.resolve([]),
+
+            // 6. New Leads This Week
+            Lead.countDocuments({
+                ...matchStage,
+                createdAt: { $gte: weekStart }
+            }),
+
+            // 7. Total Calls (filtered by date)
+            CallActivity.countDocuments(matchDate),
+
+            // 8. Total Emails (Sent) (filtered by date)
+            Email.countDocuments({
+                type: "sent",
+                ...(matchDate.timestamp ? { date: matchDate.timestamp } : {})
+            }),
+
+            // 9. Call Stats per User
+            CallActivity.aggregate([
+                { $match: matchDate },
+                { $group: { _id: "$userId", count: { $sum: 1 } } }
+            ]),
+
+            // 10. Daily Stats (for Activity Timeline)
+            Lead.aggregate([
+                { $match: matchStage },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                        },
+                        leads: { $sum: 1 },
+                        proposals: {
+                            $sum: { $cond: [{ $eq: ["$stage", "Proposal Sent"] }, 1, 0] }
+                        }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ])
+        ]);
+
+        // Format Monthly Stats
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const formattedMonthlyStats = monthlyStats.map(item => ({
+            month: monthNames[item._id.month - 1],
+            year: item._id.year,
+            leads: item.count,
+            revenue: item.revenue
+        }));
+
+        // Format Stage Stats
+        const formattedStageStats = stageStats.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        // Format Call Stats
+        const formattedCallStats = callStats.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        // Format Daily Stats (Merge with calls if possible, or just send separate)
+        // For now, let's just send what we have. Calls need separate aggregation for daily if we want to merge.
+        // Let's do a quick daily aggregation for calls too.
+        const dailyCalls = await CallActivity.aggregate([
+            { $match: matchDate },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$timestamp" }
+                    },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const dailyStatsMap = {};
+        dailyStats.forEach(d => {
+            dailyStatsMap[d._id] = { date: d._id, leads: d.leads, proposals: d.proposals, calls: 0 };
+        });
+        dailyCalls.forEach(c => {
+            if (!dailyStatsMap[c._id]) {
+                dailyStatsMap[c._id] = { date: c._id, leads: 0, proposals: 0, calls: 0 };
+            }
+            dailyStatsMap[c._id].calls = c.count;
+        });
+
+        const formattedDailyStats = Object.values(dailyStatsMap).sort((a, b) => a.date.localeCompare(b.date));
+
+        res.json({
+            totalLeads,
+            stageStats: formattedStageStats,
+            totalRevenue: revenueStats[0]?.total || 0,
+            monthlyStats: formattedMonthlyStats,
+            userStats,
+            newLeadsThisWeek,
+            totalCalls,
+            totalEmails,
+            callStats: formattedCallStats,
+            dailyStats: formattedDailyStats
+        });
+
+    } catch (err) {
+        console.error("Dashboard stats error:", err);
+        res.status(500).json({ message: err.message });
     }
 });
 

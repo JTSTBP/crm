@@ -16,40 +16,29 @@ import {
   Area,
 } from "recharts";
 import {
-  Phone,
-  FileText,
   UserCheck,
   TrendingUp,
-  UserX,
   CheckSquare,
   Mail,
   Clock,
   DollarSign,
-  Award,
-  Download,
-  Filter,
-  Calendar,
-  Users,
-  Activity,
-  Building2,
   Target,
-  Eye,
-  Crown,
-  Zap,
-  BarChart3,
-  Shield,
+  Phone,
+  FileText,
   User,
+  Shield,
+  Users,
   Briefcase,
+  BarChart3,
+  Activity,
+  Download,
   MessageSquare,
-  Edit,
-  Trash,
   Trash2,
   PlusCircle,
 } from "lucide-react";
 
-import { useReports } from "../../hooks/useReports";
 import { format, parseISO } from "date-fns";
-import { isToday, subDays, isWithinInterval } from "date-fns";
+import { subDays } from "date-fns";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { useUsers } from "../../hooks/useUsers";
@@ -57,201 +46,144 @@ import { useEmail } from "../../contexts/EmailContext";
 import { useLeadsContext } from "../../contexts/leadcontext";
 
 const ReportsDashboard: React.FC = () => {
-  const {
-    overallMetrics,
-
-    chartData,
-
-    filters,
-    updateFilters,
-    exportData,
-  } = useReports();
   const { loading, toggleUserStatus, deleteUser } = useAuth();
   const { users } = useUsers();
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity">(
     "overview"
   );
-  const [activitiesgiv, setActivitiesgiv] = useState([]);
-  const [callcount, setCallCount] = useState(0);
-  const { fetchAllCallActivities, fetchUserCalls, allemails } = useEmail();
-  const { leads, activities, alltasks } = useLeadsContext();
+
+  const {
+    leads,
+    activities,
+    alltasks,
+    dashboardStats,
+    fetchDashboardStats,
+    getAllActivities
+  } = useLeadsContext();
+
+  const [filters, setFilters] = useState({
+    dateRange: "last30days",
+    customStart: "",
+    customEnd: "",
+    userId: "",
+  });
+
   const [customRange, setCustomRange] = useState<{
     start: string;
     end: string;
   }>({ start: "", end: "" });
-  const [totalpos, setTotalPos] = useState(0);
-  const [proposalSentCount, setProposalSentCount] = useState(0);
-  const [negocount, setNegoCount] = useState(0);
-  const [filterTask, setFilterTask] = useState(0);
-  const [totalleadsupl, setTotalLeadsUpl] = useState(0);
-  const [sendEmails, setSendEmails] = useState(0);
-  const [timeseriesData, setTimeSeriesData] = useState([]);
 
-  const proposalSentLeads = leads.filter(
-    (lead) => lead.stage === "Proposal Sent"
-  );
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+
 
   const nonAdmins = users.filter((user) => user.role !== "Admin");
 
   const handleCustomStartChange = (date: string) => {
     setCustomRange((prev) => ({ ...prev, start: date }));
-    updateFilters({ customStart: date });
+    setFilters((prev) => ({ ...prev, customStart: date, dateRange: "custom" }));
   };
 
   const handleCustomEndChange = (date: string) => {
     setCustomRange((prev) => ({ ...prev, end: date }));
-    updateFilters({ customEnd: date });
+    setFilters((prev) => ({ ...prev, customEnd: date, dateRange: "custom" }));
   };
 
   const handleDateRangeChange = (range: string) => {
-    updateFilters({ dateRange: range as any });
+    setFilters((prev) => ({ ...prev, dateRange: range }));
     if (range !== "custom") setCustomRange({ start: "", end: "" });
   };
 
-  const applyDateFilter = (date: any) => {
-    if (!date) return false;
-    const dt = new Date(date);
-
-    if (filters.dateRange === "today") return isToday(dt);
-
-    if (filters.dateRange === "last7days")
-      return isWithinInterval(dt, {
-        start: subDays(new Date(), 7),
-        end: new Date(),
-      });
-
-    if (filters.dateRange === "last30days")
-      return isWithinInterval(dt, {
-        start: subDays(new Date(), 30),
-        end: new Date(),
-      });
-
-    if (
-      filters.dateRange === "custom" &&
-      filters.customStart &&
-      filters.customEnd
-    )
-      return isWithinInterval(dt, {
-        start: new Date(filters.customStart),
-        end: new Date(filters.customEnd),
-      });
-
-    return true; // fallback
+  const updateFilters = (newFilters: any) => {
+    setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
+  // Helper function to fetch user calls from backend
+  const fetchUserCalls = async (userId: string) => {
+    try {
+      const url = import.meta.env.VITE_BACKEND_URL;
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${url}/api/users/calls/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching user calls:", error);
+      return { calls: [] };
+    }
+  };
+
+  // Helper function to apply date filter
+  const applyDateFilter = (timestamp: string | { $date: string }) => {
+    const callDate = new Date(typeof timestamp === 'string' ? timestamp : timestamp.$date);
+    const now = new Date();
+
+    if (filters.dateRange === "today") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return callDate >= today && callDate < tomorrow;
+    } else if (filters.dateRange === "last7days") {
+      const last7 = subDays(now, 7);
+      return callDate >= last7 && callDate <= now;
+    } else if (filters.dateRange === "last30days") {
+      const last30 = subDays(now, 30);
+      return callDate >= last30 && callDate <= now;
+    } else if (filters.dateRange === "custom") {
+      if (!filters.customStart || !filters.customEnd) return true;
+      const start = new Date(filters.customStart);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(filters.customEnd);
+      end.setHours(23, 59, 59, 999);
+      return callDate >= start && callDate <= end;
+    }
+    return true;
+  };
+
+  const exportData = (format: "csv" | "excel" | "pdf") => {
+    // Implement export logic using dashboardStats
+    console.log("Exporting data...", format);
+  };
 
   useEffect(() => {
-    const getData = async () => {
-      const allCalls = await fetchAllCallActivities();
-      let filteredCalls = allCalls;
-      let filteredLeads = leads;
-      let filteredActivities = activities;
-      let filteredTask = alltasks;
-      let filteredEmails = await allemails();
+    const fetchData = async () => {
+      let startDate = "";
+      let endDate = "";
+      const now = new Date();
 
-      const filteredEmailSend = filteredEmails.filter((email: any) => {
-        const dateToCheck = email.date;
-        return dateToCheck ? applyDateFilter(dateToCheck) : false;
+      if (filters.dateRange === "today") {
+        startDate = now.toISOString().split("T")[0];
+        endDate = now.toISOString().split("T")[0];
+      } else if (filters.dateRange === "last7days") {
+        const last7 = subDays(now, 7);
+        startDate = last7.toISOString().split("T")[0];
+        endDate = now.toISOString().split("T")[0];
+      } else if (filters.dateRange === "last30days") {
+        const last30 = subDays(now, 30);
+        startDate = last30.toISOString().split("T")[0];
+        endDate = now.toISOString().split("T")[0];
+      } else if (filters.dateRange === "custom") {
+        startDate = filters.customStart;
+        endDate = filters.customEnd;
+      }
+
+      await fetchDashboardStats({
+        startDate,
+        endDate,
+        assignedBy: filters.userId
       });
 
-      filteredCalls = filteredCalls.filter((call: any) =>
-        applyDateFilter(call.timestamp?.$date || call.timestamp)
-      );
-
-      const totalNoOfPositions = filteredLeads.reduce(
-        (sum: number, lead: any) => sum + (lead.no_of_positions || 0),
-        0
-      );
-
-      const totalleadsupl = filteredLeads.filter((lead: any) => {
-        const dateToCheck = lead.createdAt;
-        return dateToCheck ? applyDateFilter(dateToCheck) : false;
-      });
-
-      const filteredLeadsNego = filteredLeads.filter(
-        (lead: any) => lead.stage === "Negotiation"
-      );
-
-      const filterPoposalsend = filteredLeads.filter((lead: any) => {
-        if (lead.stage !== "Proposal Sent") return false;
-        const dateToCheck = lead.stageProposalUpd || lead.updatedAt;
-        return dateToCheck ? applyDateFilter(dateToCheck) : false;
-      });
-
-      filteredActivities = filteredActivities.filter((activity: any) =>
-        applyDateFilter(activity.timestamp?.$date || activity.timestamp)
-      );
-
-      filteredTask = filteredTask.filter((task: any) => {
-        if (!task.completed) return false;
-        const dateToCheck =
-          task.completedAt || task.updated_at || task.created_at;
-        return dateToCheck ? applyDateFilter(dateToCheck) : false;
-      });
-
-      // -------------------------------
-      // ✅ Create timeSeriesData array
-      // -------------------------------
-      const datesSet = new Set<string>();
-      filteredCalls.forEach((c: any) =>
-        datesSet.add(
-          new Date(c.timestamp?.$date || c.timestamp)
-            .toISOString()
-            .split("T")[0]
-        )
-      );
-      filterPoposalsend.forEach((p: any) =>
-        datesSet.add(
-          new Date(p.stageProposalUpd || p.updatedAt)
-            .toISOString()
-            .split("T")[0]
-        )
-      );
-      totalleadsupl.forEach((l: any) =>
-        datesSet.add(new Date(l.createdAt).toISOString().split("T")[0])
-      );
-
-      const timeSeriesData = Array.from(datesSet)
-        .sort()
-        .map((date) => {
-          const calls = filteredCalls.filter(
-            (c: any) =>
-              new Date(c.timestamp?.$date || c.timestamp)
-                .toISOString()
-                .split("T")[0] === date
-          ).length;
-          const proposals = filterPoposalsend.filter(
-            (p: any) =>
-              new Date(p.stageProposalUpd || p.updatedAt)
-                .toISOString()
-                .split("T")[0] === date
-          ).length;
-          const leads = totalleadsupl.filter(
-            (l: any) =>
-              new Date(l.createdAt).toISOString().split("T")[0] === date
-          ).length;
-          return { date, calls, proposals, leads };
-        });
-
-      setCallCount(filteredCalls.length);
-      setProposalSentCount(filterPoposalsend.length);
-      setActivitiesgiv(filteredActivities);
-      setTotalPos(totalNoOfPositions);
-      setNegoCount(filteredLeadsNego.length);
-      setFilterTask(filteredTask.length);
-      setTotalLeadsUpl(totalleadsupl.length);
-      setSendEmails(filteredEmailSend.length);
-      setTimeSeriesData(timeSeriesData);
+      setActivitiesLoading(true);
+      await getAllActivities();
+      setActivitiesLoading(false);
     };
 
-    getData();
-  }, [
-    filters.dateRange,
-    filters.customStart,
-    filters.customEnd,
-    filters.userId,
-  ]);
+    fetchData();
+  }, [filters]);
 
   const stageColors: Record<string, string> = {
     New: "#3B82F6",
@@ -285,9 +217,9 @@ const ReportsDashboard: React.FC = () => {
   // Count Lost leads
   const lostCount = leads.filter((lead: any) => lead.stage === "Lost").length;
 
-const inProgressCount = leads.filter(
-  (lead: any) => lead.stage === "Negotiation" || lead.stage === "Proposal Sent"
-).length;
+  const inProgressCount = leads.filter(
+    (lead: any) => lead.stage === "Negotiation" || lead.stage === "Proposal Sent"
+  ).length;
 
   // Build array
   const conversionData = [
@@ -309,9 +241,8 @@ const inProgressCount = leads.filter(
     onClick?: () => void;
   }> = ({ title, value, icon, color, trend, onClick }) => (
     <div
-      className={`glass rounded-2xl p-6 border border-white/30 hover:shadow-xl transition-all duration-300 ${
-        onClick ? "cursor-pointer hover:scale-105" : ""
-      }`}
+      className={`glass rounded-2xl p-6 border border-white/30 hover:shadow-xl transition-all duration-300 ${onClick ? "cursor-pointer hover:scale-105" : ""
+        }`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
@@ -370,37 +301,37 @@ const inProgressCount = leads.filter(
 
     //   getUserCalls();
     // }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
-   
-   useEffect(() => {
-     const getUserCalls = async () => {
-       try {
-         const data = await fetchUserCalls(user._id); // API returning populated calls
-         let filteredCalls = data.calls || [];
 
-         // Apply date filter
-         filteredCalls = filteredCalls.filter((call: any) =>
-           applyDateFilter(call.timestamp?.$date || call.timestamp)
-         );
+    useEffect(() => {
+      const getUserCalls = async () => {
+        try {
+          const data = await fetchUserCalls(user._id); // API returning populated calls
+          let filteredCalls = data.calls || [];
 
-         // Map through each call and attach stage from matching point_of_contact
-         const enhancedCalls = filteredCalls.map((call: any) => {
-           const contact = call.leadId?.points_of_contact?.find(
-             (p: any) => p.phone === call.phone
-           );
-           return {
-             ...call,
-             contactStage: contact?.stage || "N/A", // fallback if no match
-           };
-         });
+          // Apply date filter
+          filteredCalls = filteredCalls.filter((call: any) =>
+            applyDateFilter(call.timestamp?.$date || call.timestamp)
+          );
 
-         setUserCalls(enhancedCalls);
-       } catch (error) {
-         console.error("Error fetching user calls:", error);
-       }
-     };
+          // Map through each call and attach stage from matching point_of_contact
+          const enhancedCalls = filteredCalls.map((call: any) => {
+            const contact = call.leadId?.points_of_contact?.find(
+              (p: any) => p.phone === call.phone
+            );
+            return {
+              ...call,
+              contactStage: contact?.stage || "N/A", // fallback if no match
+            };
+          });
 
-     getUserCalls();
-   }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
+          setUserCalls(enhancedCalls);
+        } catch (error) {
+          console.error("Error fetching user calls:", error);
+        }
+      };
+
+      getUserCalls();
+    }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
 
 
 
@@ -732,11 +663,10 @@ const inProgressCount = leads.filter(
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-300 ${
-              activeTab === tab.id
-                ? "bg-white/20 text-white shadow-lg"
-                : "text-gray-300 hover:text-white hover:bg-white/10"
-            }`}
+            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-300 ${activeTab === tab.id
+              ? "bg-white/20 text-white shadow-lg"
+              : "text-gray-300 hover:text-white hover:bg-white/10"
+              }`}
           >
             <tab.icon className="w-5 h-5" />
             <span className="font-medium">{tab.label}</span>
@@ -751,57 +681,57 @@ const inProgressCount = leads.filter(
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               title="Total Calls Made"
-              value={callcount}
+              value={dashboardStats?.totalCalls || 0}
               icon={<Phone className="w-7 h-7 text-white" />}
               color="bg-blue-500"
-              trend="+12% vs last period"
+              trend=""
             />
             <MetricCard
               title="Proposals Sent"
-              value={proposalSentCount}
+              value={dashboardStats?.stageStats?.["Proposal Sent"] || 0}
               icon={<FileText className="w-7 h-7 text-white" />}
               color="bg-purple-500"
-              trend="+8% vs last period"
+              trend=""
             />
             <MetricCard
               title="Leads Onboarded"
-              value={0}
+              value={dashboardStats?.stageStats?.["Won"] || 0}
               icon={<UserCheck className="w-7 h-7 text-white" />}
               color="bg-green-500"
-              trend="+15% vs last period"
+              trend=""
             />
             <MetricCard
-              title="No of Positions"
-              value={totalpos}
-              icon={<Users className="w-7 h-7 text-white" />}
+              title="Total Revenue"
+              value={`₹${((dashboardStats?.totalRevenue || 0) / 100000).toFixed(1)}L`}
+              icon={<DollarSign className="w-7 h-7 text-white" />}
               color="bg-emerald-500"
-              trend="+23% vs last period"
+              trend=""
             />
           </div>
 
           {/* Secondary Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
-              title="Total Leads Uploaded"
-              value={totalleadsupl}
+              title="Total Leads"
+              value={dashboardStats?.totalLeads || 0}
               icon={<Target className="w-6 h-6 text-white" />}
               color="bg-blue-400"
             />
             <MetricCard
               title="In Negotiation"
-              value={negocount}
+              value={dashboardStats?.stageStats?.["Negotiation"] || 0}
               icon={<TrendingUp className="w-6 h-6 text-white" />}
               color="bg-orange-500"
             />
             <MetricCard
               title="Tasks Completed"
-              value={filterTask}
+              value={alltasks.filter(t => t.status === 'Completed').length}
               icon={<CheckSquare className="w-6 h-6 text-white" />}
               color="bg-green-400"
             />
             <MetricCard
-              title="Total Emails Send"
-              value={sendEmails}
+              title="Total Emails Sent"
+              value={dashboardStats?.totalEmails || 0}
               icon={<Mail className="w-6 h-6 text-white" />}
               color="bg-red-500"
             />
@@ -861,7 +791,7 @@ const inProgressCount = leads.filter(
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {chartData.conversionData.map((entry, index) => (
+                    {conversionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -903,7 +833,7 @@ const inProgressCount = leads.filter(
               Activity Timeline
             </h2>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={timeseriesData}>
+              <AreaChart data={dashboardStats?.dailyStats || []}>
                 <defs>
                   <linearGradient
                     id="callsGradient"
@@ -1095,23 +1025,22 @@ const inProgressCount = leads.filter(
             className="space-y-4 max-h-96 overflow-y-auto"
             style={{ overflowX: "hidden" }}
           >
-            {activitiesgiv.map((activity) => (
+            {activities.map((activity) => (
               <div
-                key={activity.id}
+                key={activity._id}
                 className="flex items-start space-x-4 p-4 bg-white/5 rounded-xl border border-white/10"
               >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.action === "update"
-                      ? "bg-blue-500"
-                      : activity.action === "remark_added"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.action === "update"
+                    ? "bg-blue-500"
+                    : activity.action === "remark_added"
                       ? "bg-green-500"
                       : activity.action === "remark_deleted"
-                      ? "bg-red-500"
-                      : activity.action === "create"
-                      ? "bg-purple-500"
-                      : "bg-gray-500"
-                  }`}
+                        ? "bg-red-500"
+                        : activity.action === "create"
+                          ? "bg-purple-500"
+                          : "bg-gray-500"
+                    }`}
                 >
                   {activity.action === "update" && (
                     <TrendingUp className="w-5 h-5 text-white" />
@@ -1130,8 +1059,8 @@ const inProgressCount = leads.filter(
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-white">
-                      <span className="text-blue-400">{activity.user}</span>{" "}
-                      {activity.action.toLowerCase()}
+                      <span className="text-blue-400">{activity.entityName}</span>{" "}
+                      {activity.action.replace(/_/g, " ")}
                     </p>
                     <p className="text-xs text-gray-400 flex-shrink-0 ml-2">
                       {format(new Date(activity.timestamp), "MMM dd, HH:mm")}
@@ -1139,9 +1068,9 @@ const inProgressCount = leads.filter(
                   </div>
 
                   <p className="text-sm text-gray-300 mt-1">
-                    {activity.entity}: {activity.entityName}
+                    {activity.entity}
                   </p>
-                
+
 
                   {activity.updatedFields && (
                     <div className="mt-2 text-sm text-gray-400 space-y-1">
@@ -1177,12 +1106,17 @@ const inProgressCount = leads.filter(
               </div>
             ))}
 
-            {activitiesgiv.length === 0 && (
+            {activitiesLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                <p className="text-gray-400 mt-4">Loading activities...</p>
+              </div>
+            ) : activities.length === 0 ? (
               <div className="text-center py-8">
                 <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-400">No recent activities yet.</p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       )}

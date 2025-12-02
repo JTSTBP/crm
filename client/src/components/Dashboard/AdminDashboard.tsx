@@ -28,83 +28,36 @@ import { useLeadsContext } from "../../contexts/leadcontext";
 import { useUsers } from "../../hooks/useUsers";
 
 const AdminDashboard: React.FC = () => {
-  const { leads, activities } = useLeadsContext();
+  const { leads, activities, dashboardStats, fetchDashboardStats } = useLeadsContext();
   const { users } = useUsers();
-  const leadsSafe = Array.isArray(leads) ? leads : [];
 
+  React.useEffect(() => {
+    fetchDashboardStats();
+  }, []);
 
   const stats = {
     totalUsers: users.length,
-    totalLeads: leadsSafe.length,
-    totalRevenue: leadsSafe
-      .filter((l) => l.stage === "Won")
-      .reduce((sum, l) => sum + (l.value ?? 0), 0),
-    activeProposals: leadsSafe.filter((l) => l.stage === "Proposal Sent")
-      .length,
+    totalLeads: dashboardStats?.totalLeads || 0,
+    totalRevenue: dashboardStats?.totalRevenue || 0,
+    activeProposals: dashboardStats?.stageStats?.["Proposal Sent"] || 0,
     conversionRate:
-      leadsSafe.length > 0
+      (dashboardStats?.totalLeads || 0) > 0
         ? Math.round(
-          (leadsSafe.filter((l) => l.stage === "Won").length /
-            leadsSafe.length) *
+          ((dashboardStats?.stageStats?.["Won"] || 0) /
+            (dashboardStats?.totalLeads || 1)) *
           100
         )
         : 0,
     avgDealSize:
-      leadsSafe.filter((l) => l.stage === "Won").length > 0
+      (dashboardStats?.stageStats?.["Won"] || 0) > 0
         ? Math.round(
-          leadsSafe
-            .filter((l) => l.stage === "Won")
-            .reduce((sum, l) => sum + (l.value ?? 0), 0) /
-          leadsSafe.filter((l) => l.stage === "Won").length
+          (dashboardStats?.totalRevenue || 0) /
+          (dashboardStats?.stageStats?.["Won"] || 1)
         )
         : 0,
   };
 
-  const revenueData = (() => {
-    // Create an object to store totals per month
-    const monthlyStats = {};
-
-    leadsSafe.forEach((lead) => {
-      const createdAt = new Date(lead.createdAt?.$date || lead.createdAt);
-      const month = createdAt.toLocaleString("default", { month: "short" }); // e.g., "Jan"
-
-      if (!monthlyStats[month]) {
-        monthlyStats[month] = { revenue: 0, leads: 0 };
-      }
-
-      // Count all leads created in this month
-      monthlyStats[month].leads += 1;
-
-      // Add revenue only for "Won" deals
-      if (lead.stage === "Won") {
-        monthlyStats[month].revenue += lead.value ?? 0;
-      }
-    });
-
-    // Convert the monthly object into a sorted array (Jan–Dec order)
-    const monthOrder = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-
-    return monthOrder
-      .filter((m) => monthlyStats[m]) // keep only months that exist in data
-      .map((month) => ({
-        month,
-        revenue: monthlyStats[month].revenue,
-        leads: monthlyStats[month].leads,
-      }));
-  })();
+  const revenueData = dashboardStats?.monthlyStats || [];
 
   const formatUpdatedFields = (updatedFields: any, action?: string) => {
     if (!updatedFields) return null;
@@ -385,14 +338,14 @@ const AdminDashboard: React.FC = () => {
                   {/* Activity Icon */}
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.action === "update"
-                        ? "bg-blue-100"
-                        : activity.action === "remark_added"
-                          ? "bg-green-100"
-                          : activity.action === "remark_deleted"
-                            ? "bg-red-100"
-                            : activity.action === "create"
-                              ? "bg-purple-100"
-                              : "bg-gray-100"
+                      ? "bg-blue-100"
+                      : activity.action === "remark_added"
+                        ? "bg-green-100"
+                        : activity.action === "remark_deleted"
+                          ? "bg-red-100"
+                          : activity.action === "create"
+                            ? "bg-purple-100"
+                            : "bg-gray-100"
                       }`}
                   >
                     {activity.action === "update" && (

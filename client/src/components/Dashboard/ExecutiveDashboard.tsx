@@ -13,12 +13,14 @@ import { useLeadsContext } from "../../contexts/leadcontext";
 import { format, isToday, isTomorrow, isPast, startOfWeek } from "date-fns";
 
 const ExecutiveDashboard: React.FC = () => {
-  const { leads, alltasks, fetchLeads, pagination } = useLeadsContext();
+  const { leads, alltasks, fetchLeads, dashboardStats, fetchDashboardStats } = useLeadsContext();
 
-  // Fetch ALL leads when dashboard mounts (no pagination limit)
+  // Fetch dashboard stats and recent leads (limit 5)
   useEffect(() => {
-    fetchLeads({ limit: 1000 }); // Fetch up to 1000 leads for dashboard stats
+    fetchDashboardStats();
+    fetchLeads({ limit: 5 });
   }, []);
+
   const formatDueDate = (dueDate: string) => {
     const due = new Date(dueDate);
     if (isToday(due)) return "Today";
@@ -26,29 +28,24 @@ const ExecutiveDashboard: React.FC = () => {
     return format(due, "MMM dd, yyyy");
   };
 
-  // Calculate start of current week (Sunday)
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-  weekStart.setHours(0, 0, 0, 0);
-
   const stats = {
-    totalLeads: leads.length,
-    newLeads: leads.filter((l) => l.stage === "New").length,
-    newLeadsThisWeek: leads.filter((l) => {
-      const createdDate = new Date(l.createdAt);
-      return createdDate >= weekStart;
-    }).length,
-    contacted: leads.filter((l) => l.stage === "Contacted").length,
-    proposals: leads.filter((l) => l.stage === "Proposal Sent").length,
-    won: leads.filter((l) => l.stage === "Won").length,
+    totalLeads: dashboardStats?.totalLeads || 0,
+    newLeads: dashboardStats?.stageStats?.["New"] || 0,
+    newLeadsThisWeek: dashboardStats?.newLeadsThisWeek || 0,
+    contacted: dashboardStats?.stageStats?.["Contacted"] || 0,
+    proposals: dashboardStats?.stageStats?.["Proposal Sent"] || 0,
+    won: dashboardStats?.stageStats?.["Won"] || 0,
     conversionRate:
-      leads.length > 0
+      (dashboardStats?.totalLeads || 0) > 0
         ? Math.round(
-          (leads.filter((l) => l.stage === "Won").length / leads.length) * 100
+          ((dashboardStats?.stageStats?.["Won"] || 0) /
+            (dashboardStats?.totalLeads || 1)) *
+          100
         )
         : 0,
   };
 
-  const recentLeads = leads.slice(0, 5);
+  const recentLeads = leads;
 
   const StatCard: React.FC<{
     title: string;
@@ -92,7 +89,7 @@ const ExecutiveDashboard: React.FC = () => {
       <span>{title}</span>
     </button>
   );
-  const incompleteTasks = alltasks.filter((task) => task.completed === false);
+  const incompleteTasks = alltasks.filter((task) => task.status !== "Completed");
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -174,7 +171,7 @@ const ExecutiveDashboard: React.FC = () => {
               <div className="divide-y divide-white/10">
                 {recentLeads.map((lead) => (
                   <div
-                    key={lead.id}
+                    key={lead._id}
                     className="p-6 hover:bg-white/10 transition-all duration-300 hover:scale-[1.02]"
                   >
                     <div className="flex items-center justify-between">
@@ -183,10 +180,10 @@ const ExecutiveDashboard: React.FC = () => {
                           {lead.company_name}
                         </h3>
                         <p className="text-sm text-gray-300 font-medium">
-                          {lead.industry_name}
+                          {lead.industry_name || "N/A"}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {lead.assignedBy.name}
+                          {lead.assignedBy?.name || "Unassigned"}
                         </p>
                       </div>
                       <div className="text-right">
@@ -205,7 +202,7 @@ const ExecutiveDashboard: React.FC = () => {
                           {lead.stage}
                         </span>
                         <p className="text-xs text-gray-400 mt-2 font-medium">
-                          {new Date(lead.updatedAt).toLocaleDateString()}
+                          {lead.createdAt ? new Date(typeof lead.createdAt === 'string' ? lead.createdAt : lead.createdAt.$date).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -237,20 +234,20 @@ const ExecutiveDashboard: React.FC = () => {
                   className="flex items-center space-x-4 p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/10"
                 >
                   <CheckCircle
-                    className={`w-5 h-5 ${task.completed ? "text-green-500" : "text-gray-400"
+                    className={`w-5 h-5 ${task.status === "Completed" ? "text-green-500" : "text-gray-400"
                       }`}
                   />
                   <div className="flex-1">
                     <p
-                      className={`font-semibold ${task.completed ? "text-gray-400 line-through" : "text-white"
+                      className={`font-semibold ${task.status === "Completed" ? "text-gray-400 line-through" : "text-white"
                         }`}
                     >
                       {task.title}
                     </p>
                     <p className="text-sm text-gray-300 flex items-center font-medium">
                       <Clock className="w-4 h-4 mr-1" />
-                      {formatDueDate(task.due_date)} -{" "}
-                      {format(new Date(task.due_date), "hh:mm a")}
+                      {formatDueDate(task.dueDate)} -{" "}
+                      {format(new Date(task.dueDate), "hh:mm a")}
                     </p>
                   </div>
                 </div>
