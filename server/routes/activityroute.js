@@ -6,7 +6,7 @@ router.get("/activities", async (req, res) => {
   try {
     const logs = await ActivityLog.find()
     // optional: lead details
-      .sort({ timestamp: -1 }); // latest first
+    // latest first
 
     res.status(200).json(logs);
   } catch (err) {

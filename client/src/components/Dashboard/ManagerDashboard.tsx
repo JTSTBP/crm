@@ -1,8 +1,8 @@
 import React from 'react'
-import { 
-  Users, 
-  TrendingUp, 
-  DollarSign, 
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
   Target,
   FileText,
   Clock,
@@ -20,52 +20,52 @@ const ManagerDashboard: React.FC = () => {
 
   console.log(leads, "leads");
 
-const usersWithStats = users
-  .filter((exec) => exec.role !== "Admin" && exec.role !== "Manager") // exclude admin & manager
-  .map((exec) => {
-    // Filter leads for this exec
-    const execLeads = leads.filter((lead) => lead.assignedBy?._id === exec._id);
+  const usersWithStats = users
+    .filter((exec) => exec.role !== "Admin" && exec.role !== "Manager") // exclude admin & manager
+    .map((exec) => {
+      // Filter leads for this exec
+      const execLeads = leads.filter((lead) => lead.assignedBy?._id === exec._id);
 
-    // Count by stage
-    const newLeads = execLeads.filter((l) => l.stage === "New").length;
-    const contacted = execLeads.filter((l) => l.stage === "Contacted").length;
-    const proposals = execLeads.filter(
-      (l) => l.stage === "Proposal Sent"
-    ).length;
-    const negotiations = execLeads.filter(
-      (l) => l.stage === "Negotiation"
-    ).length;
-    const won = execLeads.filter((l) => l.stage === "Won").length;
-    const lost = execLeads.filter((l) => l.stage === "Lost").length;
+      // Count by stage
+      const newLeads = execLeads.filter((l) => l.stage === "New").length;
+      const contacted = execLeads.filter((l) => l.stage === "Contacted").length;
+      const proposals = execLeads.filter(
+        (l) => l.stage === "Proposal Sent"
+      ).length;
+      const negotiations = execLeads.filter(
+        (l) => l.stage === "Negotiation"
+      ).length;
+      const won = execLeads.filter((l) => l.stage === "Won").length;
+      const lost = execLeads.filter((l) => l.stage === "Lost").length;
 
-    // Total leads
-    const totalLeads = execLeads.length;
+      // Total leads
+      const totalLeads = execLeads.length;
 
-    // Revenue (sum of all won leads revenue)
-    const revenue = execLeads
-      .filter((l) => l.stage === "Won")
-      .reduce((sum, l) => sum + (l.revenue || 0), 0);
+      // Revenue (sum of all won leads revenue)
+      const revenue = execLeads
+        .filter((l) => l.stage === "Won")
+        .reduce((sum, l) => sum + (l.revenue || 0), 0);
 
-    // Win %
-    const winRate = totalLeads ? Math.round((won / totalLeads) * 100) : 0;
+      // Win %
+      const winRate = totalLeads ? Math.round((won / totalLeads) * 100) : 0;
 
-    return {
-      name: exec.name,
-      leads: totalLeads,
-      proposals,
-      won,
-      revenue,
-      winRate,
-      stageBreakdown: {
-        New: newLeads,
-        Contacted: contacted,
-        Proposal: proposals,
-        Negotiation: negotiations,
-        Won: won,
-        Lost: lost,
-      },
-    };
-  });
+      return {
+        name: exec.name,
+        leads: totalLeads,
+        proposals,
+        won,
+        revenue,
+        winRate,
+        stageBreakdown: {
+          New: newLeads,
+          Contacted: contacted,
+          Proposal: proposals,
+          Negotiation: negotiations,
+          Won: won,
+          Lost: lost,
+        },
+      };
+    });
 
   const stats = {
     totalLeads: leads.length,
@@ -79,8 +79,8 @@ const usersWithStats = users
     conversionRate:
       leads.length > 0
         ? Math.round(
-            (leads.filter((l) => l.stage === "Won").length / leads.length) * 100
-          )
+          (leads.filter((l) => l.stage === "Won").length / leads.length) * 100
+        )
         : 0,
   };
 

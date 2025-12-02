@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Users,
   FileText,
@@ -10,27 +10,41 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useLeadsContext } from "../../contexts/leadcontext";
-import { format, isToday, isTomorrow, isPast } from "date-fns";
+import { format, isToday, isTomorrow, isPast, startOfWeek } from "date-fns";
 
 const ExecutiveDashboard: React.FC = () => {
-  const { leads, alltasks } = useLeadsContext();
+  const { leads, alltasks, fetchLeads, pagination } = useLeadsContext();
+
+  // Fetch ALL leads when dashboard mounts (no pagination limit)
+  useEffect(() => {
+    fetchLeads({ limit: 1000 }); // Fetch up to 1000 leads for dashboard stats
+  }, []);
   const formatDueDate = (dueDate: string) => {
     const due = new Date(dueDate);
     if (isToday(due)) return "Today";
     if (isTomorrow(due)) return "Tomorrow";
     return format(due, "MMM dd, yyyy");
   };
+
+  // Calculate start of current week (Sunday)
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+  weekStart.setHours(0, 0, 0, 0);
+
   const stats = {
     totalLeads: leads.length,
     newLeads: leads.filter((l) => l.stage === "New").length,
+    newLeadsThisWeek: leads.filter((l) => {
+      const createdDate = new Date(l.createdAt);
+      return createdDate >= weekStart;
+    }).length,
     contacted: leads.filter((l) => l.stage === "Contacted").length,
     proposals: leads.filter((l) => l.stage === "Proposal Sent").length,
     won: leads.filter((l) => l.stage === "Won").length,
     conversionRate:
       leads.length > 0
         ? Math.round(
-            (leads.filter((l) => l.stage === "Won").length / leads.length) * 100
-          )
+          (leads.filter((l) => l.stage === "Won").length / leads.length) * 100
+        )
         : 0,
   };
 
@@ -78,7 +92,7 @@ const ExecutiveDashboard: React.FC = () => {
       <span>{title}</span>
     </button>
   );
-const incompleteTasks = alltasks.filter((task) => task.completed === false);
+  const incompleteTasks = alltasks.filter((task) => task.completed === false);
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,7 +102,7 @@ const incompleteTasks = alltasks.filter((task) => task.completed === false);
 
         <h1 className="text-2xl font-bold mb-2">Good morning! 👋</h1>
         <p className="text-blue-100 text-lg">
-          You have {stats.newLeads} new leads to follow up today
+          You have {stats.newLeadsThisWeek} new leads created this week
         </p>
       </div>
 
@@ -101,11 +115,10 @@ const incompleteTasks = alltasks.filter((task) => task.completed === false);
           color="gradient-primary shadow-xl"
         />
         <StatCard
-          title="New Leads"
-          value={stats.newLeads}
+          title="New Leads (This Week)"
+          value={stats.newLeadsThisWeek}
           icon={<Target className="w-7 h-7 text-white" />}
           color="gradient-success shadow-xl"
-          trend="+12% this week"
         />
         <StatCard
           title="Proposals Sent"
@@ -130,25 +143,25 @@ const incompleteTasks = alltasks.filter((task) => task.completed === false);
               title="Make a Call"
               icon={<Phone className="w-5 h-5" />}
               color="bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-xl hover:scale-105"
-              onClick={() => {}}
+              onClick={() => { }}
             />
             <QuickAction
               title="Schedule Meeting"
               icon={<Calendar className="w-5 h-5" />}
               color="bg-gradient-to-r from-blue-500 to-purple-600 hover:shadow-xl hover:scale-105"
-              onClick={() => {}}
+              onClick={() => { }}
             />
             <QuickAction
               title="Send Proposal"
               icon={<FileText className="w-5 h-5" />}
               color="bg-gradient-to-r from-purple-500 to-pink-600 hover:shadow-xl hover:scale-105"
-              onClick={() => {}}
+              onClick={() => { }}
             />
             <QuickAction
               title="Add Lead"
               icon={<Users className="w-5 h-5" />}
               color="bg-gradient-to-r from-orange-500 to-red-600 hover:shadow-xl hover:scale-105"
-              onClick={() => {}}
+              onClick={() => { }}
             />
           </div>
         </div>
@@ -178,17 +191,16 @@ const incompleteTasks = alltasks.filter((task) => task.completed === false);
                       </div>
                       <div className="text-right">
                         <span
-                          className={`inline-flex px-3 py-2 text-xs font-bold rounded-full shadow-lg ${
-                            lead.stage === "New"
-                              ? "bg-blue-100 text-blue-800"
-                              : lead.stage === "Contacted"
+                          className={`inline-flex px-3 py-2 text-xs font-bold rounded-full shadow-lg ${lead.stage === "New"
+                            ? "bg-blue-100 text-blue-800"
+                            : lead.stage === "Contacted"
                               ? "bg-yellow-100 text-yellow-800"
                               : lead.stage === "Proposal Sent"
-                              ? "bg-purple-100 text-purple-800"
-                              : lead.stage === "Won"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
+                                ? "bg-purple-100 text-purple-800"
+                                : lead.stage === "Won"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }`}
                         >
                           {lead.stage}
                         </span>
@@ -209,44 +221,42 @@ const incompleteTasks = alltasks.filter((task) => task.completed === false);
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Today's Tasks */}
-      <div className="glass rounded-2xl p-8 border border-white/30 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white">Today's Tasks</h2>
-          <span className="text-sm text-gray-300 font-medium bg-white/20 px-3 py-1 rounded-full">
-            {incompleteTasks?.length || 0} pending
-          </span>
-        </div>
-        <div className="space-y-4">
-          {alltasks.map((task, index) => (
-            <div
-              key={index}
-              className="flex items-center space-x-4 p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/10"
-            >
-              <CheckCircle
-                className={`w-5 h-5 ${
-                  task.completed ? "text-green-500" : "text-gray-400"
-                }`}
-              />
-              <div className="flex-1">
-                <p
-                  className={`font-semibold ${
-                    task.completed ? "text-gray-400 line-through" : "text-white"
-                  }`}
-                >
-                  {task.title}
-                </p>
-                <p className="text-sm text-gray-300 flex items-center font-medium">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {formatDueDate(task.due_date)} -{" "}
-                  {format(new Date(task.due_date), "hh:mm a")}
-                </p>
-              </div>
+          {/* Today's Tasks */}
+          <div className="glass rounded-2xl p-8 border border-white/30 shadow-xl mt-8"> {/* Added mt-8 for spacing */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">Today's Tasks</h2>
+              <span className="text-sm text-gray-300 font-medium bg-white/20 px-3 py-1 rounded-full">
+                {incompleteTasks?.length || 0} pending
+              </span>
             </div>
-          ))}
+            <div className="space-y-4">
+              {alltasks.map((task, index) => (
+                <div
+                  key={index}
+                  className="flex items-center space-x-4 p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/10"
+                >
+                  <CheckCircle
+                    className={`w-5 h-5 ${task.completed ? "text-green-500" : "text-gray-400"
+                      }`}
+                  />
+                  <div className="flex-1">
+                    <p
+                      className={`font-semibold ${task.completed ? "text-gray-400 line-through" : "text-white"
+                        }`}
+                    >
+                      {task.title}
+                    </p>
+                    <p className="text-sm text-gray-300 flex items-center font-medium">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {formatDueDate(task.due_date)} -{" "}
+                      {format(new Date(task.due_date), "hh:mm a")}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
