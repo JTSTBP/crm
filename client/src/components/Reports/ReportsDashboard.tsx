@@ -75,6 +75,8 @@ const ReportsDashboard: React.FC = () => {
   }>({ start: "", end: "" });
 
   const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [allUserCalls, setAllUserCalls] = useState<Record<string, any[]>>({});
+  const [callsLoading, setCallsLoading] = useState(false);
 
 
   const nonAdmins = users.filter((user) => user.role !== "Admin");
@@ -98,21 +100,29 @@ const ReportsDashboard: React.FC = () => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
-  // Helper function to fetch user calls from backend
-  const fetchUserCalls = async (userId: string) => {
+  // Helper function to fetch ALL users' calls in one batch request (OPTIMIZED)
+  const fetchAllUserCalls = async (startDate?: string, endDate?: string) => {
     try {
       const url = import.meta.env.VITE_BACKEND_URL;
       const token = localStorage.getItem("token");
-      const response = await fetch(`${url}/api/users/calls/${userId}`, {
+
+      let queryParams = "";
+      if (startDate && endDate) {
+        queryParams = `?startDate=${startDate}&endDate=${endDate}`;
+      }
+
+      const response = await fetch(`${url}/api/users/calls-batch${queryParams}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       const data = await response.json();
-      return data;
+      console.log('Batch fetch complete:', data.totalCalls, 'total calls');
+      return data.callsByUser || {};
     } catch (error) {
-      console.error("Error fetching user calls:", error);
-      return { calls: [] };
+      console.error("Error fetching batch user calls:", error);
+      toast.error("Failed to load call data");
+      return {};
     }
   };
 
@@ -184,6 +194,41 @@ const ReportsDashboard: React.FC = () => {
 
     fetchData();
   }, [filters]);
+
+  // Fetch all users' calls when Team Performance tab is active
+  useEffect(() => {
+    if (activeTab === "users") {
+      const loadAllCalls = async () => {
+        setCallsLoading(true);
+
+        // Calculate date range for API
+        let startDate = "";
+        let endDate = "";
+        const now = new Date();
+
+        if (filters.dateRange === "today") {
+          startDate = now.toISOString().split("T")[0];
+          endDate = now.toISOString().split("T")[0];
+        } else if (filters.dateRange === "last7days") {
+          const last7 = subDays(now, 7);
+          startDate = last7.toISOString().split("T")[0];
+          endDate = now.toISOString().split("T")[0];
+        } else if (filters.dateRange === "last30days") {
+          const last30 = subDays(now, 30);
+          startDate = last30.toISOString().split("T")[0];
+          endDate = now.toISOString().split("T")[0];
+        } else if (filters.dateRange === "custom") {
+          startDate = filters.customStart;
+          endDate = filters.customEnd;
+        }
+
+        const callsByUser = await fetchAllUserCalls(startDate, endDate);
+        setAllUserCalls(callsByUser);
+        setCallsLoading(false);
+      };
+      loadAllCalls();
+    }
+  }, [activeTab, filters.dateRange, filters.customStart, filters.customEnd]);
 
   const stageColors: Record<string, string> = {
     New: "#3B82F6",
@@ -274,13 +319,18 @@ const ReportsDashboard: React.FC = () => {
     "BD Executive": <Briefcase className="w-5 h-5" />,
   };
 
-  const UserMetricCard: React.FC<{ user: any }> = ({ user }) => {
+  const UserMetricCard: React.FC<{
+    user: any;
+    userCalls?: any[];
+    loading?: boolean;
+  }> = ({ user, userCalls = [], loading = false }) => {
     const role = user.role || "BD Executive";
     const colorClass =
       roleColors[role] || "bg-gradient-to-r from-gray-400 to-gray-600";
 
     const [showModal, setShowModal] = useState(false);
-    const [userCalls, setUserCalls] = useState<any[]>([]); // all calls
+    const [filteredCalls, setFilteredCalls] = useState<any[]>([]);
+    const [totalCalls, setTotalCalls] = useState(0);
 
     // useEffect(() => {
     //   const getUserCalls = async () => {
@@ -302,36 +352,53 @@ const ReportsDashboard: React.FC = () => {
     //   getUserCalls();
     // }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
 
+    // Apply date filter to passed userCalls prop (no more individual API calls!)
     useEffect(() => {
-      const getUserCalls = async () => {
-        try {
-          const data = await fetchUserCalls(user._id); // API returning populated calls
-          let filteredCalls = data.calls || [];
+      setTotalCalls(userCalls.length);
 
-          // Apply date filter
-          filteredCalls = filteredCalls.filter((call: any) =>
-            applyDateFilter(call.timestamp?.$date || call.timestamp)
-          );
+      const filtered = userCalls.filter((call: any) =>
+        applyDateFilter(call.timestamp?.$date || call.timestamp)
+      );
 
-          // Map through each call and attach stage from matching point_of_contact
-          const enhancedCalls = filteredCalls.map((call: any) => {
-            const contact = call.leadId?.points_of_contact?.find(
-              (p: any) => p.phone === call.phone
-            );
-            return {
-              ...call,
-              contactStage: contact?.stage || "N/A", // fallback if no match
-            };
-          });
+      const enhanced = filtered.map((call: any) => {
+        const contact = call.leadId?.points_of_contact?.find(
+          (p: any) => p.phone === call.phone
+        );
+        return {
+          ...call,
+          contactStage: contact?.stage || "N/A",
+        };
+      });
 
-          setUserCalls(enhancedCalls);
-        } catch (error) {
-          console.error("Error fetching user calls:", error);
-        }
-      };
+      setFilteredCalls(enhanced);
+    }, [userCalls, filters.dateRange, filters.customStart, filters.customEnd]);
 
-      getUserCalls();
-    }, [user._id, filters.dateRange, filters.customStart, filters.customEnd]);
+    // Show loading skeleton
+    if (loading) {
+      return (
+        <div className="glass rounded-xl p-4 border border-white/30 animate-pulse">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-gray-700"></div>
+              <div>
+                <div className="h-4 w-24 bg-gray-700 rounded mb-2"></div>
+                <div className="h-3 w-32 bg-gray-700 rounded mb-1"></div>
+                <div className="h-2 w-20 bg-gray-700 rounded"></div>
+              </div>
+            </div>
+            <div className="h-6 w-12 bg-gray-700 rounded"></div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="text-center">
+                <div className="h-6 w-12 bg-gray-700 rounded mx-auto mb-1"></div>
+                <div className="h-3 w-16 bg-gray-700 rounded mx-auto"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
 
 
@@ -367,9 +434,11 @@ const ReportsDashboard: React.FC = () => {
           <div className="grid grid-cols-4 gap-3 text-center">
             <div>
               <p className="text-lg font-semibold text-blue-400">
-                {userCalls.length}
+                {filteredCalls.length}
               </p>
-              <p className="text-xs text-gray-400">Calls</p>
+              <p className="text-xs text-gray-400">
+                Calls {totalCalls > 0 && `(${totalCalls} total)`}
+              </p>
             </div>
             <div>
               <p className="text-lg font-semibold text-purple-400">
@@ -409,12 +478,12 @@ const ReportsDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {userCalls.length === 0 && (
+                {filteredCalls.length === 0 && (
                   <p className="text-gray-400">
                     No calls made in selected period.
                   </p>
                 )}
-                {userCalls.map((call) => (
+                {filteredCalls.map((call) => (
                   <div
                     key={call._id}
                     className="p-3 bg-white/5 rounded-xl flex justify-between"
@@ -1010,7 +1079,12 @@ const ReportsDashboard: React.FC = () => {
                 filters.userId ? user._id === filters.userId : true
               )
               .map((user) => (
-                <UserMetricCard key={user._id} user={user} />
+                <UserMetricCard
+                  key={user._id}
+                  user={user}
+                  userCalls={allUserCalls[user._id] || []}
+                  loading={callsLoading}
+                />
               ))}
           </div>
         </div>

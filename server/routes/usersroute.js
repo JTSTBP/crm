@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/users");
-  const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const CallActivity = require("../models/call");
 const authMiddleware = require("../middleware/auth"); // JWT auth middleware
 
@@ -73,7 +73,7 @@ router.put("/:id/change-password", async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // Hash the new password before saving (best practice)
-  
+
 
 
     // Update password
@@ -178,6 +178,46 @@ router.get("/calls/:userId", async (req, res) => {
     res.status(200).json({ calls });
   } catch (err) {
     console.error("Error fetching call activities:", err);
+    res.status(500).json({ message: "Failed to fetch call activities" });
+  }
+});
+
+// Batch endpoint: Get calls for ALL users (optimized for Reports dashboard)
+router.get("/calls-batch", authMiddleware, async (req, res) => {
+  try {
+    // Only fetch calls from last 90 days for better performance
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    console.time('Batch call fetch');
+
+    // Fetch recent calls with populated data in a single optimized query
+    const calls = await CallActivity.find({
+      timestamp: { $gte: ninetyDaysAgo }
+    })
+      .sort({ timestamp: -1 })
+      .populate("leadId", "company_name points_of_contact")
+      .populate("userId", "name email")
+      .lean(); // Convert to plain objects for better performance
+
+    // Group calls by userId for easy frontend distribution
+    const callsByUser = {};
+    calls.forEach(call => {
+      const userId = call.userId?._id?.toString();
+      if (userId) {
+        if (!callsByUser[userId]) {
+          callsByUser[userId] = [];
+        }
+        callsByUser[userId].push(call);
+      }
+    });
+
+    console.timeEnd('Batch call fetch');
+    console.log(`Batch call fetch: ${calls.length} calls (last 90 days) for ${Object.keys(callsByUser).length} users`);
+
+    res.status(200).json({ callsByUser, totalCalls: calls.length });
+  } catch (err) {
+    console.error("Error fetching batch call activities:", err);
     res.status(500).json({ message: "Failed to fetch call activities" });
   }
 });
