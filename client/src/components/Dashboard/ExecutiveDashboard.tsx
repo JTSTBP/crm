@@ -180,7 +180,7 @@ const ExecutiveDashboard: React.FC = () => {
                           {lead.company_name}
                         </h3>
                         <p className="text-sm text-gray-300 font-medium">
-                          {lead.industry_name || "N/A"}
+                          {lead.stage || "N/A"}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                           {lead.assignedBy?.name || "Unassigned"}

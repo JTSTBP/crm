@@ -104,6 +104,8 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const [isEditingOwner, setIsEditingOwner] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState("");
   const [loadingPOCId, setLoadingPOCId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
 
 
 
@@ -1704,33 +1706,61 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <button
                 onClick={async () => {
                   try {
-                    // Save updated POCs (only updates the POC stages)
-                    await handleSavePOCs();
+                    setIsLoading(true);
 
-                    // Add remark (optional)
+                    // Build consolidated update object for POCs and stage
+                    const updates = {
+                      points_of_contact: localPOCs,
+                      stage: "Contacted"
+                    };
+
+                    // Make API calls in parallel for better performance
+                    const promises = [
+                      updateLead(localLead._id, updates)
+                    ];
+
+                    // Add remark call only if remark exists
                     if (remarkAfterCall.trim()) {
-                      await addRemark(localLead._id, {
-                        content: remarkAfterCall,
-                        type: "text",
-                        profile,
-                      });
+                      promises.push(
+                        addRemark(localLead._id, {
+                          content: remarkAfterCall,
+                          type: "text",
+                          profile,
+                        })
+                      );
                     }
+
+                    // Execute all API calls in parallel
+                    await Promise.all(promises);
+
+                    // Update local state immediately for better UX
+                    setLocalLead({
+                      ...localLead,
+                      stage: "Contacted",
+                      updated_at: new Date().toISOString(),
+                    });
 
                     toast.success("POC stage and remark updated successfully!");
                     setShowRemarksPopup(false);
-                    handleStageUpdate("Contacted");
                     setSelectedStageAfterCall("");
                     setRemarkAfterCall("");
                   } catch (error: any) {
-                    toast.error(
-                      error.message || "Failed to update POC details"
-                    );
+                    toast.error(error.message || "Failed to update POC details");
+                  } finally {
+                    setIsLoading(false);
                   }
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                disabled={isLoading}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 
+    ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
               >
-                Close
+                {isLoading ? (
+                  <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                ) : (
+                  "Close"
+                )}
               </button>
+
             </div>
           </div>
         </div>
