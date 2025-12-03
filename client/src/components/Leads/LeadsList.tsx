@@ -46,7 +46,16 @@ const LeadsList: React.FC = () => {
   const url = import.meta.env.VITE_BACKEND_URL;
   const [bulkStage, setBulkStage] = useState("");
 
-  const pageSize = 10; // Increased from 5 for better UX
+  // Dynamic page size for mobile optimization
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const pageSize = isMobile ? 5 : 10; // Reduce to 5 for mobile devices
 
   const pocStages = [
     "All",
