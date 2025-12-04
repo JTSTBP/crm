@@ -157,8 +157,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser({ email: data.user.email });
 
       toast.success("Login successful!");
-      await refetchAttendance(); // fetch attendance after login
-      await fetchUsers(); // fetch users after login
+      // await refetchAttendance(); // fetch attendance after login
+      // await fetchUsers(); // fetch users after login
     } catch (error: any) {
       toast.error(error.message || "Login failed");
       throw error;
@@ -198,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     let timer: NodeJS.Timeout;
 
-    if (profile.role === "Admin") return;
+    if (profile?.role === "Admin") return;
     const resetTimer = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => signOut(), 5 * 60 * 1000); // 5 min
@@ -331,8 +331,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const attendancePercentage =
       totalDays > 0
         ? Math.round(
-            ((presentDays + lateDays + halfDays * 0.5) / totalDays) * 100
-          )
+          ((presentDays + lateDays + halfDays * 0.5) / totalDays) * 100
+        )
         : 0;
 
     return {
@@ -428,7 +428,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (session) fetchUsers();
+    if (session) {
+      fetchUsers();
+      refetchAttendance();
+    }
   }, [session]);
 
   /* -----------------------------

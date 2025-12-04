@@ -1709,29 +1709,22 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                     setIsLoading(true);
 
                     // Build consolidated update object for POCs and stage
-                    const updates = {
+                    const updates: any = {
                       points_of_contact: localPOCs,
                       stage: "Contacted"
                     };
 
-                    // Make API calls in parallel for better performance
-                    const promises = [
-                      updateLead(localLead._id, updates)
-                    ];
-
-                    // Add remark call only if remark exists
+                    // Add remark to updates if it exists
                     if (remarkAfterCall.trim()) {
-                      promises.push(
-                        addRemark(localLead._id, {
-                          content: remarkAfterCall,
-                          type: "text",
-                          profile,
-                        })
-                      );
+                      updates.remark = {
+                        content: remarkAfterCall,
+                        type: "text",
+                        profile,
+                      };
                     }
 
-                    // Execute all API calls in parallel
-                    await Promise.all(promises);
+                    // Single API call
+                    await updateLead(localLead._id, updates);
 
                     // Update local state immediately for better UX
                     setLocalLead({

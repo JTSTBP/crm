@@ -49,9 +49,16 @@ const authMiddleware = require("../middleware/auth");
 // 3. Get Today’s Attendance
 // -----------------------------
 // GET /api/attendance/all
-router.get("/all", async (req, res) => {
+router.get("/all", authMiddleware, async (req, res) => {
   try {
-    const records = await Attendance.find()
+    let query = {};
+
+    // If user is BD Executive, only fetch their own records
+    if (req.user.role === "BD Executive") {
+      query.user_id = req.user._id;
+    }
+
+    const records = await Attendance.find(query)
       .populate("user_id", "name email role") // optional: include user info
       .sort({ date: -1 }); // latest first
 

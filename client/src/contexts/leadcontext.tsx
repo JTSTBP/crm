@@ -452,10 +452,10 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
     getAllTasks(profile?.role === "BD Executive" ? profile.id : undefined);
   }, [profile]);
 
-  useEffect(() => {
-    getAllActivities();
-    console.log("calledprop");
-  }, [leads, alltasks, proposals]);
+  // useEffect(() => {
+  //   getAllActivities();
+  //   console.log("calledprop");
+  // }, [leads, alltasks, proposals]);
 
   return (
     <LeadsContext.Provider

@@ -582,7 +582,7 @@ router.put("/bulk-assign", async (req, res) => {
 // Update lead
 router.put("/:id", async (req, res) => {
     try {
-        const { points_of_contact, stage } = req.body;
+        const { points_of_contact, stage, remark, ...otherFields } = req.body;
 
         // Check for duplicate contact phone numbers
         const phones =
@@ -598,12 +598,35 @@ router.put("/:id", async (req, res) => {
                 .json({ message: "Duplicate contact phone numbers are not allowed" });
         }
 
+        const updateOps = {
+            $set: { ...otherFields }
+        };
+
+        if (points_of_contact) updateOps.$set.points_of_contact = points_of_contact;
+        if (stage) updateOps.$set.stage = stage;
+
         // If stage is being updated, add stageUpdatedAt
         if (stage === "Proposal Sent") {
-            req.body.stageProposalUpd = new Date();
+            updateOps.$set.stageProposalUpd = new Date();
         }
 
-        const updated = await Lead.findByIdAndUpdate(req.params.id, req.body, {
+        // Handle new remark
+        if (remark) {
+            const formattedRemark = {
+                content: remark.content,
+                type: remark.type || 'text',
+                fileUrl: remark.fileUrl,
+                voiceUrl: remark.voiceUrl,
+                profile: {
+                    id: remark.profile.id || remark.profile._id,
+                    name: remark.profile.name,
+                },
+                created_at: new Date()
+            };
+            updateOps.$push = { remarks: formattedRemark };
+        }
+
+        const updated = await Lead.findByIdAndUpdate(req.params.id, updateOps, {
             new: true,
         }).populate("assignedBy", "name email role");
 
