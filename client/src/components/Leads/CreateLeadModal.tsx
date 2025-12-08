@@ -752,15 +752,15 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   } = useForm<LeadFormData>({
     defaultValues: lead
       ? {
-          ...lead,
-          points_of_contact: lead.points_of_contact || [
-            { name: "", designation: "", phone: "", email: "", stage: "New" },
-          ],
-          hiring_needs: lead.hiring_needs || [],
-        }
+        ...lead,
+        points_of_contact: lead.points_of_contact || [
+          { name: "", designation: "", phone: "", email: "", stage: "New" },
+        ],
+        hiring_needs: lead.hiring_needs || [],
+      }
       : {
-          stage: "New",
-        },
+        stage: "New",
+      },
   });
   useEffect(() => {
     if (lead) {
@@ -1310,6 +1310,9 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               </option>
               <option className="bg-gray-700 text-white" value="No vendor">
                 No vendor
+              </option>
+              <option className="bg-gray-700 text-white" value="Future Reference">
+                Future Reference
               </option>
             </select>
           </div>

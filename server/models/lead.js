@@ -57,6 +57,7 @@ const LeadSchema = new mongoose.Schema(
         "Lost",
         "Onboarded",
         "No vendor",
+        "Future Reference"
       ],
       default: "New",
     },

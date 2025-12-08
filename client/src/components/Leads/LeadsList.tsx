@@ -113,6 +113,7 @@ const LeadsList: React.FC = () => {
     "Lost",
     "Onboarded",
     "No vendor",
+    "Future Reference"
   ];
 
   const goToPage = (page: number) => {

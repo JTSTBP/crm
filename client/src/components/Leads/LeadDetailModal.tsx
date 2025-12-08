@@ -118,6 +118,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     "Lost",
     "Onboarded",
     "No vendor",
+    "Future Reference"
   ];
 
   const communicationLogs = getCommunicationLogs(lead._id) || [];
