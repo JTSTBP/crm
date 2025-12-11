@@ -946,6 +946,8 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                                 <a
                                   href={contact.linkedin_url}
                                   className="text-blue-600 hover:text-blue-800"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                 >
                                   {contact.linkedin_url || "-"}
                                 </a>

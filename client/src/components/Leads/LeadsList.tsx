@@ -10,6 +10,7 @@ import {
   Calendar,
   Edit3,
   Eye,
+  Download,
 } from "lucide-react";
 import { useLeads } from "../../hooks/useLeads";
 import { useAuth } from "../../contexts/AuthContext";
@@ -23,7 +24,7 @@ import toast from "react-hot-toast";
 
 const LeadsList: React.FC = () => {
   // const { leads, loading } = useLeads()
-  const { fetchLeads, leads, loading, pagination, createLead, updateLead, deleteLead } =
+  const { fetchLeads, leads, loading, pagination, createLead, updateLead, deleteLead, exportLeads } =
     useLeadsContext();
   const { users } = useUsers();
   const { profile } = useAuth();
@@ -45,6 +46,7 @@ const LeadsList: React.FC = () => {
   const [isBulkAssigning, setIsBulkAssigning] = useState(false);
   const url = import.meta.env.VITE_BACKEND_URL;
   const [bulkStage, setBulkStage] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Dynamic page size for mobile optimization
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -195,6 +197,79 @@ const LeadsList: React.FC = () => {
     }
   };
 
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+
+      // Get current filters
+      const filters = {
+        assignedBy: userFilter !== "All" ? userFilter : undefined,
+        stage: stageFilter !== "All" ? stageFilter : undefined,
+        search: searchTerm || undefined,
+        pocStage: pocStageFilter !== "All" ? pocStageFilter : undefined,
+        date: dateFilter || undefined,
+      };
+
+      // Fetch all leads with current filters
+      const allLeads = await exportLeads(filters);
+
+      if (allLeads.length === 0) {
+        toast.error("No leads to download");
+        return;
+      }
+
+      // Convert to CSV
+      const headers = [
+        "Company Name",
+        "Contact Name",
+        "Industry",
+        "Stage",
+        "Assigned To",
+        "Email",
+        "Phone",
+        "Website",
+        "Lead Source",
+        "Company Size",
+        "Created At",
+      ];
+
+      const csvRows = [headers.join(",")];
+
+      allLeads.forEach((lead: any) => {
+        const row = [
+          lead.company_name || "",
+          lead.contact_name || "",
+          lead.industry_name || "",
+          lead.stage || "",
+          lead.assignedBy?.name || "Unassigned",
+          lead.company_email || "",
+          lead.points_of_contact?.[0]?.phone || "",
+          lead.website_url || "",
+          lead.lead_source || "",
+          lead.company_size || "",
+          lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "",
+        ];
+        csvRows.push(row.map(field => `"${field}"`).join(","));
+      });
+
+      const csvContent = csvRows.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `leads_${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Downloaded ${allLeads.length} leads`);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download leads");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -210,6 +285,16 @@ const LeadsList: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-4">
+          {profile?.role === "Admin" && (
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="bg-gradient-to-r from-green-500 to-teal-600 text-white px-6 py-4 rounded-2xl flex items-center space-x-3 hover:shadow-xl hover:scale-105 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-5 h-5" />
+              <span>{isDownloading ? "Downloading..." : "Download CSV"}</span>
+            </button>
+          )}
           {(profile?.role === "Admin" || profile?.role === "Manager") && (
             <button
               onClick={() => setIsBulkImportOpen(true)}

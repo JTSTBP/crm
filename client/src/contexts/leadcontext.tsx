@@ -103,6 +103,7 @@ interface LeadsContextType {
   dashboardStats: DashboardStats | null;
   fetchDashboardStats: (filters?: any) => Promise<void>;
   fetchLeads: (filters?: any) => void;
+  exportLeads: (filters?: any) => Promise<Lead[]>;
 
   bulkUploadLeads: (formData: any) => Promise<any>;
   createLead: (data: any) => Promise<void>;
@@ -217,6 +218,35 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
       setDashboardStats(res.data);
     } catch (err) {
       console.error("Error fetching dashboard stats:", err);
+    }
+  };
+
+  const exportLeads = async (filters?: any): Promise<Lead[]> => {
+    try {
+      // Build query params - same as fetchLeads but without pagination
+      const params = new URLSearchParams();
+      if (filters?.assignedBy) params.append("assignedBy", filters.assignedBy);
+      if (filters?.stage) params.append("stage", filters.stage);
+      if (filters?.search) params.append("search", filters.search);
+      if (filters?.pocStage) params.append("pocStage", filters.pocStage);
+      if (filters?.date) params.append("date", filters.date);
+      // Set limit to a very high number to get all leads
+      params.append("limit", "999999");
+
+      const query = params.toString() ? `?${params.toString()}` : "";
+      const res = await axios.get(`${API_URL}${query}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+
+      // Return leads without updating state
+      if (res.data.leads) {
+        return res.data.leads;
+      } else {
+        return res.data;
+      }
+    } catch (err) {
+      console.error("Error exporting leads:", err);
+      return [];
     }
   };
 
@@ -464,6 +494,7 @@ export const LeadsProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         pagination,
         fetchLeads,
+        exportLeads,
         fetchDashboardStats,
         dashboardStats,
 
