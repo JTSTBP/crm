@@ -410,20 +410,20 @@ const ReportsDashboard: React.FC = () => {
           onClick={() => setShowModal(true)}
         >
           {/* Card content */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-4">
+            <div className="flex items-center space-x-3 w-full sm:w-auto">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${colorClass}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 ${colorClass}`}
               >
                 {roleIcons[role] || role.charAt(0)}
               </div>
-              <div>
-                <p className="font-semibold text-white">{user.name}</p>
-                <p className="text-sm text-gray-300">{user.email}</p>
+              <div className="min-w-0">
+                <p className="font-semibold text-white truncate">{user.name}</p>
+                <p className="text-sm text-gray-300 truncate">{user.email}</p>
                 <p className="text-xs text-gray-400 mt-1">{role}</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right w-full sm:w-auto pl-[3.25rem] sm:pl-0">
               <p className="text-lg font-bold text-emerald-400">
                 {user.leadsOnboarded || "-"}
               </p>
@@ -431,7 +431,7 @@ const ReportsDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
             <div>
               <p className="text-lg font-semibold text-blue-400">
                 {filteredCalls.length}
@@ -649,26 +649,26 @@ const ReportsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="p-4 md:p-8 space-y-8">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
 
-        <div className="flex items-center justify-between relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between relative z-10 gap-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">
               CRM Analytics Dashboard
             </h1>
-            <p className="text-blue-100 text-lg">
+            <p className="text-blue-100 text-base md:text-lg">
               Comprehensive insights into sales performance and team metrics
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <select
               value={filters.dateRange}
               onChange={(e) => handleDateRangeChange(e.target.value)}
-              className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-white"
+              className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-white w-full sm:w-auto"
             >
               <option className="bg-gray-700 text-white" value="today">
                 Today
@@ -684,46 +684,47 @@ const ReportsDashboard: React.FC = () => {
               </option>
             </select>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
               <button
                 onClick={() => handleExport("csv")}
-                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors flex-1 sm:flex-none"
               >
                 <Download className="w-4 h-4" />
                 <span>CSV</span>
               </button>
               <button
                 onClick={() => handleExport("excel")}
-                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors flex-1 sm:flex-none"
               >
                 <Download className="w-4 h-4" />
                 <span>Excel</span>
               </button>
             </div>
+            {filters.dateRange === "custom" && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="date"
+                  value={customRange.start}
+                  onChange={(e) => handleCustomStartChange(e.target.value)}
+                  className="bg-white/20 border border-white/30 rounded-xl px-2 py-1 text-white w-full sm:w-auto"
+                />
+                <span className="text-white hidden sm:inline">to</span>
+                <span className="text-white sm:hidden">to</span>
+                <input
+                  type="date"
+                  value={customRange.end}
+                  onChange={(e) => handleCustomEndChange(e.target.value)}
+                  className="bg-white/20 border border-white/30 rounded-xl px-2 py-1 text-white w-full sm:w-auto"
+                />
+              </div>
+            )}
           </div>
-          <br />
-          {filters.dateRange === "custom" && (
-            <div className="flex items-center space-x-2 ml-2">
-              <input
-                type="date"
-                value={customRange.start}
-                onChange={(e) => handleCustomStartChange(e.target.value)}
-                className="bg-white/20 border border-white/30 rounded-xl px-2 py-1 text-white"
-              />
-              <span className="text-white">to</span>
-              <input
-                type="date"
-                value={customRange.end}
-                onChange={(e) => handleCustomEndChange(e.target.value)}
-                className="bg-white/20 border border-white/30 rounded-xl px-2 py-1 text-white"
-              />
-            </div>
-          )}
+
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-white/10 rounded-xl p-1">
+      <div className="flex space-x-1 bg-white/10 rounded-xl p-1 overflow-x-auto whitespace-nowrap">
         {[
           { id: "overview", label: "Overview", icon: BarChart3 },
           { id: "users", label: "Team Performance", icon: Users },
@@ -810,7 +811,7 @@ const ReportsDashboard: React.FC = () => {
             apply here.*
           </h6>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             {/* Sales Pipeline Chart */}
 
             <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
@@ -1047,15 +1048,15 @@ const ReportsDashboard: React.FC = () => {
       {/* Team Performance Tab */}
       {activeTab === "users" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 className="text-xl md:text-2xl font-bold text-white">
               Team Performance Leaderboard
             </h2>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 w-full md:w-auto">
               <select
                 value={filters.userId || ""}
                 onChange={(e) => handleUserFilter(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-blue-400"
+                className="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white focus:ring-2 focus:ring-blue-400 w-full md:w-auto"
               >
                 <option className="bg-gray-700 text-white" value="">
                   All Users
@@ -1073,7 +1074,7 @@ const ReportsDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {nonAdmins
               .filter((user) =>
                 filters.userId ? user._id === filters.userId : true
@@ -1091,14 +1092,11 @@ const ReportsDashboard: React.FC = () => {
       )}
       {/* Activity Feed Tab */}
       {activeTab === "activity" && (
-        <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl">
+        <div className="glass rounded-2xl p-6 border border-white/30 shadow-xl overflow-x-auto">
           <h2 className="text-xl font-bold text-white mb-6">
             Recent Activity Feed
           </h2>
-          <div
-            className="space-y-4 max-h-96 overflow-y-auto"
-            style={{ overflowX: "hidden" }}
-          >
+          <div className="space-y-4 max-h-96 overflow-y-auto">
             {activities.map((activity) => (
               <div
                 key={activity._id}
