@@ -65,7 +65,7 @@ export const useAutomation = () => {
     // Check if we're in demo mode
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
+
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
       // Demo mode - return demo data
       setTimeout(() => {
@@ -95,16 +95,16 @@ export const useAutomation = () => {
 
     // Generate follow-up alerts
     const followUpConfig = activeConfigs.find(config => config.type === 'followUp')
-    if (followUpConfig) {
+    if (followUpConfig && Array.isArray(leads)) {
       leads.forEach(lead => {
         const lastUpdate = new Date(lead.updated_at)
         const daysSince = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24))
-        
+
         // Check if lead needs follow-up (not in final stages and no recent activity)
         if (!['Won', 'Lost', 'Onboarded'].includes(lead.stage) && daysSince >= followUpConfig.daysThreshold) {
           const priority = daysSince >= followUpConfig.daysThreshold * 2 ? 'Urgent' :
-                          daysSince >= followUpConfig.daysThreshold * 1.5 ? 'High' :
-                          daysSince >= followUpConfig.daysThreshold ? 'Medium' : 'Low'
+            daysSince >= followUpConfig.daysThreshold * 1.5 ? 'High' :
+              daysSince >= followUpConfig.daysThreshold ? 'Medium' : 'Low'
 
           generatedAlerts.push({
             id: `followup-${lead.id}`,
@@ -126,16 +126,16 @@ export const useAutomation = () => {
 
     // Generate proposal follow-up alerts
     const proposalConfig = activeConfigs.find(config => config.type === 'proposal')
-    if (proposalConfig) {
+    if (proposalConfig && Array.isArray(proposals)) {
       proposals.forEach(proposal => {
         if (proposal.status === 'Sent' && proposal.sent_at) {
           const sentDate = new Date(proposal.sent_at)
           const daysSince = Math.floor((now.getTime() - sentDate.getTime()) / (1000 * 60 * 60 * 24))
-          
+
           if (daysSince >= proposalConfig.daysThreshold) {
             const priority = daysSince >= proposalConfig.daysThreshold * 2 ? 'Urgent' :
-                            daysSince >= proposalConfig.daysThreshold * 1.5 ? 'High' :
-                            'Medium'
+              daysSince >= proposalConfig.daysThreshold * 1.5 ? 'High' :
+                'Medium'
 
             generatedAlerts.push({
               id: `proposal-${proposal.id}`,
@@ -167,17 +167,17 @@ export const useAutomation = () => {
     // Check if we're in demo mode
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
+
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
       // Demo mode - simulate updating config
-      setConfigs(prev => prev.map(config => 
-        config.id === id 
+      setConfigs(prev => prev.map(config =>
+        config.id === id
           ? { ...config, ...updates, updatedAt: new Date().toISOString() }
           : config
       ))
-      
+
       // Regenerate alerts with new config
-      const updatedConfigs = configs.map(config => 
+      const updatedConfigs = configs.map(config =>
         config.id === id ? { ...config, ...updates } : config
       )
       generateAlerts(updatedConfigs)
@@ -201,7 +201,7 @@ export const useAutomation = () => {
     // Check if we're in demo mode
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
+
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
       // Demo mode - simulate creating config
       const newConfig: AutomationConfig = {
@@ -213,7 +213,7 @@ export const useAutomation = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
-      
+
       setConfigs(prev => [...prev, newConfig])
       generateAlerts([...configs, newConfig])
       return
@@ -255,7 +255,7 @@ export const useAutomation = () => {
     // Check if we're in demo mode
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
+
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
       // Demo mode - just log to console
       console.log('Automation activity logged:', { action, details })

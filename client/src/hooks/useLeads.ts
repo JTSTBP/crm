@@ -17,7 +17,12 @@ export const useLeads = () => {
       const res = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
-      setLeads(res.data);
+      // Handle both old and new response formats
+      if (res.data.leads) {
+        setLeads(res.data.leads);
+      } else {
+        setLeads(res.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -29,12 +34,12 @@ export const useLeads = () => {
     fetchLeads();
   }, []);
   useEffect(() => {
-   
+
   }, [loading]);
 
 
   const createLead = async (data: any) => {
-    
+
     const res = await axios.post(API_URL, data, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
@@ -43,15 +48,15 @@ export const useLeads = () => {
   };
 
   const updateLead = async (id: string, data: any) => {
-      setLoading(true);
-    
+    setLoading(true);
+
     const res = await axios.put(`${API_URL}/${id}`, data, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
     });
     setLeads((prev) => prev.map((lead) => (lead._id === id ? res.data : lead)));
 
-      setLoading(false);
-return res.data;
+    setLoading(false);
+    return res.data;
     // setLeads((prev) => prev.map((l) => (l._id === id ? res.data : l)));
   };
 
