@@ -368,6 +368,13 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     setLocalPOCs(updatedPOCs);
   };
   const handleSavePOCs = async () => {
+    // Validation: check if all POCs have a phone number
+    const incompletePOCs = localPOCs.filter((poc: any) => !poc.phone || poc.phone.trim() === "");
+    if (incompletePOCs.length > 0) {
+      toast.error("Phone number is mandatory for all points of contact");
+      return;
+    }
+
     try {
       await updateLead(lead._id, { points_of_contact: localPOCs });
       toast.success("Points of Contact updated successfully!");
@@ -804,7 +811,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                           </div>
                           <div className="flex flex-col">
                             <label className="text-xs font-medium text-gray-600 mb-1">
-                              Phone
+                              Phone *
                             </label>
                             <input
                               value={contact.phone}
