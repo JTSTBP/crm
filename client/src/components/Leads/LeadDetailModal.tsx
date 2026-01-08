@@ -883,7 +883,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                               className="px-3 py-2 border rounded-lg text-sm w-34"
                             >
                               <option value="">Select Stage</option>
-                              <option value="Contacted">New</option>
+                              <option value="New">New</option>
                               <option value="Contacted">Contacted</option>
                               <option value="Busy">Busy</option>
                               <option value="No Answer">No Answer</option>
