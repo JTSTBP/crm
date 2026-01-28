@@ -4,7 +4,7 @@ const multer = require("multer");
 const csv = require("csv-parser");
 const fs = require("fs");
 const Lead = require("../models/lead");
-const User = require("../models/users"); 
+const User = require("../models/users");
 
 const upload = multer({ dest: "uploads/" });
 
@@ -16,6 +16,12 @@ function normalizeUrl(url) {
   } catch (err) {
     return url;
   }
+}
+
+function validatePhone(phone) {
+  if (!phone) return false;
+  const cleaned = phone.trim().replace(/[\s\-\(\)]/g, "");
+  return /^\d{10}$/.test(cleaned);
 }
 
 function parsePointsOfContact(row) {
@@ -120,10 +126,33 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
             );
             return res.status(400).json({
               success: false,
-              message: `Each company must have at least one valid point of contact (with name and phone). Missing for: ${
-                row.company_name || "Unknown Company"
-              }`,
+              message: `Each company must have at least one valid point of contact (with name and phone). Missing for: ${row.company_name || "Unknown Company"
+                }`,
             });
+          }
+
+          // ✅ Validate phone numbers (must be 10 digits)
+          for (const contact of contacts) {
+            if (contact.phone && !validatePhone(contact.phone)) {
+              fs.unlinkSync(req.file.path);
+              return res.status(400).json({
+                success: false,
+                message: `Invalid phone number for contact ${contact.name} at ${row.company_name || "Unknown Company"
+                  }. Phone must be exactly 10 digits.`,
+              });
+            }
+            if (
+              contact.alternate_phone &&
+              !validatePhone(contact.alternate_phone)
+            ) {
+              fs.unlinkSync(req.file.path);
+              return res.status(400).json({
+                success: false,
+                message: `Invalid alternate phone number for contact ${contact.name
+                  } at ${row.company_name || "Unknown Company"
+                  }. Alternate phone must be exactly 10 digits.`,
+              });
+            }
           }
 
           if (existingLeadsMap.has(normalizedUrl)) {
@@ -131,17 +160,17 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
             const lead = existingLeadsMap.get(normalizedUrl);
 
             contacts.forEach((contact) => {
-            if (
-              !lead.points_of_contact.some(
-                (c) =>
-                  c.phone === contact.phone ||
-                  c.phone === contact.alternate_phone ||
-                  c.alternate_phone === contact.phone ||
-                  c.alternate_phone === contact.alternate_phone
-              )
-            ) {
-              lead.points_of_contact.push(contact);
-            }
+              if (
+                !lead.points_of_contact.some(
+                  (c) =>
+                    c.phone === contact.phone ||
+                    c.phone === contact.alternate_phone ||
+                    c.alternate_phone === contact.phone ||
+                    c.alternate_phone === contact.alternate_phone
+                )
+              ) {
+                lead.points_of_contact.push(contact);
+              }
             });
 
             await lead.save(); // 🔑 save updated lead immediately

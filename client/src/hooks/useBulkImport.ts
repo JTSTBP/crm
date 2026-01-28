@@ -19,7 +19,7 @@ export const useBulkImport = () => {
   }
 
   const validatePhone = (phone: string): boolean => {
-    const phoneRegex = /^[\+]?[1-9][\d]{7,14}$/
+    const phoneRegex = /^\d{10}$/
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))
   }
 
@@ -64,7 +64,7 @@ export const useBulkImport = () => {
     const data = lines.slice(1).map((line, index) => {
       const values = line.split(',').map(v => v.trim().replace(/"/g, ''))
       const row: any = { _line: index + 2 }
-      
+
       headers.forEach((header, i) => {
         // Normalize header names
         const normalizedHeader = header.toLowerCase().replace(/[^a-z]/g, '')
@@ -119,7 +119,7 @@ export const useBulkImport = () => {
           row.assignedTo = values[i] || ''
         }
       })
-      
+
       return row
     })
 
@@ -132,7 +132,7 @@ export const useBulkImport = () => {
     }
 
     setLoading(true)
-    
+
     try {
       const file = formData.get('file') as File
       const assignmentOption = formData.get('assignmentOption') as string
@@ -160,7 +160,7 @@ export const useBulkImport = () => {
       // Check if we're in demo mode
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      
+
       if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
         // Demo mode - simulate import
         await simulateImport(data, assignmentOption, assignedTo, summary)
@@ -179,9 +179,9 @@ export const useBulkImport = () => {
   }
 
   const simulateImport = async (
-    data: any[], 
-    assignmentOption: string, 
-    assignedTo: string, 
+    data: any[],
+    assignmentOption: string,
+    assignedTo: string,
     summary: ImportSummary
   ) => {
     // Simulate processing delay
@@ -192,7 +192,7 @@ export const useBulkImport = () => {
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i]
-      
+
       // Validate required fields
       if (!row.companyName || !row.contactName || !row.contactEmail || !row.contactPhone || !row.contactDesignation || !row.industryName) {
         summary.errors.push({
@@ -219,7 +219,7 @@ export const useBulkImport = () => {
       if (!validatePhone(row.contactPhone)) {
         summary.errors.push({
           line: row._line,
-          reason: 'Invalid phone format (must be 8-15 digits)',
+          reason: 'Invalid phone format (must be exactly 10 digits)',
           data: row
         })
         summary.skipped++
@@ -327,9 +327,9 @@ export const useBulkImport = () => {
   }
 
   const performRealImport = async (
-    data: any[], 
-    assignmentOption: string, 
-    assignedTo: string, 
+    data: any[],
+    assignmentOption: string,
+    assignedTo: string,
     summary: ImportSummary
   ) => {
     // Get existing emails to check for duplicates
@@ -350,7 +350,7 @@ export const useBulkImport = () => {
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i]
-      
+
       // Validate required fields
       if (!row.companyName || !row.contactName || !row.contactEmail || !row.contactPhone || !row.contactDesignation || !row.industryName) {
         summary.errors.push({
@@ -388,7 +388,7 @@ export const useBulkImport = () => {
       if (!validatePhone(row.contactPhone)) {
         summary.errors.push({
           line: row._line,
-          reason: 'Invalid phone format (must be 8-15 digits)',
+          reason: 'Invalid phone format (must be exactly 10 digits)',
           data: row
         })
         summary.skipped++
