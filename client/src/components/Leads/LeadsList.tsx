@@ -11,6 +11,7 @@ import {
   Edit3,
   Eye,
   Download,
+  Trash2,
 } from "lucide-react";
 import { useLeads } from "../../hooks/useLeads";
 import { useAuth } from "../../contexts/AuthContext";
@@ -47,6 +48,7 @@ const LeadsList: React.FC = () => {
   const url = import.meta.env.VITE_BACKEND_URL;
   const [bulkStage, setBulkStage] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Dynamic page size for mobile optimization
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -173,6 +175,60 @@ const LeadsList: React.FC = () => {
       toast.error(error.message || "Error assigning leads");
     } finally {
       setIsBulkAssigning(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedLeads.length === 0) {
+      toast.error("Please select at least one lead to delete");
+      return;
+    }
+
+    // Confirmation dialog
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedLeads.length} lead(s)? This action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setIsBulkDeleting(true);
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${url}/api/leads/bulk-delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ leadIds: selectedLeads }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete leads");
+      }
+
+      toast.success(data.message || "Leads deleted successfully!");
+      setSelectedLeads([]);
+      setSelectAll(false);
+
+      // Refresh leads with current filters
+      const filters = {
+        assignedBy: userFilter !== "All" ? userFilter : undefined,
+        stage: stageFilter !== "All" ? stageFilter : undefined,
+        search: searchTerm || undefined,
+        pocStage: pocStageFilter !== "All" ? pocStageFilter : undefined,
+        date: dateFilter || undefined,
+        page: currentPage,
+        limit: pageSize,
+      };
+      fetchLeads(filters);
+    } catch (error) {
+      toast.error(error.message || "Error deleting leads");
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -496,13 +552,26 @@ const LeadsList: React.FC = () => {
             </select>
           </div>
 
-          <button
-            onClick={handleBulkAssign}
-            disabled={(!bulkAssignee && !bulkStage) || isBulkAssigning}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-          >
-            {isBulkAssigning ? "Assigning..." : "Assign Selected"}
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleBulkAssign}
+              disabled={(!bulkAssignee && !bulkStage) || isBulkAssigning}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50"
+            >
+              {isBulkAssigning ? "Assigning..." : "Assign Selected"}
+            </button>
+
+            {profile?.role === "Admin" && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 flex items-center space-x-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isBulkDeleting ? "Deleting..." : "Delete Selected"}</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

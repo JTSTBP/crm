@@ -579,6 +579,37 @@ router.put("/bulk-assign", async (req, res) => {
     }
 });
 
+// DELETE /api/leads/bulk-delete - Admin only
+router.delete("/bulk-delete", authMiddleware, async (req, res) => {
+    try {
+        // Check if user is Admin
+        if (req.user.role !== "Admin") {
+            return res.status(403).json({
+                message: "Access denied. Only Admin users can delete leads."
+            });
+        }
+
+        const { leadIds } = req.body;
+
+        if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
+            return res.status(400).json({
+                message: "Please provide an array of lead IDs to delete"
+            });
+        }
+
+        // Delete the leads
+        const result = await Lead.deleteMany({ _id: { $in: leadIds } });
+
+        res.json({
+            message: `Successfully deleted ${result.deletedCount} lead(s)`,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error("Bulk delete error:", error);
+        res.status(500).json({ message: "Server error while deleting leads" });
+    }
+});
+
 // Update lead
 router.put("/:id", async (req, res) => {
     try {
